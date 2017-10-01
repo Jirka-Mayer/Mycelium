@@ -1,0 +1,35 @@
+{
+    "name": "jirka-mayer/mycelium",
+    "type": "library",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Jirka-Mayer",
+            "email": "jirkamayer97@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.6.4",
+        "illuminate/contracts": "^5.3",
+        "illuminate/support": "^5.3",
+        "illuminate/database": "^5.3",
+        "illuminate/filesystem": "^5.4",
+        "illuminate/http": "^5.4",
+        "illuminate/auth": "^5.4"
+    },
+    "require-dev": {
+        "mockery/mockery": "0.9.*",
+        "phpunit/phpunit": "5.7",
+        "laravel/laravel": "5.4.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "Mycelium\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Tests\\": "tests/"
+        }
+    }
+}

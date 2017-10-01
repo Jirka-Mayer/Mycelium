@@ -1,0 +1,7 @@
+node_modules
+vendor
+/mix-manifest.json
+*.sublime-project
+*.sublime-workspace
+npm-debug.log
+composer.lock
