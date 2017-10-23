@@ -2,25 +2,59 @@ const axios = require("axios")
 const TextWidget = require("./widgets/Text.js")
 const RichTextWidget = require("./widgets/RichText.js")
 
-const SAVING_TIMEOUT = 2000
+// delay between a change and save call
+const AUTOSAVE_TIMEOUT = 2000
 
+/**
+ * Class representing a shroom with all of it's data and widgets
+ *
+ * Handles editing and saving, interacts with the UI
+ */
 class Shroom
 {
+    /**
+     * Creates new Shroom instance
+     * @param {Window} window DOM widnow object
+     * @param {Document} document DOM document object
+     * @param {Object} serializedData JSON-serialized php Shroom class
+     */
     constructor(window, document, serializedData)
     {
+        /**
+         * DOM access
+         */
         this.$window = window
         this.$document = document
 
+        // load shroom from serialized JSON data
         this.$loadSerializedData(serializedData)
 
-        this.$savingTimerId = null
-        this.$saving = false
-        this.$saved = true
+        /**
+         * Saving stuff
+         */
+        this.$autosaveEnabled = false // automatic saving
+        this.$savingTimerId = null // autosave timer
+        this.$saving = false // save request pending
+        this.$saved = true // no changes made since last save
 
+        /**
+         * Widgets
+         */
         this.$widgets = []
+
+        // create instances of all widgets
         this.$createWidgetInstances()
+
+        // initializeAutosave() has to be called externally
+        // depending on the usecase (e.g. you don't want
+        // autosave when testing)
     }
 
+    /**
+     * Loads info from JSON-serialized php Shroom class
+     *
+     * The argument is an object, not string
+     */
     $loadSerializedData(data)
     {
         this.id = data.id
@@ -37,6 +71,14 @@ class Shroom
             this.data = {}
     }
 
+    /////////////
+    // Widgets //
+    /////////////
+
+    /**
+     * Instantiates controllers for all widgets
+     * and handles their registration
+     */
     $createWidgetInstances()
     {
         this.$widgets = this.$widgets.concat(
@@ -52,13 +94,23 @@ class Shroom
         )
     }
 
+    //////////
+    // Data //
+    //////////
+
+    /**
+     * Sets new value to a data key
+     */
     setData(key, value)
     {
         this.data[key] = value
 
-        this.$scheduleSave()
+        this.$onDataChange()
     }
 
+    /**
+     * Returns data under a key
+     */
     getData(key, defaultValue)
     {
         if (defaultValue === undefined)
@@ -72,22 +124,24 @@ class Shroom
         return data
     }
 
-    $scheduleSave()
+    ////////////
+    // Saving //
+    ////////////
+
+    /**
+     * Starts the autosave logic
+     */
+    initializeAutosave()
     {
-        this.$saved = false
+        this.$autosaveEnabled = true
 
-        if (this.$saving)
-            return
-
-        if (this.$savingTimerId !== null)
-            clearTimeout(this.$savingTimerId)
-
-        this.$savingTimerId = setTimeout(
-            this.save.bind(this),
-            SAVING_TIMEOUT
-        )
+        if (!this.$saved)
+            this.$scheduleAutosave()
     }
 
+    /**
+     * Performs the saving procedure - the HTTP request
+     */
     save()
     {
         this.$saving = true
@@ -110,11 +164,48 @@ class Shroom
         })
     }
 
+    /**
+     * Starts or resets the autosave timer
+     *
+     * Autosave enabled checks have to be made externally
+     */
+    $scheduleAutosave()
+    {
+        if (this.$saving)
+            return
+
+        if (this.$savingTimerId !== null)
+            clearTimeout(this.$savingTimerId)
+
+        this.$savingTimerId = setTimeout(
+            this.save.bind(this),
+            AUTOSAVE_TIMEOUT
+        )
+    }
+
+    ////////////
+    // Events //
+    ////////////
+
+    /**
+     * When some data changes (in the data object)
+     */
+    $onDataChange()
+    {
+        this.$saved = false
+
+        if (this.$autosaveEnabled)
+            this.$scheduleAutosave()
+    }
+
+    /**
+     * Called after a successful save() execution
+     */
     $afterSave()
     {
-        // change was made during saving
+        // changes were made during saving
         if (!this.$saved)
-            this.$scheduleSave()
+            this.$scheduleAutosave()
     }
 }
 
