@@ -2,6 +2,8 @@
 
 namespace Tests;
 
+use Illuminate\Config\Repository;
+
 class TestCase extends \Illuminate\Foundation\Testing\TestCase
 {
     /**
@@ -20,6 +22,13 @@ class TestCase extends \Illuminate\Foundation\Testing\TestCase
     {
         $app = require __DIR__ . '/../vendor/laravel/laravel/bootstrap/app.php';
         
+        // config
+        $app->instance("config", $config = new Repository);
+        $app["config"]->set(
+            "mycelium",
+            require __DIR__ . "/../assets/config/config.php"
+        );
+
         // register service provider
         $app->register(\Mycelium\MyceliumServiceProvider::class);
 

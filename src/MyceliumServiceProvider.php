@@ -3,9 +3,7 @@
 namespace Mycelium;
 
 use Illuminate\Contracts\Container\Container;
-use Illuminate\Foundation\Application as LaravelApplication;
 use Illuminate\Support\ServiceProvider;
-use Laravel\Lumen\Application as LumenApplication;
 
 use Mycelium\Services\Mycelium;
 use Mycelium\Services\RouteGenerator;
@@ -22,16 +20,32 @@ class MyceliumServiceProvider extends ServiceProvider
         
         $this->loadViewsFrom(__DIR__ . "/../assets/views", "mycelium");
 
+        if (config("mycelium.auth.routes.register", false))
+        {
+            $this->loadRoutesFrom(
+                __DIR__ . "/../assets/routes/authentication.php"
+            );
+        }
+
         $this->publishes([
             __DIR__ . "/../dist/mycelium.js" =>
                 public_path("js/vendor/mycelium/mycelium.js"),
             __DIR__ . "/../dist/mycelium.css" =>
                 public_path("css/vendor/mycelium/mycelium.css")
         ], "public");
+
+        $this->publishes([
+            __DIR__ . "/../assets/config/config.php" =>
+                config_path("mycelium.php")
+        ], "config");
     }
 
     public function register()
     {
+        $this->mergeConfigFrom(
+            __DIR__ . "/../assets/config/config.php", "mycelium"
+        );
+
         $this->app->singleton("mycelium.filesystem", function () {
             return $this->app["filesystem"]->createLocalDriver([
                 "root" => storage_path("mycelium")
