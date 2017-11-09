@@ -25,7 +25,19 @@ trait ServesShroom
      * Render the shroom for viewing
      * @return \Illuminate\Http\Response
      */
-    public function view(Container $app, Mycelium $mycelium, View $view)
+    public function view(Container $app)
+    {
+        if ($app->call([$this, "isUserAnEditor"]))
+            return $app->call([$this, "viewAsEditor"]);
+        else
+            return $app->call([$this, "viewAsVisitor"]);
+    }
+
+    /**
+     * Render the shroom for viewing for a visitor
+     * @return \Illuminate\Http\Response
+     */
+    public function viewAsVisitor(Container $app, Mycelium $mycelium, View $view)
     {
         $app->call([$this, "obtainShroom"]);
 
@@ -37,6 +49,31 @@ trait ServesShroom
             );
 
         $mycelium->editing(false);
+        $mycelium->editor(false);
+
+        return $view->make(
+            $app->call([$this, "shroomView"]),
+            $app->call([$this, "getDataForViewing"])
+        );
+    }
+
+    /**
+     * Render the shroom for viewing for an editor
+     * @return \Illuminate\Http\Response
+     */
+    public function viewAsEditor(Container $app, Mycelium $mycelium, View $view)
+    {
+        $app->call([$this, "obtainShroom"]);
+
+        $app->call([$this, "guardViewing"]);
+
+        if (!$this->shroom->transparent && !$this->shroom->isPublished())
+            return new AuthorizationException(
+                "You are not allowed to view this page."
+            );
+
+        $mycelium->editing(false);
+        $mycelium->editor(true);
 
         return $view->make(
             $app->call([$this, "shroomView"]),
@@ -52,9 +89,13 @@ trait ServesShroom
     {
         $app->call([$this, "obtainShroom"]);
 
-        $app->call([$this, "guardEditing"]);
+        if (!$app->call([$this, "isUserAnEditor"]))
+            throw new AuthorizationException(
+                "You don't have permissions to edit this page."
+            );
 
         $mycelium->editing(true);
+        $mycelium->editor(true);
 
         return $view->make(
             $app->call([$this, "shroomView"]),
@@ -70,7 +111,8 @@ trait ServesShroom
     {
         $app->call([$this, "obtainShroom"]);
 
-        $app->call([$this, "guardEditing"]);
+        if (!$app->call([$this, "isUserAnEditor"]))
+            throw new AuthorizationException;
 
         $this->editShroomData($app, $request);
 
@@ -121,27 +163,20 @@ trait ServesShroom
     }
 
     /**
-     * Handle authorization for editing
-     * @return void
+     * Return true if the user requesting this page is an editor
+     * @return boolean
      */
-    public function guardEditing()
+    public function isUserAnEditor()
     {
-        // disallow
-        throw new AuthorizationException(
-            "By default, no one can edit a shroom."
-        );
+        return false;
     }
 
     /**
      * Is the served shroom transparent?
      * (This means that it's displayed to visitors even if not published)
-     * @var boolean
      */
     public function isShroomTransparent()
     {
-        // not a property, because trait properties
-        // cannot be overriden
-        
         return false;
     }
 

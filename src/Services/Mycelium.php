@@ -7,17 +7,15 @@ namespace Mycelium\Services;
  */
 class Mycelium
 {
+    /////////////
+    // Routing //
+    /////////////
+    
     /**
      * Route generator instance
      * @var \Mycelium\RouteGenerator
      */
     protected $routeGenerator;
-
-    /**
-     * Is the current mode set to editing?
-     * @var boolean
-     */
-    protected $isEditing = false;
 
     /**
      * Sets the Route generator dependency
@@ -37,6 +35,16 @@ class Mycelium
         return $this->routeGenerator;
     }
 
+    /////////////
+    // Editing //
+    /////////////
+
+    /**
+     * Is the current mode set to editing?
+     * @var boolean
+     */
+    protected $isEditing = false;
+
     /**
      * Setting and getting the editing mode
      * @return boolean
@@ -47,5 +55,27 @@ class Mycelium
             return $this->isEditing;
         else
             return $this->isEditing = $set;
+    }
+
+    ///////////////
+    // Is editor //
+    ///////////////
+
+    /**
+     * Is the user an editor?
+     * @var boolean
+     */
+    protected $isUserEditor = false;
+
+    /**
+     * Sets of gets if the user is an editor
+     * @return boolean
+     */
+    public function editor($set = null)
+    {
+        if ($set === null)
+            return $this->isUserEditor;
+        else
+            return $this->isUserEditor = $set;
     }
 }

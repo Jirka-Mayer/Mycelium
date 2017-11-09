@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Scenario\StaticTransparentWebsite;
+namespace Tests\Feature\ShroomRenderingType;
 
 use Illuminate\Routing\Controller;
 use Illuminate\Contracts\Session\Session;
@@ -17,7 +17,7 @@ class IndexController extends Controller
 
     public function isUserAnEditor(Session $session)
     {
-        return $session->get("bob is logged in", false);
+        return $session->get("bob is editor", false);
     }
 
     public function shroomSlug()

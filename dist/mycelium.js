@@ -745,23 +745,35 @@ module.exports = Cancel;
 /* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(8);
+__webpack_require__(8);
+module.exports = __webpack_require__(33);
 
 
 /***/ }),
 /* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/**
- * Mycelium namespace
- */
+///////////////////////////////
+// Create mycelium namespace //
+///////////////////////////////
+
 if (!window.mycelium) window.mycelium = {};
+
+// object for storing mycelium state
+if (!window.mycelium.state) window.mycelium.state = {};
 
 // namespace for exporting classes
 if (!window.mycelium.class) window.mycelium.class = {};
 
-// register classes
+//////////////////////
+// Register classes //
+//////////////////////
+
 window.mycelium.class.Shroom = __webpack_require__(9);
+
+if (!window.mycelium.class.ui) window.mycelium.class.ui = {};
+
+window.mycelium.class.ui.Taskbar = __webpack_require__(32);
 
 /***/ }),
 /* 9 */
@@ -775,24 +787,61 @@ var axios = __webpack_require__(10);
 var TextWidget = __webpack_require__(30);
 var RichTextWidget = __webpack_require__(31);
 
-var SAVING_TIMEOUT = 2000;
+// delay between a change and save call
+var AUTOSAVE_TIMEOUT = 2000;
+
+/**
+ * Class representing a shroom with all of it's data and widgets
+ *
+ * Handles editing and saving, interacts with the UI
+ */
 
 var Shroom = function () {
+    /**
+     * Creates new Shroom instance
+     * @param {Window} window DOM widnow object
+     * @param {Document} document DOM document object
+     * @param {Object} serializedData JSON-serialized php Shroom class
+     */
     function Shroom(window, document, serializedData) {
         _classCallCheck(this, Shroom);
 
+        /**
+         * DOM access
+         */
         this.$window = window;
         this.$document = document;
 
+        // load shroom from serialized JSON data
         this.$loadSerializedData(serializedData);
 
-        this.$savingTimerId = null;
-        this.$saving = false;
-        this.$saved = true;
+        /**
+         * Saving stuff
+         */
+        this.$autosaveEnabled = false; // automatic saving
+        this.$savingTimerId = null; // autosave timer
+        this.$saving = false; // save request pending
+        this.$saved = true; // no changes made since last save
 
+        /**
+         * Widgets
+         */
         this.$widgets = [];
+
+        // create instances of all widgets
         this.$createWidgetInstances();
+
+        // initializeAutosave() has to be called externally
+        // depending on the usecase (e.g. you don't want
+        // autosave when testing)
     }
+
+    /**
+     * Loads info from JSON-serialized php Shroom class
+     *
+     * The argument is an object, not string
+     */
+
 
     _createClass(Shroom, [{
         key: "$loadSerializedData",
@@ -809,6 +858,16 @@ var Shroom = function () {
             // in php as [] instead of {}
             if (this.data instanceof Array) this.data = {};
         }
+
+        /////////////
+        // Widgets //
+        /////////////
+
+        /**
+         * Instantiates controllers for all widgets
+         * and handles their registration
+         */
+
     }, {
         key: "$createWidgetInstances",
         value: function $createWidgetInstances() {
@@ -816,13 +875,27 @@ var Shroom = function () {
 
             this.$widgets = this.$widgets.concat(RichTextWidget.createInstances(this.$window, this.$document, this));
         }
+
+        //////////
+        // Data //
+        //////////
+
+        /**
+         * Sets new value to a data key
+         */
+
     }, {
         key: "setData",
         value: function setData(key, value) {
             this.data[key] = value;
 
-            this.$scheduleSave();
+            this.$onDataChange();
         }
+
+        /**
+         * Returns data under a key
+         */
+
     }, {
         key: "getData",
         value: function getData(key, defaultValue) {
@@ -834,17 +907,27 @@ var Shroom = function () {
 
             return data;
         }
+
+        ////////////
+        // Saving //
+        ////////////
+
+        /**
+         * Starts the autosave logic
+         */
+
     }, {
-        key: "$scheduleSave",
-        value: function $scheduleSave() {
-            this.$saved = false;
+        key: "initializeAutosave",
+        value: function initializeAutosave() {
+            this.$autosaveEnabled = true;
 
-            if (this.$saving) return;
-
-            if (this.$savingTimerId !== null) clearTimeout(this.$savingTimerId);
-
-            this.$savingTimerId = setTimeout(this.save.bind(this), SAVING_TIMEOUT);
+            if (!this.$saved) this.$scheduleAutosave();
         }
+
+        /**
+         * Performs the saving procedure - the HTTP request
+         */
+
     }, {
         key: "save",
         value: function save() {
@@ -867,11 +950,48 @@ var Shroom = function () {
                 _this.$afterSave();
             });
         }
+
+        /**
+         * Starts or resets the autosave timer
+         *
+         * Autosave enabled checks have to be made externally
+         */
+
+    }, {
+        key: "$scheduleAutosave",
+        value: function $scheduleAutosave() {
+            if (this.$saving) return;
+
+            if (this.$savingTimerId !== null) clearTimeout(this.$savingTimerId);
+
+            this.$savingTimerId = setTimeout(this.save.bind(this), AUTOSAVE_TIMEOUT);
+        }
+
+        ////////////
+        // Events //
+        ////////////
+
+        /**
+         * When some data changes (in the data object)
+         */
+
+    }, {
+        key: "$onDataChange",
+        value: function $onDataChange() {
+            this.$saved = false;
+
+            if (this.$autosaveEnabled) this.$scheduleAutosave();
+        }
+
+        /**
+         * Called after a successful save() execution
+         */
+
     }, {
         key: "$afterSave",
         value: function $afterSave() {
-            // change was made during saving
-            if (!this.$saved) this.$scheduleSave();
+            // changes were made during saving
+            if (!this.$saved) this.$scheduleAutosave();
         }
     }]);
 
@@ -2118,6 +2238,57 @@ var RichText = function () {
 }();
 
 module.exports = RichText;
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Taskbar = function () {
+    function Taskbar(document) {
+        _classCallCheck(this, Taskbar);
+
+        this.$createDOM(document);
+    }
+
+    _createClass(Taskbar, [{
+        key: "$createDOM",
+        value: function $createDOM(document) {
+            var html = "\n            <div class=\"mc-taskbar__panel\">\n                <button class=\"mc-taskbar__button mc-edit\">Edit</button>\n                <button class=\"mc-taskbar__button\">Save</button>\n            </div>\n            <div class=\"mc-taskbar__panel\">\n                <button class=\"mc-taskbar__button\">B</button>\n                <button class=\"mc-taskbar__button\">I</button>\n            </div>\n        ";
+
+            var element = document.createElement("div");
+            element.innerHTML = html;
+            element.className = "mc-taskbar";
+
+            var spacer = document.createElement("div");
+            spacer.style.height = "50px";
+
+            var editButton = element.querySelector(".mc-edit");
+            editButton.addEventListener("click", function () {
+                console.log("yay!");
+            });
+
+            document.body.appendChild(element);
+            document.body.appendChild(spacer);
+
+            this.$element = element;
+            this.$spacer = spacer;
+        }
+    }]);
+
+    return Taskbar;
+}();
+
+module.exports = Taskbar;
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
 
 /***/ })
 /******/ ]);
