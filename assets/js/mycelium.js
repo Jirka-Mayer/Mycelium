@@ -9,6 +9,10 @@ if (!window.mycelium)
 if (!window.mycelium.state)
     window.mycelium.state = {}
 
+// exported mycelium php config
+if (!window.mycelium.config)
+    window.mycelium.config = {}
+
 // namespace for exporting classes
 if (!window.mycelium.class)
     window.mycelium.class = {}
@@ -22,4 +26,4 @@ window.mycelium.class.Shroom = require("./Shroom.js")
 if (!window.mycelium.class.ui)
     window.mycelium.class.ui = {}
 
-window.mycelium.class.ui.Taskbar = require("./ui/Taskbar.js")
+window.mycelium.class.ui.Toolbar = require("./ui/Toolbar.js")

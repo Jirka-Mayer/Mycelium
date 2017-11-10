@@ -3,17 +3,15 @@
 return [
 
     /**
-     * Built-in mycelium auth
+     * Built-in authentication
      */
     "auth" => [
 
         "enabled" => false,
 
         "routes" => [
-            "register" => true,
-
-            "login" => "/login",
-            "logout" => "/logout"
+            "login" => url("login"),
+            "logout" => url("logout")
         ]
     ]
 ];

@@ -1,4 +1,4 @@
-.mc-taskbar {
+.mc-toolbar {
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
@@ -11,10 +11,10 @@
   -webkit-box-shadow: 0 0 5px 0 rgba(0,0,0,0.2);
           box-shadow: 0 0 5px 0 rgba(0,0,0,0.2);
 }
-.mc-taskbar__panel {
+.mc-toolbar__panel {
   border-right: 1px solid rgba(0,0,0,0.3);
 }
-.mc-taskbar__button {
+.mc-toolbar__button {
   display: inline-block;
   width: 50px;
   height: 50px;
@@ -23,6 +23,6 @@
   background: none;
   cursor: pointer;
 }
-.mc-taskbar__button:hover {
+.mc-toolbar__button:hover {
   background: #ddd;
 }

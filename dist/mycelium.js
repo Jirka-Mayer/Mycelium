@@ -762,6 +762,9 @@ if (!window.mycelium) window.mycelium = {};
 // object for storing mycelium state
 if (!window.mycelium.state) window.mycelium.state = {};
 
+// exported mycelium php config
+if (!window.mycelium.config) window.mycelium.config = {};
+
 // namespace for exporting classes
 if (!window.mycelium.class) window.mycelium.class = {};
 
@@ -773,7 +776,7 @@ window.mycelium.class.Shroom = __webpack_require__(9);
 
 if (!window.mycelium.class.ui) window.mycelium.class.ui = {};
 
-window.mycelium.class.ui.Taskbar = __webpack_require__(32);
+window.mycelium.class.ui.Toolbar = __webpack_require__(32);
 
 /***/ }),
 /* 9 */
@@ -2247,42 +2250,99 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Taskbar = function () {
-    function Taskbar(document) {
-        _classCallCheck(this, Taskbar);
+var Toolbar = function () {
+    function Toolbar(document, mycelium) {
+        _classCallCheck(this, Toolbar);
+
+        // reference to the mycelium namespace
+        this.mycelium = mycelium;
+
+        /**
+         * References to elements
+         */
+        this.$refs = {};
 
         this.$createDOM(document);
     }
 
-    _createClass(Taskbar, [{
+    /**
+     * Creates all elements and appends them to the document
+     */
+
+
+    _createClass(Toolbar, [{
         key: "$createDOM",
         value: function $createDOM(document) {
-            var html = "\n            <div class=\"mc-taskbar__panel\">\n                <button class=\"mc-taskbar__button mc-edit\">Edit</button>\n                <button class=\"mc-taskbar__button\">Save</button>\n            </div>\n            <div class=\"mc-taskbar__panel\">\n                <button class=\"mc-taskbar__button\">B</button>\n                <button class=\"mc-taskbar__button\">I</button>\n            </div>\n        ";
+            // toolbar markup
+            var html = "\n            <div class=\"mc-toolbar__panel\">\n                <button class=\"mc-toolbar__button mc-toggle-edit\">Edit</button>\n                <button class=\"mc-toolbar__button\">Save</button>\n            </div>\n            <div class=\"mc-toolbar__panel\">\n                <button class=\"mc-toolbar__button\">B</button>\n                <button class=\"mc-toolbar__button\">I</button>\n            </div>\n            <div class=\"mc-toolbar__panel\">\n                <button class=\"mc-toolbar__button mc-logout\">Logout</button>\n            </div>\n        ";
 
+            // create toolbar element
             var element = document.createElement("div");
             element.innerHTML = html;
-            element.className = "mc-taskbar";
+            element.className = "mc-toolbar";
 
+            // create spacer
             var spacer = document.createElement("div");
             spacer.style.height = "50px";
 
-            var editButton = element.querySelector(".mc-edit");
-            editButton.addEventListener("click", function () {
-                console.log("yay!");
-            });
-
+            // add elemnts to the page
             document.body.appendChild(element);
             document.body.appendChild(spacer);
 
             this.$element = element;
             this.$spacer = spacer;
+
+            // get element references
+            this.$refs.logout = this.$element.querySelector(".mc-logout");
+            this.$refs.toggleEdit = this.$element.querySelector(".mc-toggle-edit");
+
+            // register event listeners
+            this.$refs.logout.addEventListener("click", this.$onLogoutClick.bind(this));
+            this.$refs.toggleEdit.addEventListener("click", this.$onToggleEditClick.bind(this));
+
+            this.$initializeElements();
+        }
+
+        /**
+         * Initializes individual elements based on the mycelium state
+         */
+
+    }, {
+        key: "$initializeElements",
+        value: function $initializeElements() {
+            this.$initializeLogoutButton();
+        }
+
+        /**
+         * Initializes logout button
+         */
+
+    }, {
+        key: "$initializeLogoutButton",
+        value: function $initializeLogoutButton() {
+            if (!this.mycelium.config.auth.enabled) this.$refs.logout.remove();
+        }
+
+        /////////////////////
+        // Event listeners //
+        /////////////////////
+
+    }, {
+        key: "$onLogoutClick",
+        value: function $onLogoutClick() {
+            window.location.href = this.mycelium.config.auth.routes.logout;
+        }
+    }, {
+        key: "$onToggleEditClick",
+        value: function $onToggleEditClick() {
+            if (this.mycelium.state.editing) window.location.href += "/..";else window.location.href += "edit";
         }
     }]);
 
-    return Taskbar;
+    return Toolbar;
 }();
 
-module.exports = Taskbar;
+module.exports = Toolbar;
 
 /***/ }),
 /* 33 */

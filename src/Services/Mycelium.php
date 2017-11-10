@@ -78,4 +78,20 @@ class Mycelium
         else
             return $this->isUserEditor = $set;
     }
+
+    /////////////////////////////
+    // Javascript state export //
+    /////////////////////////////
+
+    /**
+     * Returns javascript "mycelium.state" object
+     * @return array
+     */
+    public function exportState()
+    {
+        return [
+            "editing" => $this->editing(),
+            "editor" => $this->editor()
+        ];
+    }
 }

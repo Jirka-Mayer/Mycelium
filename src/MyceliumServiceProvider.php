@@ -20,7 +20,7 @@ class MyceliumServiceProvider extends ServiceProvider
         
         $this->loadViewsFrom(__DIR__ . "/../assets/views", "mycelium");
 
-        if (config("mycelium.auth.routes.register", false))
+        if (config("mycelium.auth.enabled", false))
         {
             $this->loadRoutesFrom(
                 __DIR__ . "/../assets/routes/authentication.php"

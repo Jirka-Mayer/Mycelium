@@ -29,9 +29,10 @@
         href="{{ asset("css/vendor/mycelium/mycelium.css") }}"
     >
 
-    {{-- set mycelium state --}}
+    {{-- mycelium state and config --}}
     <script type="text/javascript">
-        window.mycelium.state.editing = {!! json_encode($mycelium->editing()) !!}
+        window.mycelium.state = {!! json_encode($mycelium->exportState()) !!}
+        window.mycelium.config = {!! json_encode(config("mycelium")) !!}
     </script>
 
     {{-- if the user is in editing mode --}}
@@ -58,7 +59,10 @@
 
     <!-- create UI -->
     <script type="text/javascript">
-        window.mycelium.taskbar = new window.mycelium.class.ui.Taskbar(document)
+        window.mycelium.toolbar = new window.mycelium.class.ui.Toolbar(
+            window.document,
+            window.mycelium
+        )
     </script>
 
 @endif
