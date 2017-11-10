@@ -18,25 +18,9 @@ class Toolbar
      */
     $createDOM(document)
     {
-        // toolbar markup
-        const html = `
-            <div class="mc-toolbar__panel">
-                <button class="mc-toolbar__button mc-toggle-edit">Edit</button>
-                <button class="mc-toolbar__button">Save</button>
-            </div>
-            <div class="mc-toolbar__panel">
-                <button class="mc-toolbar__button mc-bold">B</button>
-                <button class="mc-toolbar__button mc-h1">H1</button>
-                <button class="mc-toolbar__button mc-h2">H2</button>
-            </div>
-            <div class="mc-toolbar__panel">
-                <button class="mc-toolbar__button mc-logout">Logout</button>
-            </div>
-        `
-
         // create toolbar element
         let element = document.createElement("div")
-        element.innerHTML = html
+        element.innerHTML = require("./Toolbar.html")
         element.className = "mc-toolbar"
 
         // create spacer

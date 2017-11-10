@@ -25,5 +25,7 @@
         style="white-space: pre-wrap; display: inline-block;"
     >{{ $shroom->data("master")->get($key, $default) }}</span>
 @else
-    {{ $shroom->data("public")->get($key, $default) }}
+    <span
+        style="white-space: pre-wrap; display: inline-block;"
+    >{{ $shroom->data("public")->get($key, $default) }}</span>
 @endif

@@ -2178,6 +2178,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var Quill = __webpack_require__(46);
 __webpack_require__(44);
+__webpack_require__(51);
 __webpack_require__(49);
 var EventBus = __webpack_require__(48);
 
@@ -2210,7 +2211,9 @@ var RichText = function () {
 
         this.defaultValue = this.$el.getAttribute("mycelium-default");
 
-        this.$el.widgetInstance = this;
+        try {
+            this.defaultValue = JSON.parse(this.defaultValue);
+        } catch (e) {}
 
         this.$createQuillInstance();
 
@@ -2225,6 +2228,8 @@ var RichText = function () {
             this.$loadQuillContents();
 
             this.$quill.on("text-change", this.$onTextChange.bind(this));
+
+            this.$quill.on("selection-change", this.$onSelectionChange.bind(this));
         }
     }, {
         key: "$loadQuillContents",
@@ -2243,6 +2248,12 @@ var RichText = function () {
         key: "$onTextChange",
         value: function $onTextChange(delta, oldContents, source) {
             this.shroom.setData(this.key, this.$quill.getContents());
+        }
+    }, {
+        key: "$onSelectionChange",
+        value: function $onSelectionChange(selection) {
+            // active widget
+            if (selection) RichText.activeWidget = this;else if (RichText.activeWidget === this) RichText.activeWidget = null;
         }
     }, {
         key: "$registerEvents",
@@ -2283,11 +2294,13 @@ var RichText = function () {
 
 RichText.bus = new EventBus();
 
+RichText.activeWidget = null;
+
 module.exports = RichText;
 
 /***/ }),
 /* 32 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
@@ -2316,12 +2329,9 @@ var Toolbar = function () {
     _createClass(Toolbar, [{
         key: "$createDOM",
         value: function $createDOM(document) {
-            // toolbar markup
-            var html = "\n            <div class=\"mc-toolbar__panel\">\n                <button class=\"mc-toolbar__button mc-toggle-edit\">Edit</button>\n                <button class=\"mc-toolbar__button\">Save</button>\n            </div>\n            <div class=\"mc-toolbar__panel\">\n                <button class=\"mc-toolbar__button mc-bold\">B</button>\n                <button class=\"mc-toolbar__button mc-h1\">H1</button>\n                <button class=\"mc-toolbar__button mc-h2\">H2</button>\n            </div>\n            <div class=\"mc-toolbar__panel\">\n                <button class=\"mc-toolbar__button mc-logout\">Logout</button>\n            </div>\n        ";
-
             // create toolbar element
             var element = document.createElement("div");
-            element.innerHTML = html;
+            element.innerHTML = __webpack_require__(50);
             element.className = "mc-toolbar";
 
             // create spacer
@@ -13069,6 +13079,42 @@ HeaderBlot.blotName = "header";
 HeaderBlot.tagName = ["H1", "H2"];
 
 Quill.register(HeaderBlot);
+
+/***/ }),
+/* 50 */
+/***/ (function(module, exports) {
+
+module.exports = "<!--\n    Icons used:\n    http://www.entypo.com/\n-->\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-toggle-edit\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M17.561,2.439c-1.442-1.443-2.525-1.227-2.525-1.227L8.984,7.264L2.21,14.037L1.2,18.799l4.763-1.01\n            l6.774-6.771l6.052-6.052C18.788,4.966,19.005,3.883,17.561,2.439z M5.68,17.217l-1.624,0.35c-0.156-0.293-0.345-0.586-0.69-0.932\n            c-0.346-0.346-0.639-0.533-0.932-0.691l0.35-1.623l0.47-0.469c0,0,0.883,0.018,1.881,1.016c0.997,0.996,1.016,1.881,1.016,1.881\n            L5.68,17.217z\"/>\n        </svg>\n    </button>\n    <button class=\"mc-toolbar__button\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M15.173,2H4C2.899,2,2,2.9,2,4v12c0,1.1,0.899,2,2,2h12c1.101,0,2-0.9,2-2V5.127L15.173,2z M14,8\n            c0,0.549-0.45,1-1,1H7C6.45,9,6,8.549,6,8V3h8V8z M13,4h-2v4h2V4z\"/>\n        </svg>\n    </button>\n</div>\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-bold\">B</button>\n    <button class=\"mc-toolbar__button mc-h1\">H1</button>\n    <button class=\"mc-toolbar__button mc-h2\">H2</button>\n</div>\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-logout\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M19,10l-6-5v3H6v4h7v3L19,10z M3,3h8V1H3C1.9,1,1,1.9,1,3v14c0,1.1,0.9,2,2,2h8v-2H3V3z\"/>\n        </svg>\n    </button>\n</div>";
+
+/***/ }),
+/* 51 */
+/***/ (function(module, exports, __webpack_require__) {
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Quill = __webpack_require__(46);
+var Inline = Quill.import("blots/inline");
+
+var ItalicBlot = function (_Inline) {
+  _inherits(ItalicBlot, _Inline);
+
+  function ItalicBlot() {
+    _classCallCheck(this, ItalicBlot);
+
+    return _possibleConstructorReturn(this, (ItalicBlot.__proto__ || Object.getPrototypeOf(ItalicBlot)).apply(this, arguments));
+  }
+
+  return ItalicBlot;
+}(Inline);
+
+ItalicBlot.blotName = "italic";
+ItalicBlot.tagName = "em";
+
+Quill.register(ItalicBlot);
 
 /***/ })
 /******/ ]);

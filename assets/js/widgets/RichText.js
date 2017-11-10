@@ -1,5 +1,6 @@
 const Quill = require("./RichText/quill.js")
 require("./RichText/BoldBlot.js")
+require("./RichText/ItalicBlot.js")
 require("./RichText/HeaderBlot.js")
 const EventBus = require("../EventBus.js")
 
@@ -36,8 +37,12 @@ class RichText
 
         this.defaultValue = this.$el.getAttribute("mycelium-default")
 
-        this.$el.widgetInstance = this
-        
+        try
+        {
+            this.defaultValue = JSON.parse(this.defaultValue)
+        }
+        catch (e) {}
+
         this.$createQuillInstance()
 
         this.$registerEvents()
@@ -51,6 +56,10 @@ class RichText
 
         this.$quill.on("text-change",
             this.$onTextChange.bind(this)
+        )
+
+        this.$quill.on("selection-change",
+            this.$onSelectionChange.bind(this)
         )
     }
 
@@ -84,6 +93,15 @@ class RichText
             this.key,
             this.$quill.getContents()
         )
+    }
+
+    $onSelectionChange(selection)
+    {
+        // active widget
+        if (selection)
+            RichText.activeWidget = this
+        else if (RichText.activeWidget === this)
+            RichText.activeWidget = null
     }
 
     $registerEvents()
@@ -127,5 +145,7 @@ class RichText
 }
 
 RichText.bus = new EventBus()
+
+RichText.activeWidget = null
 
 module.exports = RichText

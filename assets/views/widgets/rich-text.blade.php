@@ -35,11 +35,11 @@
         class="{{ $class }}"
     >
         {{-- print rendered content before quill loads --}}
-        {{--{!!
+        {!!
             $renderer->render(
-                $shroom->data("master")->get($key, $default)
+                $shroom->data("public")->get($key, $default)
             )
-        !!}--}}
+        !!}
     </div>
 @else
     {!!

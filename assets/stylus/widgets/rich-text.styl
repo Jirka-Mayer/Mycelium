@@ -1,0 +1,22 @@
+[mycelium-widget="rich-text"]
+
+    .ql-editor
+        outline: 0px solid rgba(black, 0.2)
+        outline-offset: 0.2em
+        
+        &:focus, &:hover
+            outline-width: 2px
+            
+        *::selection
+            background: rgba(black, 0.2)
+
+    .ql-clipboard
+        left: -100000px
+        height: 1px
+        overflow-y: hidden
+        position: absolute
+        top: 50%
+
+        p
+            margin: 0
+            padding: 0
