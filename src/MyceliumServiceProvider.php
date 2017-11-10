@@ -7,7 +7,7 @@ use Illuminate\Support\ServiceProvider;
 
 use Mycelium\Services\Mycelium;
 use Mycelium\Services\RouteGenerator;
-use Mycelium\Services\RichTextRenderer;
+use Mycelium\Services\DeltaRenderer;
 use Mycelium\Shroom;
 
 class MyceliumServiceProvider extends ServiceProvider
@@ -58,8 +58,8 @@ class MyceliumServiceProvider extends ServiceProvider
         );
         
         $this->app->singleton(
-            "mycelium.richTextRenderer",
-            RichTextRenderer::class
+            "mycelium.deltaRenderer",
+            DeltaRenderer::class
         );
 
         $this->app->singleton("mycelium", function () {

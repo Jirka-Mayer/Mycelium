@@ -3,7 +3,7 @@ class Toolbar
     constructor(document, mycelium)
     {
         // reference to the mycelium namespace
-        this.mycelium = mycelium
+        this.$mycelium = mycelium
 
         /**
          * References to elements
@@ -25,8 +25,9 @@ class Toolbar
                 <button class="mc-toolbar__button">Save</button>
             </div>
             <div class="mc-toolbar__panel">
-                <button class="mc-toolbar__button">B</button>
-                <button class="mc-toolbar__button">I</button>
+                <button class="mc-toolbar__button mc-bold">B</button>
+                <button class="mc-toolbar__button mc-h1">H1</button>
+                <button class="mc-toolbar__button mc-h2">H2</button>
             </div>
             <div class="mc-toolbar__panel">
                 <button class="mc-toolbar__button mc-logout">Logout</button>
@@ -52,6 +53,9 @@ class Toolbar
         // get element references
         this.$refs.logout = this.$element.querySelector(".mc-logout")
         this.$refs.toggleEdit = this.$element.querySelector(".mc-toggle-edit")
+        this.$refs.bold = this.$element.querySelector(".mc-bold")
+        this.$refs.h1 = this.$element.querySelector(".mc-h1")
+        this.$refs.h2 = this.$element.querySelector(".mc-h2")
 
         // register event listeners
         this.$refs.logout.addEventListener(
@@ -59,6 +63,15 @@ class Toolbar
         )
         this.$refs.toggleEdit.addEventListener(
             "click", this.$onToggleEditClick.bind(this)
+        )
+        this.$refs.bold.addEventListener(
+            "click", this.$onBoldClick.bind(this)
+        )
+        this.$refs.h1.addEventListener(
+            "click", this.$onH1Click.bind(this)
+        )
+        this.$refs.h2.addEventListener(
+            "click", this.$onH2Click.bind(this)
         )
 
         this.$initializeElements()
@@ -77,7 +90,7 @@ class Toolbar
      */
     $initializeLogoutButton()
     {
-        if (!this.mycelium.config.auth.enabled)
+        if (!this.$mycelium.config.auth.enabled)
             this.$refs.logout.remove()
     }
 
@@ -87,15 +100,30 @@ class Toolbar
 
     $onLogoutClick()
     {
-        window.location.href = this.mycelium.config.auth.routes.logout
+        window.location.href = this.$mycelium.config.auth.routes.logout
     }
 
     $onToggleEditClick()
     {
-        if (this.mycelium.state.editing)
+        if (this.$mycelium.state.editing)
             window.location.href += "/.."
         else
             window.location.href += "edit"
+    }
+
+    $onBoldClick()
+    {
+        this.$mycelium.class.widgets.RichText.bus.fire("apply-bold")
+    }
+
+    $onH1Click()
+    {
+        this.$mycelium.class.widgets.RichText.bus.fire("apply-header", 1)
+    }
+
+    $onH2Click()
+    {
+        this.$mycelium.class.widgets.RichText.bus.fire("apply-header", 2)
     }
 }
 

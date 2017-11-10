@@ -1,6 +1,11 @@
+const Quill = require("./RichText/quill.js")
+require("./RichText/BoldBlot.js")
+require("./RichText/HeaderBlot.js")
+const EventBus = require("../EventBus.js")
+
 class RichText
 {
-    static createInstances(window, document, shroom)
+    static createInstances(window, document, mycelium, shroom)
     {
         let elements = document.querySelectorAll(
             '[mycelium-widget="rich-text"]'
@@ -9,14 +14,15 @@ class RichText
 
         for (let i = 0; i < elements.length; i++)
             instances.push(new RichText(
-                window, document, elements[i], shroom
+                window, document, elements[i], mycelium, shroom
             ))
 
         return instances
     }
 
-    constructor(window, document, element, shroom)
+    constructor(window, document, element, mycelium, shroom)
     {
+        this.$mycelium = mycelium
         this.$window = window
         this.$document = document
         
@@ -30,29 +36,16 @@ class RichText
 
         this.defaultValue = this.$el.getAttribute("mycelium-default")
 
+        this.$el.widgetInstance = this
+        
         this.$createQuillInstance()
+
+        this.$registerEvents()
     }
 
     $createQuillInstance()
     {
-        this.$quill = new Quill(this.$el, {
-            theme: "snow",
-            modules: {
-                toolbar: [
-                    ["bold", "italic", "underline", "strike"],
-                    ["blockquote"],
-
-                    [{"list": "ordered"}, {"list": "bullet"}],
-                    [{"indent": "-1"}, {"indent": "+1"}],
-
-                    [{"header": [1, 2, 3, 4, 5, 6, false]}],
-                    [{"align": []}],
-
-                    ["link", "image"],
-                    ["clean"]
-                ]
-            }
-        })
+        this.$quill = new Quill(this.$el)
 
         this.$loadQuillContents()
 
@@ -91,13 +84,48 @@ class RichText
             this.key,
             this.$quill.getContents()
         )
+    }
 
-        // debug, save rendered HTML
-        this.shroom.setData(
-            this.key + "@rendered",
-            this.$quill.root.innerHTML
+    $registerEvents()
+    {
+        this.$bindListener("apply-bold", this.$onApplyBold)
+        this.$bindListener("apply-header", this.$onApplyHeader)
+    }
+
+    $bindListener(event, listener)
+    {
+        RichText.bus.on(event, function (a) {
+            if (!this.$quill.getSelection())
+                return
+
+            listener.apply(this, arguments)
+        }.bind(this))
+    }
+
+    /////////////////////
+    // Event listeners //
+    /////////////////////
+
+    $onApplyBold()
+    {
+        this.$quill.format(
+            "bold",
+            !this.$quill.getFormat().bold
+        )
+    }
+
+    $onApplyHeader(level)
+    {
+        if (level == this.$quill.getFormat().header)
+            level = false
+
+        this.$quill.format(
+            "header",
+            level
         )
     }
 }
+
+RichText.bus = new EventBus()
 
 module.exports = RichText

@@ -1,0 +1,1 @@
+module.exports = require("quill/dist/quill.core.js")

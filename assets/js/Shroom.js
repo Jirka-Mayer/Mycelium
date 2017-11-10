@@ -18,8 +18,11 @@ class Shroom
      * @param {Document} document DOM document object
      * @param {Object} serializedData JSON-serialized php Shroom class
      */
-    constructor(window, document, serializedData)
+    constructor(window, document, mycelium, serializedData)
     {
+        // mycelium namespace reference
+        this.$mycelium = mycelium
+
         /**
          * DOM access
          */
@@ -89,7 +92,7 @@ class Shroom
 
         this.$widgets = this.$widgets.concat(
             RichTextWidget.createInstances(
-                this.$window, this.$document, this
+                this.$window, this.$document, this.$mycelium, this
             )
         )
     }

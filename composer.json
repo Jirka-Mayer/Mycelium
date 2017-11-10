@@ -15,7 +15,8 @@
         "illuminate/database": "^5.3",
         "illuminate/filesystem": "^5.4",
         "illuminate/http": "^5.4",
-        "illuminate/auth": "^5.4"
+        "illuminate/auth": "^5.4",
+        "deanblackborough/php-quill-renderer": "^1.01"
     },
     "require-dev": {
         "mockery/mockery": "0.9.*",

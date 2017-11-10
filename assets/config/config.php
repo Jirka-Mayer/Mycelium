@@ -10,8 +10,8 @@ return [
         "enabled" => false,
 
         "routes" => [
-            "login" => url("login"),
-            "logout" => url("logout")
+            "login" => "/login",
+            "logout" => "/logout"
         ]
     ]
 ];

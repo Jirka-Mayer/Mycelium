@@ -23,6 +23,11 @@ if (!window.mycelium.class)
 
 window.mycelium.class.Shroom = require("./Shroom.js")
 
+if (!window.mycelium.class.widgets)
+    window.mycelium.class.widgets = {}
+
+window.mycelium.class.widgets.RichText = require("./widgets/RichText.js")
+
 if (!window.mycelium.class.ui)
     window.mycelium.class.ui = {}
 
