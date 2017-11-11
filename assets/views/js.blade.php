@@ -45,6 +45,10 @@
 
     <!-- create UI -->
     <script type="text/javascript">
+        window.mycelium.windowManager = new window.mycelium.class.ui.WindowManager(
+            window.document
+        )
+
         window.mycelium.toolbar = new window.mycelium.class.ui.Toolbar(
             window.document,
             window.mycelium

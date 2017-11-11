@@ -32,3 +32,4 @@ if (!window.mycelium.class.ui)
     window.mycelium.class.ui = {}
 
 window.mycelium.class.ui.Toolbar = require("./ui/Toolbar.js")
+window.mycelium.class.ui.WindowManager = require("./ui/WindowManager.js")

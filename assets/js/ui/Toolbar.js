@@ -1,3 +1,5 @@
+const RichTextWidgetToolbar = require("./windows/RichTextWidgetToolbar.js")
+
 class Toolbar
 {
     constructor(document, mycelium)
@@ -11,6 +13,11 @@ class Toolbar
         this.$refs = {}
 
         this.$createDOM(document)
+
+        // create rich-text widget toolbar
+        this.$mycelium.windowManager.registerWindow(
+            new RichTextWidgetToolbar(document, mycelium, {})
+        )
     }
 
     /**
@@ -37,7 +44,6 @@ class Toolbar
         // get element references
         this.$refs.logout = this.$element.querySelector(".mc-logout")
         this.$refs.toggleEdit = this.$element.querySelector(".mc-toggle-edit")
-        this.$refs.bold = this.$element.querySelector(".mc-bold")
         this.$refs.h1 = this.$element.querySelector(".mc-h1")
         this.$refs.h2 = this.$element.querySelector(".mc-h2")
 
@@ -47,9 +53,6 @@ class Toolbar
         )
         this.$refs.toggleEdit.addEventListener(
             "click", this.$onToggleEditClick.bind(this)
-        )
-        this.$refs.bold.addEventListener(
-            "click", this.$onBoldClick.bind(this)
         )
         this.$refs.h1.addEventListener(
             "click", this.$onH1Click.bind(this)
@@ -93,11 +96,6 @@ class Toolbar
             window.location.href += "/.."
         else
             window.location.href += "edit"
-    }
-
-    $onBoldClick()
-    {
-        this.$mycelium.class.widgets.RichText.bus.fire("apply-bold")
     }
 
     $onH1Click()

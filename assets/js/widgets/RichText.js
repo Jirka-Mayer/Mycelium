@@ -107,6 +107,7 @@ class RichText
     $registerEvents()
     {
         this.$bindListener("apply-bold", this.$onApplyBold)
+        this.$bindListener("apply-italic", this.$onApplyItalic)
         this.$bindListener("apply-header", this.$onApplyHeader)
     }
 
@@ -129,6 +130,14 @@ class RichText
         this.$quill.format(
             "bold",
             !this.$quill.getFormat().bold
+        )
+    }
+
+    $onApplyItalic()
+    {
+        this.$quill.format(
+            "italic",
+            !this.$quill.getFormat().italic
         )
     }
 

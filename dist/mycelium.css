@@ -1,3 +1,58 @@
+.mc-picker {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: stretch;
+      -ms-flex-align: stretch;
+          align-items: stretch;
+  margin: 0;
+  font-size: 16px;
+  font-family: "Helvetica", sans-serif;
+  cursor: pointer;
+}
+.mc-picker:hover {
+  background: #ccc;
+}
+.mc-picker .mc-picker__stroke {
+  fill: none;
+  stroke: #444;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+.mc-picker .mc-picker__label {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  padding-left: 5px;
+}
+.mc-picker .mc-picker__label:before {
+  content: attr(data-label);
+  display: block;
+}
+.mc-picker .mc-picker__label svg {
+  display: block;
+  width: 25px;
+  height: 25px;
+}
+.mc-picker .mc-picker__options {
+  display: block;
+  position: absolute;
+  top: 30px;
+  background: #fff;
+  -webkit-box-shadow: 0 0 5px 0 rgba(0,0,0,0.4);
+          box-shadow: 0 0 5px 0 rgba(0,0,0,0.4);
+}
+.mc-picker .mc-picker__options div {
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+.mc-picker .mc-picker__options div:hover {
+  background: #ddd;
+}
 [mycelium-widget="text"] {
   min-width: 3em;
   outline: 0px solid rgba(0,0,0,0.2);
@@ -38,6 +93,29 @@
   margin: 0;
   padding: 0;
 }
+.mc-window-manager {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 0;
+  width: 0;
+}
+.mc-window {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  -webkit-box-shadow: 0 0 5px 0 rgba(0,0,0,0.4);
+          box-shadow: 0 0 5px 0 rgba(0,0,0,0.4);
+}
+.mc-window__handle {
+  height: 20px;
+  background: #444;
+}
+.mc-window__content {
+  position: relative;
+  background: #fff;
+}
 .mc-toolbar {
   display: -webkit-box;
   display: -ms-flexbox;
@@ -65,4 +143,35 @@
 }
 .mc-toolbar__button:hover {
   background: #ddd;
+}
+.mc-rtwt {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  background: #eee;
+}
+.mc-rtwt .mc-rtwt-stroke {
+  fill: none;
+  stroke: #444;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+.mc-rtwt .mc-rtwt__button {
+  margin: 0;
+  padding: 5px;
+  width: 35px;
+  height: 35px;
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+.mc-rtwt .mc-rtwt__button:hover {
+  background: #ccc;
+}
+.mc-rtwt .mc-rtwt__line {
+  margin: 5px 10px;
+  border: none;
+  border-left: 1.5px solid #555;
+  border-radius: 1px;
 }
