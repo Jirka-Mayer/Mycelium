@@ -50,6 +50,7 @@
         )
 
         window.mycelium.toolbar = new window.mycelium.class.ui.Toolbar(
+            window,
             window.document,
             window.mycelium
         )

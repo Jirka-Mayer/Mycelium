@@ -1,7 +1,23 @@
+const EventBus = require("../../EventBus.js")
+
+/*
+    Events:
+    "pick" - when the pick() method is succesfully called
+    "user-pick" - when the user picks an item by clicking an option
+ */
+
 class Picker
 {
-    constructor(element)
+    constructor(document, element, options)
     {
+        /**
+         * Document reference
+         */
+        this.$document = document
+
+        /**
+         * Root element
+         */
         this.$element = element
 
         /**
@@ -9,7 +25,28 @@ class Picker
          */
         this.expanded = false
 
+        /**
+         * Options to pick from
+         *
+         * An array of objects: { key: string, label: string }
+         */
+        this.options = options
+
+        /**
+         * The picked option
+         */
+        this.pickedOption = null
+
+        /**
+         * Event bus
+         */
+        this.$bus = new EventBus();
+
+        // create all necessary elements
         this.$createDOM()
+
+        // pick the first item in the list
+        this.pick(this.options[0].key)
 
         // bind event handlers
         this.$label.addEventListener(
@@ -23,6 +60,9 @@ class Picker
         )
     }
 
+    /**
+     * Creates all necessary html elements
+     */
     $createDOM()
     {
         this.$element.className += "mc-picker"
@@ -30,6 +70,14 @@ class Picker
         
         this.$label = this.$element.querySelector(".mc-picker__label")
         this.$options = this.$element.querySelector(".mc-picker__options")
+
+        for (let i = 0; i < this.options.length; i++)
+        {
+            let option = this.$document.createElement("div")
+            option.innerHTML = this.options[i].label
+            option.setAttribute("mc-picker-key", this.options[i].key)
+            this.$options.appendChild(option)
+        }
     }
 
     /**
@@ -53,16 +101,34 @@ class Picker
     /**
      * Pick an option
      */
-    pick(option)
+    pick(optionKey)
     {
+        for (let i = 0; i < this.options.length; i++)
+        {
+            if (this.options[i].key == optionKey)
+            {
+                this.pickedOption = this.options[i]
+                this.$label.setAttribute("data-label", this.options[i].label)
 
+                this.$bus.fire("pick", this.options[i].key)
+                break
+            }
+        }
+    }
+
+    /**
+     * Register an event listener
+     */
+    on(event, listener)
+    {
+        this.$bus.on(event, listener)
     }
 
     ////////////////////
     // Event handlers //
     ////////////////////
 
-    $onLabelClick()
+    $onLabelClick(e)
     {
         if (this.expanded)
             this.collapse()
@@ -77,9 +143,15 @@ class Picker
 
     $onOptionsClick(e)
     {
-        console.log(e.target)
+        let key = e.target.getAttribute("mc-picker-key")
 
+        if (key === null)
+            return
+
+        this.pick(key)
         this.collapse()
+
+        this.$bus.fire("user-pick", key)
     }
 }
 

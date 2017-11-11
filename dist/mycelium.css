@@ -32,6 +32,8 @@
 .mc-picker .mc-picker__label:before {
   content: attr(data-label);
   display: block;
+  min-width: 50px;
+  white-space: nowrap;
 }
 .mc-picker .mc-picker__label svg {
   display: block;
@@ -103,14 +105,60 @@
 }
 .mc-window {
   position: absolute;
-  top: 20px;
-  left: 20px;
+  top: 0;
+  left: 0;
   -webkit-box-shadow: 0 0 5px 0 rgba(0,0,0,0.4);
           box-shadow: 0 0 5px 0 rgba(0,0,0,0.4);
+  -webkit-transform: translateY(0);
+          transform: translateY(0);
+  opacity: 1;
+  -webkit-transition: opacity 200ms, -webkit-transform 200ms;
+  transition: opacity 200ms, -webkit-transform 200ms;
+  transition: transform 200ms, opacity 200ms;
+  transition: transform 200ms, opacity 200ms, -webkit-transform 200ms;
+  -webkit-transition-timing-function: ease-in;
+          transition-timing-function: ease-in;
 }
-.mc-window__handle {
+.mc-window.mc-window--minimized {
+  -webkit-transform: translateY(20px);
+          transform: translateY(20px);
+  opacity: 0;
+}
+.mc-window--transparent {
+  opacity: 0.3;
+}
+.mc-window--transparent:hover {
+  opacity: 1;
+}
+.mc-window__bar {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
   height: 20px;
   background: #444;
+}
+.mc-window__bar .mc-window__handle {
+  -webkit-box-flex: 1;
+      -ms-flex: 1;
+          flex: 1;
+  color: rgba(255,255,255,0.8);
+  font-size: 14px;
+  font-family: "Helvetica", sans-serif;
+}
+.mc-window__bar .mc-window__button {
+  -webkit-box-sizing: border-box;
+          box-sizing: border-box;
+  height: 20px;
+  width: 20px;
+  padding: 2px;
+  background: none;
+  border: none;
+  outline: none;
+  opacity: 0.4;
+  cursor: pointer;
+}
+.mc-window__bar .mc-window__button:hover {
+  opacity: 0.8;
 }
 .mc-window__content {
   position: relative;
@@ -120,6 +168,9 @@
   display: -webkit-box;
   display: -ms-flexbox;
   display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
   position: fixed;
   height: 50px;
   width: 100%;
@@ -129,19 +180,31 @@
   -webkit-box-shadow: 0 0 5px 0 rgba(0,0,0,0.2);
           box-shadow: 0 0 5px 0 rgba(0,0,0,0.2);
 }
-.mc-toolbar__panel {
-  border-right: 1px solid rgba(0,0,0,0.3);
+.mc-toolbar__text {
+  padding: 0 10px;
+  color: rgba(0,0,0,0.8);
+  font-size: 15px;
+  font-family: "Helvetica", sans-serif;
+}
+.mc-toolbar__line {
+  margin: 0;
+  height: 100%;
+  border: none;
+  border-left: 1px solid rgba(0,0,0,0.3);
 }
 .mc-toolbar__button {
   display: inline-block;
   width: 50px;
   height: 50px;
   margin: 0;
+  padding: 10px;
   border: none;
   background: none;
   cursor: pointer;
+  opacity: 0.9;
 }
 .mc-toolbar__button:hover {
+  opacity: 1;
   background: #ddd;
 }
 .mc-rtwt {
@@ -168,6 +231,9 @@
 }
 .mc-rtwt .mc-rtwt__button:hover {
   background: #ccc;
+}
+.mc-rtwt .mc-rtwt__button--active {
+  background: #ddd;
 }
 .mc-rtwt .mc-rtwt__line {
   margin: 5px 10px;

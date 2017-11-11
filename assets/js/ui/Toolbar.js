@@ -1,8 +1,9 @@
 const RichTextWidgetToolbar = require("./windows/RichTextWidgetToolbar.js")
+const getRefs = require("../utils/getRefs.js")
 
 class Toolbar
 {
-    constructor(document, mycelium)
+    constructor(window, document, mycelium)
     {
         // reference to the mycelium namespace
         this.$mycelium = mycelium
@@ -14,10 +15,14 @@ class Toolbar
 
         this.$createDOM(document)
 
-        // create rich-text widget toolbar
-        this.$mycelium.windowManager.registerWindow(
-            new RichTextWidgetToolbar(document, mycelium, {})
-        )
+        // create rich-text widget toolbar window
+        if (this.$mycelium.state.editing)
+        {
+            this.richTextToolbar = new RichTextWidgetToolbar(window, document, {})
+            this.$mycelium.windowManager.registerWindow(
+                this.richTextToolbar
+            )
+        }
     }
 
     /**
@@ -40,12 +45,7 @@ class Toolbar
 
         this.$element = element
         this.$spacer = spacer
-
-        // get element references
-        this.$refs.logout = this.$element.querySelector(".mc-logout")
-        this.$refs.toggleEdit = this.$element.querySelector(".mc-toggle-edit")
-        this.$refs.h1 = this.$element.querySelector(".mc-h1")
-        this.$refs.h2 = this.$element.querySelector(".mc-h2")
+        this.$refs = getRefs(this.$element)
 
         // register event listeners
         this.$refs.logout.addEventListener(
@@ -54,12 +54,19 @@ class Toolbar
         this.$refs.toggleEdit.addEventListener(
             "click", this.$onToggleEditClick.bind(this)
         )
-        this.$refs.h1.addEventListener(
-            "click", this.$onH1Click.bind(this)
-        )
-        this.$refs.h2.addEventListener(
-            "click", this.$onH2Click.bind(this)
-        )
+
+        if (this.$mycelium.state.editing)
+        {
+            this.$refs.richTextToolbar.addEventListener(
+                "click", () => {
+                    this.richTextToolbar.maximize()
+                }
+            )
+        }
+        else
+        {
+            this.$refs.richTextToolbar.remove()
+        }
 
         this.$initializeElements()
     }
@@ -96,16 +103,6 @@ class Toolbar
             window.location.href += "/.."
         else
             window.location.href += "edit"
-    }
-
-    $onH1Click()
-    {
-        this.$mycelium.class.widgets.RichText.bus.fire("apply-header", 1)
-    }
-
-    $onH2Click()
-    {
-        this.$mycelium.class.widgets.RichText.bus.fire("apply-header", 2)
     }
 }
 

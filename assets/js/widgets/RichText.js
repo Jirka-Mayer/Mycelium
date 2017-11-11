@@ -23,19 +23,33 @@ class RichText
 
     constructor(window, document, element, mycelium, shroom)
     {
+        // useful references
         this.$mycelium = mycelium
         this.$window = window
         this.$document = document
         
-        this.$el = element
+        /**
+         * Root html element
+         */
+        this.$element = element
 
+        /**
+         * Reference to the shroom
+         */
         this.shroom = shroom
-        this.key = this.$el.getAttribute("mycelium-key")
+
+        /**
+         * Shroom data key
+         */
+        this.key = this.$element.getAttribute("mycelium-key")
         
         if (!this.key)
             throw new Error("RichText widget missing 'key' attribute.")
 
-        this.defaultValue = this.$el.getAttribute("mycelium-default")
+        /**
+         * Default widget value
+         */
+        this.defaultValue = this.$element.getAttribute("mycelium-default")
 
         try
         {
@@ -50,7 +64,7 @@ class RichText
 
     $createQuillInstance()
     {
-        this.$quill = new Quill(this.$el)
+        this.$quill = new Quill(this.$element)
 
         this.$loadQuillContents()
 
@@ -95,13 +109,28 @@ class RichText
         )
     }
 
+    /**
+     * When quill selection changes
+     */
     $onSelectionChange(selection)
     {
+        // last active widget
+        if (selection === null)
+            RichText.lastFocusedWidget = this
+
         // active widget
         if (selection)
+        {
             RichText.activeWidget = this
-        else if (RichText.activeWidget === this)
+            RichText.bus.fire(
+                "selection-change", selection, this.$quill.getFormat()
+            )
+        }
+        else if (selection === null && RichText.activeWidget === this)
+        {
             RichText.activeWidget = null
+            RichText.bus.fire("selection-change", null, {})
+        }
     }
 
     $registerEvents()
@@ -111,6 +140,9 @@ class RichText
         this.$bindListener("apply-header", this.$onApplyHeader)
     }
 
+    /**
+     * Bind a rich-text bus listener
+     */
     $bindListener(event, listener)
     {
         RichText.bus.on(event, function (a) {
@@ -118,6 +150,13 @@ class RichText
                 return
 
             listener.apply(this, arguments)
+
+            // selection properties have changed
+            RichText.bus.fire(
+                "selection-change",
+                this.$quill.getSelection(),
+                this.$quill.getFormat()
+            )
         }.bind(this))
     }
 
@@ -153,8 +192,22 @@ class RichText
     }
 }
 
+/**
+ * Event bus for communication between widgets and the toolbar
+ */
 RichText.bus = new EventBus()
 
+/**
+ * Stores the currently active widget
+ */
 RichText.activeWidget = null
 
+/**
+ * The widget that has been the last one to be blurred (/focused)
+ *
+ * For regaining focus after UI interactions
+ */
+RichText.lastFocusedWidget = null
+
+// export
 module.exports = RichText

@@ -1,5 +1,6 @@
 .mc-toolbar
     display: flex
+    align-items: center
     position: fixed
     height: 50px
     width: 100%
@@ -8,9 +9,23 @@
     
     background: white
     box-shadow: 0 0 5px 0 rgba(black, 0.2)
-    
+
 .mc-toolbar__panel
-    border-right: 1px solid rgba(black, 0.3)
+    // nothing
+
+.mc-toolbar__text
+    padding: 0 10px
+    
+    color: rgba(black, 0.8)
+    font-size: 15px
+    font-family: "Helvetica", sans-serif
+    
+.mc-toolbar__line
+    margin: 0
+    height: 100%
+
+    border: none
+    border-left: 1px solid rgba(black, 0.3)
 
 .mc-toolbar__button
     $size = 50px
@@ -19,10 +34,14 @@
     width: $size
     height: $size
     margin: 0
+    padding: 10px
 
     border: none
     background: none
     cursor: pointer
     
+    opacity: 0.9
+    
     &:hover
+        opacity: 1
         background: #ddd

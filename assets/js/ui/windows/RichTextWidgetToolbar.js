@@ -1,20 +1,24 @@
 const Window = require("../Window.js")
 const getRefs = require("../../utils/getRefs.js")
+const cssClass = require("../../utils/cssClass.js")
 const Picker = require("../components/Picker.js")
+const RichTextWidget = require("../../widgets/RichText.js")
 
 class RichTextWidgetToolbar extends Window
 {
-    constructor(document, mycelium, options)
+    constructor(window, document, options)
     {
-        super(document, options)
-
-        this.$mycelium = mycelium
+        super(window, document, options)
 
         this.$content.innerHTML = require("./RichTextWidgetToolbar.html")
 
         this.$refs = getRefs(this.$content)
 
-        this.headerPicker = new Picker(this.$refs.header)
+        this.headerPicker = new Picker(document, this.$refs.header, [
+            { key: "p", label: "Normal" },
+            { key: "h1", label: "Heading 1" },
+            { key: "h2", label: "Heading 2" }
+        ])
 
         this.$registerEventListeners()
     }
@@ -23,20 +27,60 @@ class RichTextWidgetToolbar extends Window
     {
         this.$refs.bold.addEventListener("click", this.$onBoldClick.bind(this))
         this.$refs.italic.addEventListener("click", this.$onItalicClick.bind(this))
+        this.headerPicker.on("user-pick", this.$onHeaderPick.bind(this))
+
+        RichTextWidget.bus.on("selection-change", this.$onSelectionChange.bind(this))
     }
 
     /////////////////////
     // Event listeners //
     /////////////////////
 
+    /**
+     * When rich-text widget selection changes (any of them)
+     */
+    $onSelectionChange(selection, format)
+    {
+        // dont' do anything on deselect
+        if (selection === null)
+            return
+
+        // bold
+        cssClass(this.$refs.bold, "mc-rtwt__button--active", !!format.bold)
+
+        // italic
+        cssClass(this.$refs.italic, "mc-rtwt__button--active", !!format.italic)
+
+        // header
+        if (format.header === undefined)
+            this.headerPicker.pick("p")
+        else
+            this.headerPicker.pick("h" + format.header)
+    }
+
     $onBoldClick()
     {
-        this.$mycelium.class.widgets.RichText.bus.fire("apply-bold")
+        RichTextWidget.bus.fire("apply-bold")
     }
 
     $onItalicClick()
     {
-        this.$mycelium.class.widgets.RichText.bus.fire("apply-italic")
+        RichTextWidget.bus.fire("apply-italic")
+    }
+
+    $onHeaderPick(key)
+    {
+        if (key == "p")
+            key = false
+        else
+            key = parseInt(key[1])
+
+        // refocus the widget
+        // (focus has been lost by clicking the picker label)
+        if (RichTextWidget.lastFocusedWidget)
+            RichTextWidget.lastFocusedWidget.$quill.focus()
+
+        RichTextWidget.bus.fire("apply-header", key)
     }
 }
 

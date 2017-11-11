@@ -8,17 +8,58 @@
     
 .mc-window
     position: absolute
-    top: 20px
-    left: 20px
-
+    top: 0
+    left: 0
+    
     box-shadow: 0 0 5px 0 rgba(black, 0.4)
+    
+    // minimization animation
+    transform: translateY(0)
+    opacity: 1
+    transition: transform 200ms, opacity 200ms
+    transition-timing-function: ease-in
+    
+    &.mc-window--minimized
+        transform: translateY(20px)
+        opacity: 0
+        
+.mc-window--transparent
+    opacity: 0.3
+    
+    &:hover
+        opacity: 1
 
-.mc-window__handle
+.mc-window__bar
+    display: flex
     height: 20px
     
     background: #444
+    
+    .mc-window__handle
+        flex: 1
+        
+        color: rgba(white, 0.8)
+        font-size: 14px
+        font-family: "Helvetica", sans-serif
+        
+    .mc-window__button
+        box-sizing: border-box
+        height: 20px
+        width: 20px
+        padding: 2px
+        
+        background: none
+        border: none
+        outline: none
+        
+        opacity: 0.4
+        
+        cursor: pointer
+        
+        &:hover
+            opacity: 0.8
 
-.mc-window__content    
+.mc-window__content
     position: relative
     
     background: white

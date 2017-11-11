@@ -779,18 +779,32 @@ var RichText = function () {
     function RichText(window, document, element, mycelium, shroom) {
         _classCallCheck(this, RichText);
 
+        // useful references
         this.$mycelium = mycelium;
         this.$window = window;
         this.$document = document;
 
-        this.$el = element;
+        /**
+         * Root html element
+         */
+        this.$element = element;
 
+        /**
+         * Reference to the shroom
+         */
         this.shroom = shroom;
-        this.key = this.$el.getAttribute("mycelium-key");
+
+        /**
+         * Shroom data key
+         */
+        this.key = this.$element.getAttribute("mycelium-key");
 
         if (!this.key) throw new Error("RichText widget missing 'key' attribute.");
 
-        this.defaultValue = this.$el.getAttribute("mycelium-default");
+        /**
+         * Default widget value
+         */
+        this.defaultValue = this.$element.getAttribute("mycelium-default");
 
         try {
             this.defaultValue = JSON.parse(this.defaultValue);
@@ -804,7 +818,7 @@ var RichText = function () {
     _createClass(RichText, [{
         key: "$createQuillInstance",
         value: function $createQuillInstance() {
-            this.$quill = new Quill(this.$el);
+            this.$quill = new Quill(this.$element);
 
             this.$loadQuillContents();
 
@@ -830,11 +844,25 @@ var RichText = function () {
         value: function $onTextChange(delta, oldContents, source) {
             this.shroom.setData(this.key, this.$quill.getContents());
         }
+
+        /**
+         * When quill selection changes
+         */
+
     }, {
         key: "$onSelectionChange",
         value: function $onSelectionChange(selection) {
+            // last active widget
+            if (selection === null) RichText.lastFocusedWidget = this;
+
             // active widget
-            if (selection) RichText.activeWidget = this;else if (RichText.activeWidget === this) RichText.activeWidget = null;
+            if (selection) {
+                RichText.activeWidget = this;
+                RichText.bus.fire("selection-change", selection, this.$quill.getFormat());
+            } else if (selection === null && RichText.activeWidget === this) {
+                RichText.activeWidget = null;
+                RichText.bus.fire("selection-change", null, {});
+            }
         }
     }, {
         key: "$registerEvents",
@@ -843,6 +871,11 @@ var RichText = function () {
             this.$bindListener("apply-italic", this.$onApplyItalic);
             this.$bindListener("apply-header", this.$onApplyHeader);
         }
+
+        /**
+         * Bind a rich-text bus listener
+         */
+
     }, {
         key: "$bindListener",
         value: function $bindListener(event, listener) {
@@ -850,6 +883,9 @@ var RichText = function () {
                 if (!this.$quill.getSelection()) return;
 
                 listener.apply(this, arguments);
+
+                // selection properties have changed
+                RichText.bus.fire("selection-change", this.$quill.getSelection(), this.$quill.getFormat());
             }.bind(this));
         }
 
@@ -879,10 +915,26 @@ var RichText = function () {
     return RichText;
 }();
 
+/**
+ * Event bus for communication between widgets and the toolbar
+ */
+
+
 RichText.bus = new EventBus();
 
+/**
+ * Stores the currently active widget
+ */
 RichText.activeWidget = null;
 
+/**
+ * The widget that has been the last one to be blurred (/focused)
+ *
+ * For regaining focus after UI interactions
+ */
+RichText.lastFocusedWidget = null;
+
+// export
 module.exports = RichText;
 
 /***/ }),
@@ -890,7 +942,7 @@ module.exports = RichText;
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(10);
-module.exports = __webpack_require__(45);
+module.exports = __webpack_require__(53);
 
 
 /***/ }),
@@ -925,7 +977,7 @@ window.mycelium.class.widgets.RichText = __webpack_require__(8);
 if (!window.mycelium.class.ui) window.mycelium.class.ui = {};
 
 window.mycelium.class.ui.Toolbar = __webpack_require__(43);
-window.mycelium.class.ui.WindowManager = __webpack_require__(50);
+window.mycelium.class.ui.WindowManager = __webpack_require__(52);
 
 /***/ }),
 /* 11 */
@@ -12993,10 +13045,11 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var RichTextWidgetToolbar = __webpack_require__(53);
+var RichTextWidgetToolbar = __webpack_require__(44);
+var getRefs = __webpack_require__(47);
 
 var Toolbar = function () {
-    function Toolbar(document, mycelium) {
+    function Toolbar(window, document, mycelium) {
         _classCallCheck(this, Toolbar);
 
         // reference to the mycelium namespace
@@ -13009,8 +13062,11 @@ var Toolbar = function () {
 
         this.$createDOM(document);
 
-        // create rich-text widget toolbar
-        this.$mycelium.windowManager.registerWindow(new RichTextWidgetToolbar(document, mycelium, {}));
+        // create rich-text widget toolbar window
+        if (this.$mycelium.state.editing) {
+            this.richTextToolbar = new RichTextWidgetToolbar(window, document, {});
+            this.$mycelium.windowManager.registerWindow(this.richTextToolbar);
+        }
     }
 
     /**
@@ -13021,9 +13077,11 @@ var Toolbar = function () {
     _createClass(Toolbar, [{
         key: "$createDOM",
         value: function $createDOM(document) {
+            var _this = this;
+
             // create toolbar element
             var element = document.createElement("div");
-            element.innerHTML = __webpack_require__(44);
+            element.innerHTML = __webpack_require__(51);
             element.className = "mc-toolbar";
 
             // create spacer
@@ -13036,18 +13094,19 @@ var Toolbar = function () {
 
             this.$element = element;
             this.$spacer = spacer;
-
-            // get element references
-            this.$refs.logout = this.$element.querySelector(".mc-logout");
-            this.$refs.toggleEdit = this.$element.querySelector(".mc-toggle-edit");
-            this.$refs.h1 = this.$element.querySelector(".mc-h1");
-            this.$refs.h2 = this.$element.querySelector(".mc-h2");
+            this.$refs = getRefs(this.$element);
 
             // register event listeners
             this.$refs.logout.addEventListener("click", this.$onLogoutClick.bind(this));
             this.$refs.toggleEdit.addEventListener("click", this.$onToggleEditClick.bind(this));
-            this.$refs.h1.addEventListener("click", this.$onH1Click.bind(this));
-            this.$refs.h2.addEventListener("click", this.$onH2Click.bind(this));
+
+            if (this.$mycelium.state.editing) {
+                this.$refs.richTextToolbar.addEventListener("click", function () {
+                    _this.richTextToolbar.maximize();
+                });
+            } else {
+                this.$refs.richTextToolbar.remove();
+            }
 
             this.$initializeElements();
         }
@@ -13086,16 +13145,6 @@ var Toolbar = function () {
         value: function $onToggleEditClick() {
             if (this.$mycelium.state.editing) window.location.href += "/..";else window.location.href += "edit";
         }
-    }, {
-        key: "$onH1Click",
-        value: function $onH1Click() {
-            this.$mycelium.class.widgets.RichText.bus.fire("apply-header", 1);
-        }
-    }, {
-        key: "$onH2Click",
-        value: function $onH2Click() {
-            this.$mycelium.class.widgets.RichText.bus.fire("apply-header", 2);
-        }
     }]);
 
     return Toolbar;
@@ -13105,22 +13154,523 @@ module.exports = Toolbar;
 
 /***/ }),
 /* 44 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports = "<!--\n    Icons used:\n    http://www.entypo.com/\n-->\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-toggle-edit\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M17.561,2.439c-1.442-1.443-2.525-1.227-2.525-1.227L8.984,7.264L2.21,14.037L1.2,18.799l4.763-1.01\n            l6.774-6.771l6.052-6.052C18.788,4.966,19.005,3.883,17.561,2.439z M5.68,17.217l-1.624,0.35c-0.156-0.293-0.345-0.586-0.69-0.932\n            c-0.346-0.346-0.639-0.533-0.932-0.691l0.35-1.623l0.47-0.469c0,0,0.883,0.018,1.881,1.016c0.997,0.996,1.016,1.881,1.016,1.881\n            L5.68,17.217z\"/>\n        </svg>\n    </button>\n    <button class=\"mc-toolbar__button\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M15.173,2H4C2.899,2,2,2.9,2,4v12c0,1.1,0.899,2,2,2h12c1.101,0,2-0.9,2-2V5.127L15.173,2z M14,8\n            c0,0.549-0.45,1-1,1H7C6.45,9,6,8.549,6,8V3h8V8z M13,4h-2v4h2V4z\"/>\n        </svg>\n    </button>\n</div>\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-h1\">H1</button>\n    <button class=\"mc-toolbar__button mc-h2\">H2</button>\n</div>\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-logout\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M19,10l-6-5v3H6v4h7v3L19,10z M3,3h8V1H3C1.9,1,1,1.9,1,3v14c0,1.1,0.9,2,2,2h8v-2H3V3z\"/>\n        </svg>\n    </button>\n</div>";
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Window = __webpack_require__(45);
+var getRefs = __webpack_require__(47);
+var cssClass = __webpack_require__(58);
+var Picker = __webpack_require__(48);
+var RichTextWidget = __webpack_require__(8);
+
+var RichTextWidgetToolbar = function (_Window) {
+    _inherits(RichTextWidgetToolbar, _Window);
+
+    function RichTextWidgetToolbar(window, document, options) {
+        _classCallCheck(this, RichTextWidgetToolbar);
+
+        var _this = _possibleConstructorReturn(this, (RichTextWidgetToolbar.__proto__ || Object.getPrototypeOf(RichTextWidgetToolbar)).call(this, window, document, options));
+
+        _this.$content.innerHTML = __webpack_require__(50);
+
+        _this.$refs = getRefs(_this.$content);
+
+        _this.headerPicker = new Picker(document, _this.$refs.header, [{ key: "p", label: "Normal" }, { key: "h1", label: "Heading 1" }, { key: "h2", label: "Heading 2" }]);
+
+        _this.$registerEventListeners();
+        return _this;
+    }
+
+    _createClass(RichTextWidgetToolbar, [{
+        key: "$registerEventListeners",
+        value: function $registerEventListeners() {
+            this.$refs.bold.addEventListener("click", this.$onBoldClick.bind(this));
+            this.$refs.italic.addEventListener("click", this.$onItalicClick.bind(this));
+            this.headerPicker.on("user-pick", this.$onHeaderPick.bind(this));
+
+            RichTextWidget.bus.on("selection-change", this.$onSelectionChange.bind(this));
+        }
+
+        /////////////////////
+        // Event listeners //
+        /////////////////////
+
+        /**
+         * When rich-text widget selection changes (any of them)
+         */
+
+    }, {
+        key: "$onSelectionChange",
+        value: function $onSelectionChange(selection, format) {
+            // dont' do anything on deselect
+            if (selection === null) return;
+
+            // bold
+            cssClass(this.$refs.bold, "mc-rtwt__button--active", !!format.bold);
+
+            // italic
+            cssClass(this.$refs.italic, "mc-rtwt__button--active", !!format.italic);
+
+            // header
+            if (format.header === undefined) this.headerPicker.pick("p");else this.headerPicker.pick("h" + format.header);
+        }
+    }, {
+        key: "$onBoldClick",
+        value: function $onBoldClick() {
+            RichTextWidget.bus.fire("apply-bold");
+        }
+    }, {
+        key: "$onItalicClick",
+        value: function $onItalicClick() {
+            RichTextWidget.bus.fire("apply-italic");
+        }
+    }, {
+        key: "$onHeaderPick",
+        value: function $onHeaderPick(key) {
+            if (key == "p") key = false;else key = parseInt(key[1]);
+
+            // refocus the widget
+            // (focus has been lost by clicking the picker label)
+            if (RichTextWidget.lastFocusedWidget) RichTextWidget.lastFocusedWidget.$quill.focus();
+
+            RichTextWidget.bus.fire("apply-header", key);
+        }
+    }]);
+
+    return RichTextWidgetToolbar;
+}(Window);
+
+module.exports = RichTextWidgetToolbar;
 
 /***/ }),
 /* 45 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-// removed by extract-text-webpack-plugin
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var clamp = __webpack_require__(59);
+var cssClass = __webpack_require__(58);
+var getRefs = __webpack_require__(47);
+
+var Window = function () {
+    function Window(window, document, options) {
+        _classCallCheck(this, Window);
+
+        this.$window = window;
+        this.$document = document;
+
+        /**
+         * Window position
+         */
+        this.position = { x: 20, y: 20
+
+            /**
+             * If the window is minimized
+             */
+        };this.minimized = false;
+
+        /**
+         * Transparent window
+         */
+        this.transparent = false;
+
+        /**
+         * Is the window being dragged
+         */
+        this.dragged = false;
+
+        // dragging properties
+        this.dragStartMousePosition = null;
+        this.dragStartWindowPosition = null;
+
+        // create html stuff
+        this.$createDOM();
+
+        this.updateDisplay();
+
+        this.$handle.addEventListener("mousedown", this.$onHandleMouseDown.bind(this));
+
+        this.$window.addEventListener("mousemove", this.$onWindowMouseMove.bind(this));
+
+        this.$window.addEventListener("mouseup", this.$onWindowMouseUp.bind(this));
+
+        this.$window.addEventListener("resize", this.$onWindowResize.bind(this));
+
+        this.$refs.transparency.addEventListener("click", this.$onTransparencyToggleClick.bind(this));
+
+        this.$refs.minimize.addEventListener("click", this.minimize.bind(this));
+    }
+
+    _createClass(Window, [{
+        key: "$createDOM",
+        value: function $createDOM() {
+            var element = this.$document.createElement("div");
+            element.className = "mc-window";
+            element.innerHTML = __webpack_require__(46);
+
+            this.$element = element;
+            this.$handle = element.querySelector(".mc-window__handle");
+            this.$content = element.querySelector(".mc-window__content");
+
+            this.$refs = getRefs(this.$element);
+        }
+
+        /**
+         * Updates displayed position and size
+         */
+
+    }, {
+        key: "updateDisplay",
+        value: function updateDisplay() {
+            // clip window position
+            this.position.x = clamp(this.position.x, 0, this.$window.innerWidth - this.$element.clientWidth);
+            this.position.y = clamp(this.position.y, 0, this.$window.innerHeight - this.$element.clientHeight - 50 // toolbar
+            );
+
+            // update rendered position
+            this.$element.style.left = this.position.x + "px";
+            this.$element.style.top = this.position.y + "px";
+        }
+
+        /**
+         * Minimize the window
+         */
+
+    }, {
+        key: "minimize",
+        value: function minimize() {
+            var _this = this;
+
+            if (this.minimized) return;
+
+            cssClass(this.$element, "mc-window--minimized", true);
+
+            setTimeout(function () {
+                _this.$element.style.display = "none";
+
+                _this.minimized = true;
+            }, 500);
+        }
+
+        /**
+         * Maximize the window
+         */
+
+    }, {
+        key: "maximize",
+        value: function maximize() {
+            if (!this.minimized) return;
+
+            this.$element.style.display = "block";
+
+            cssClass(this.$element, "mc-window--minimized", false);
+
+            this.minimized = false;
+        }
+
+        /**
+         * Enables window transparency
+         */
+
+    }, {
+        key: "enableTransparency",
+        value: function enableTransparency() {
+            if (this.transparent) return;
+
+            this.transparent = true;
+
+            cssClass(this.$element, "mc-window--transparent", true);
+        }
+
+        /**
+         * Disables window transparency
+         */
+
+    }, {
+        key: "disableTransparency",
+        value: function disableTransparency() {
+            if (!this.transparent) return;
+
+            this.transparent = false;
+
+            cssClass(this.$element, "mc-window--transparent", false);
+        }
+
+        /////////////////////
+        // Event listeners //
+        /////////////////////
+
+    }, {
+        key: "$onHandleMouseDown",
+        value: function $onHandleMouseDown(e) {
+            this.dragged = true;
+
+            this.dragStartMousePosition = { x: e.clientX, y: e.clientY };
+            this.dragStartWindowPosition = { x: this.position.x, y: this.position.y };
+        }
+    }, {
+        key: "$onWindowMouseMove",
+        value: function $onWindowMouseMove(e) {
+            if (!this.dragged) return;
+
+            e.preventDefault();
+
+            this.position.x = this.dragStartWindowPosition.x + e.clientX - this.dragStartMousePosition.x;
+
+            this.position.y = this.dragStartWindowPosition.y + e.clientY - this.dragStartMousePosition.y;
+
+            this.updateDisplay();
+        }
+    }, {
+        key: "$onWindowMouseUp",
+        value: function $onWindowMouseUp(e) {
+            if (!this.dragged) return;
+
+            e.preventDefault();
+
+            this.dragged = false;
+        }
+    }, {
+        key: "$onWindowResize",
+        value: function $onWindowResize() {
+            this.updateDisplay();
+        }
+    }, {
+        key: "$onTransparencyToggleClick",
+        value: function $onTransparencyToggleClick() {
+            if (this.transparent) this.disableTransparency();else this.enableTransparency();
+        }
+    }]);
+
+    return Window;
+}();
+
+module.exports = Window;
 
 /***/ }),
-/* 46 */,
-/* 47 */,
-/* 48 */,
-/* 49 */,
+/* 46 */
+/***/ (function(module, exports) {
+
+module.exports = "<div class=\"mc-window__bar\">\n    <div class=\"mc-window__handle\"></div>\n\n    <div class=\"mc-window__button\" ref=\"transparency\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M10,4.4C3.439,4.4,0,9.232,0,10c0,0.766,3.439,5.6,10,5.6c6.56,0,10-4.834,10-5.6C20,9.232,16.56,4.4,10,4.4\n            z M10,14.307c-2.455,0-4.445-1.928-4.445-4.307S7.545,5.691,10,5.691s4.444,1.93,4.444,4.309S12.455,14.307,10,14.307z M10,10\n            c-0.407-0.447,0.663-2.154,0-2.154c-1.228,0-2.223,0.965-2.223,2.154S8.772,12.154,10,12.154c1.227,0,2.223-0.965,2.223-2.154\n            C12.223,9.453,10.346,10.379,10,10z\"/>\n        </svg>\n    </div>\n\n    <div class=\"mc-window__button\" ref=\"minimize\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M4.516,7.548c0.436-0.446,1.043-0.481,1.576,0L10,11.295l3.908-3.747c0.533-0.481,1.141-0.446,1.574,0\n            c0.436,0.445,0.408,1.197,0,1.615c-0.406,0.418-4.695,4.502-4.695,4.502C10.57,13.888,10.285,14,10,14s-0.57-0.112-0.789-0.335\n            c0,0-4.287-4.084-4.695-4.502C4.107,8.745,4.08,7.993,4.516,7.548z\"/>\n        </svg>\n    </div>\n\n    <div class=\"mc-window__button\" ref=\"close\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M14.348,14.849c-0.469,0.469-1.229,0.469-1.697,0L10,11.819l-2.651,3.029c-0.469,0.469-1.229,0.469-1.697,0\n            c-0.469-0.469-0.469-1.229,0-1.697l2.758-3.15L5.651,6.849c-0.469-0.469-0.469-1.228,0-1.697s1.228-0.469,1.697,0L10,8.183\n            l2.651-3.031c0.469-0.469,1.228-0.469,1.697,0s0.469,1.229,0,1.697l-2.758,3.152l2.758,3.15\n            C14.817,13.62,14.817,14.38,14.348,14.849z\"/>\n        </svg>\n    </div>\n</div>\n<div class=\"mc-window__content\">\n    <!--window content-->\n</div>";
+
+/***/ }),
+/* 47 */
+/***/ (function(module, exports) {
+
+/**
+ * Return an object of all refs in a given element
+ *
+ * Ref is an element with the ref="..." tag
+ */
+function getRefs(element) {
+    var refs = {};
+    var elements = element.querySelectorAll('[ref]');
+
+    for (var i = 0; i < elements.length; i++) {
+        refs[elements[i].getAttribute("ref")] = elements[i];
+    }return refs;
+}
+
+module.exports = getRefs;
+
+/***/ }),
+/* 48 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var EventBus = __webpack_require__(42);
+
+/*
+    Events:
+    "pick" - when the pick() method is succesfully called
+    "user-pick" - when the user picks an item by clicking an option
+ */
+
+var Picker = function () {
+    function Picker(document, element, options) {
+        _classCallCheck(this, Picker);
+
+        /**
+         * Document reference
+         */
+        this.$document = document;
+
+        /**
+         * Root element
+         */
+        this.$element = element;
+
+        /**
+         * Is the picker expanded?
+         */
+        this.expanded = false;
+
+        /**
+         * Options to pick from
+         *
+         * An array of objects: { key: string, label: string }
+         */
+        this.options = options;
+
+        /**
+         * The picked option
+         */
+        this.pickedOption = null;
+
+        /**
+         * Event bus
+         */
+        this.$bus = new EventBus();
+
+        // create all necessary elements
+        this.$createDOM();
+
+        // pick the first item in the list
+        this.pick(this.options[0].key);
+
+        // bind event handlers
+        this.$label.addEventListener("click", this.$onLabelClick.bind(this));
+        this.$element.addEventListener("mouseleave", this.$onPickerMouseLeave.bind(this));
+        this.$options.addEventListener("click", this.$onOptionsClick.bind(this));
+    }
+
+    /**
+     * Creates all necessary html elements
+     */
+
+
+    _createClass(Picker, [{
+        key: "$createDOM",
+        value: function $createDOM() {
+            this.$element.className += "mc-picker";
+            this.$element.innerHTML = __webpack_require__(49);
+
+            this.$label = this.$element.querySelector(".mc-picker__label");
+            this.$options = this.$element.querySelector(".mc-picker__options");
+
+            for (var i = 0; i < this.options.length; i++) {
+                var option = this.$document.createElement("div");
+                option.innerHTML = this.options[i].label;
+                option.setAttribute("mc-picker-key", this.options[i].key);
+                this.$options.appendChild(option);
+            }
+        }
+
+        /**
+         * Collapse the picker
+         */
+
+    }, {
+        key: "collapse",
+        value: function collapse() {
+            this.expanded = false;
+            this.$options.style.display = "none";
+        }
+
+        /**
+         * Expand the picker
+         */
+
+    }, {
+        key: "expand",
+        value: function expand() {
+            this.expanded = true;
+            this.$options.style.display = "block";
+        }
+
+        /**
+         * Pick an option
+         */
+
+    }, {
+        key: "pick",
+        value: function pick(optionKey) {
+            for (var i = 0; i < this.options.length; i++) {
+                if (this.options[i].key == optionKey) {
+                    this.pickedOption = this.options[i];
+                    this.$label.setAttribute("data-label", this.options[i].label);
+
+                    this.$bus.fire("pick", this.options[i].key);
+                    break;
+                }
+            }
+        }
+
+        /**
+         * Register an event listener
+         */
+
+    }, {
+        key: "on",
+        value: function on(event, listener) {
+            this.$bus.on(event, listener);
+        }
+
+        ////////////////////
+        // Event handlers //
+        ////////////////////
+
+    }, {
+        key: "$onLabelClick",
+        value: function $onLabelClick(e) {
+            if (this.expanded) this.collapse();else this.expand();
+        }
+    }, {
+        key: "$onPickerMouseLeave",
+        value: function $onPickerMouseLeave() {
+            this.collapse();
+        }
+    }, {
+        key: "$onOptionsClick",
+        value: function $onOptionsClick(e) {
+            var key = e.target.getAttribute("mc-picker-key");
+
+            if (key === null) return;
+
+            this.pick(key);
+            this.collapse();
+
+            this.$bus.fire("user-pick", key);
+        }
+    }]);
+
+    return Picker;
+}();
+
+module.exports = Picker;
+
+/***/ }),
+/* 49 */
+/***/ (function(module, exports) {
+
+module.exports = "<span class=\"mc-picker\">\n    <span class=\"mc-picker__label\" data-label=\"\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-picker__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-picker__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-picker__options\" style=\"display: none\">\n    </span>\n</span>";
+
+/***/ }),
 /* 50 */
+/***/ (function(module, exports) {
+
+module.exports = "<div class=\"mc-rtwt\">\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <span ref=\"header\"></span>\n</div>";
+
+/***/ }),
+/* 51 */
+/***/ (function(module, exports) {
+
+module.exports = "<!--\n    Icons used:\n    http://www.entypo.com/\n-->\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"toggleEdit\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M17.561,2.439c-1.442-1.443-2.525-1.227-2.525-1.227L8.984,7.264L2.21,14.037L1.2,18.799l4.763-1.01\n            l6.774-6.771l6.052-6.052C18.788,4.966,19.005,3.883,17.561,2.439z M5.68,17.217l-1.624,0.35c-0.156-0.293-0.345-0.586-0.69-0.932\n            c-0.346-0.346-0.639-0.533-0.932-0.691l0.35-1.623l0.47-0.469c0,0,0.883,0.018,1.881,1.016c0.997,0.996,1.016,1.881,1.016,1.881\n            L5.68,17.217z\"/>\n        </svg>\n    </button>\n\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"richTextToolbar\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M3.135,6.89c0.933-0.725,1.707-0.225,2.74,0.971c0.116,0.135,0.272-0.023,0.361-0.1\n            C6.324,7.683,7.687,6.456,7.754,6.4C7.82,6.341,7.9,6.231,7.795,6.108C7.688,5.985,7.301,5.483,7.052,5.157\n            c-1.808-2.365,4.946-3.969,3.909-3.994c-0.528-0.014-2.646-0.039-2.963-0.004C6.715,1.294,5.104,2.493,4.293,3.052\n            C3.232,3.778,2.836,4.204,2.771,4.263c-0.3,0.262-0.048,0.867-0.592,1.344C1.604,6.11,1.245,5.729,0.912,6.021\n            C0.747,6.167,0.285,6.513,0.153,6.628C0.02,6.745-0.004,6.942,0.132,7.099c0,0,1.264,1.396,1.37,1.52\n            C1.607,8.741,1.893,8.847,2.069,8.69c0.177-0.156,0.632-0.553,0.708-0.623C2.855,8.001,2.727,7.206,3.135,6.89z M8.843,7.407\n            c-0.12-0.139-0.269-0.143-0.397-0.029L7.012,8.63c-0.113,0.1-0.129,0.283-0.027,0.4l8.294,9.439c0.194,0.223,0.53,0.246,0.751,0.053\n            L17,17.709c0.222-0.195,0.245-0.533,0.052-0.758L8.843,7.407z M19.902,3.39c-0.074-0.494-0.33-0.391-0.463-0.182\n            c-0.133,0.211-0.721,1.102-0.963,1.506c-0.24,0.4-0.832,1.191-1.934,0.41c-1.148-0.811-0.749-1.377-0.549-1.758\n            c0.201-0.383,0.818-1.457,0.907-1.59c0.089-0.135-0.015-0.527-0.371-0.363c-0.357,0.164-2.523,1.025-2.823,2.26\n            c-0.307,1.256,0.257,2.379-0.85,3.494l-1.343,1.4l1.349,1.566l1.654-1.57c0.394-0.396,1.236-0.781,1.998-0.607\n            c1.633,0.369,2.524-0.244,3.061-1.258C20.057,5.792,19.977,3.884,19.902,3.39z M2.739,17.053c-0.208,0.209-0.208,0.549,0,0.758\n            l0.951,0.93c0.208,0.209,0.538,0.121,0.746-0.088l4.907-4.824L7.84,12.115L2.739,17.053z\"/>\n        </svg>\n    </button>\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__text\">\n    Saving...\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div style=\"flex: 1\"></div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-logout\" ref=\"logout\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M19,10l-6-5v3H6v4h7v3L19,10z M3,3h8V1H3C1.9,1,1,1.9,1,3v14c0,1.1,0.9,2,2,2h8v-2H3V3z\"/>\n        </svg>\n    </button>\n</div>";
+
+/***/ }),
+/* 52 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -13165,241 +13715,55 @@ var WindowManager = function () {
 module.exports = WindowManager;
 
 /***/ }),
-/* 51 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Window = function () {
-    function Window(document, options) {
-        _classCallCheck(this, Window);
-
-        this.$createDOM(document);
-    }
-
-    _createClass(Window, [{
-        key: "$createDOM",
-        value: function $createDOM(document) {
-            var element = document.createElement("div");
-            element.className = "mc-window";
-            element.innerHTML = __webpack_require__(52);
-
-            this.$element = element;
-            this.$content = element.querySelector(".mc-window__content");
-        }
-
-        /**
-         * Updates displayed position and size
-         */
-
-    }, {
-        key: "updateDisplay",
-        value: function updateDisplay() {}
-    }]);
-
-    return Window;
-}();
-
-module.exports = Window;
-
-/***/ }),
-/* 52 */
-/***/ (function(module, exports) {
-
-module.exports = "<div class=\"mc-window__handle\"></div>\n<div class=\"mc-window__content\">\n    This is a window!\n</div>";
-
-/***/ }),
 /* 53 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var Window = __webpack_require__(51);
-var getRefs = __webpack_require__(55);
-var Picker = __webpack_require__(56);
-
-var RichTextWidgetToolbar = function (_Window) {
-    _inherits(RichTextWidgetToolbar, _Window);
-
-    function RichTextWidgetToolbar(document, mycelium, options) {
-        _classCallCheck(this, RichTextWidgetToolbar);
-
-        var _this = _possibleConstructorReturn(this, (RichTextWidgetToolbar.__proto__ || Object.getPrototypeOf(RichTextWidgetToolbar)).call(this, document, options));
-
-        _this.$mycelium = mycelium;
-
-        _this.$content.innerHTML = __webpack_require__(54);
-
-        _this.$refs = getRefs(_this.$content);
-
-        _this.headerPicker = new Picker(_this.$refs.header);
-
-        _this.$registerEventListeners();
-        return _this;
-    }
-
-    _createClass(RichTextWidgetToolbar, [{
-        key: "$registerEventListeners",
-        value: function $registerEventListeners() {
-            this.$refs.bold.addEventListener("click", this.$onBoldClick.bind(this));
-            this.$refs.italic.addEventListener("click", this.$onItalicClick.bind(this));
-        }
-
-        /////////////////////
-        // Event listeners //
-        /////////////////////
-
-    }, {
-        key: "$onBoldClick",
-        value: function $onBoldClick() {
-            this.$mycelium.class.widgets.RichText.bus.fire("apply-bold");
-        }
-    }, {
-        key: "$onItalicClick",
-        value: function $onItalicClick() {
-            this.$mycelium.class.widgets.RichText.bus.fire("apply-italic");
-        }
-    }]);
-
-    return RichTextWidgetToolbar;
-}(Window);
-
-module.exports = RichTextWidgetToolbar;
-
-/***/ }),
-/* 54 */
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"mc-rtwt\">\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <span ref=\"header\"></span>\n</div>";
+// removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 55 */
+/* 54 */,
+/* 55 */,
+/* 56 */,
+/* 57 */,
+/* 58 */
 /***/ (function(module, exports) {
 
 /**
- * Return an object of all refs in a given element
- *
- * Ref is an element with the ref="..." tag
+ * Enables or disables a css class on an element
  */
-function getRefs(element) {
-    var refs = {};
-    var elements = element.querySelectorAll('[ref]');
+function cssClass(element, cssClass, enable) {
+    var newClasses = "";
+    var found = false;
 
-    for (var i = 0; i < elements.length; i++) {
-        refs[elements[i].getAttribute("ref")] = elements[i];
-    }return refs;
-}
+    for (var i = 0; i < element.classList.length; i++) {
+        if (element.classList[i] == cssClass) {
+            found = true;
 
-module.exports = getRefs;
-
-/***/ }),
-/* 56 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var Picker = function () {
-    function Picker(element) {
-        _classCallCheck(this, Picker);
-
-        this.$element = element;
-
-        /**
-         * Is the picker expanded?
-         */
-        this.expanded = false;
-
-        this.$createDOM();
-
-        // bind event handlers
-        this.$label.addEventListener("click", this.$onLabelClick.bind(this));
-        this.$element.addEventListener("mouseleave", this.$onPickerMouseLeave.bind(this));
-        this.$options.addEventListener("click", this.$onOptionsClick.bind(this));
+            if (enable) newClasses += element.classList[i] + " ";
+        } else {
+            newClasses += element.classList[i] + " ";
+        }
     }
 
-    _createClass(Picker, [{
-        key: "$createDOM",
-        value: function $createDOM() {
-            this.$element.className += "mc-picker";
-            this.$element.innerHTML = __webpack_require__(57);
+    if (!found && enable) newClasses += cssClass;
 
-            this.$label = this.$element.querySelector(".mc-picker__label");
-            this.$options = this.$element.querySelector(".mc-picker__options");
-        }
+    element.className = newClasses;
+}
 
-        /**
-         * Collapse the picker
-         */
-
-    }, {
-        key: "collapse",
-        value: function collapse() {
-            this.expanded = false;
-            this.$options.style.display = "none";
-        }
-
-        /**
-         * Expand the picker
-         */
-
-    }, {
-        key: "expand",
-        value: function expand() {
-            this.expanded = true;
-            this.$options.style.display = "block";
-        }
-
-        /**
-         * Pick an option
-         */
-
-    }, {
-        key: "pick",
-        value: function pick(option) {}
-
-        ////////////////////
-        // Event handlers //
-        ////////////////////
-
-    }, {
-        key: "$onLabelClick",
-        value: function $onLabelClick() {
-            if (this.expanded) this.collapse();else this.expand();
-        }
-    }, {
-        key: "$onPickerMouseLeave",
-        value: function $onPickerMouseLeave() {
-            this.collapse();
-        }
-    }, {
-        key: "$onOptionsClick",
-        value: function $onOptionsClick(e) {
-            console.log(e.target);
-
-            this.collapse();
-        }
-    }]);
-
-    return Picker;
-}();
-
-module.exports = Picker;
+module.exports = cssClass;
 
 /***/ }),
-/* 57 */
+/* 59 */
 /***/ (function(module, exports) {
 
-module.exports = "<span class=\"mc-picker\">\n    <span class=\"mc-picker__label\" data-label=\"Normal\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-picker__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-picker__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-picker__options\" style=\"display: none\">\n        <div>Normal</div>\n        <div>Header 1</div>\n        <div>Header 2</div>\n    </span>\n</span>";
+/**
+ * Clamp a value between two bounds
+ */
+function clamp(x, min, max) {
+    if (x < min) return min;else if (x > max) return max;else return x;
+}
+
+module.exports = clamp;
 
 /***/ })
 /******/ ]);
