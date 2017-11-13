@@ -2,6 +2,7 @@ const Quill = require("./RichText/quill.js")
 require("./RichText/BoldBlot.js")
 require("./RichText/ItalicBlot.js")
 require("./RichText/HeaderBlot.js")
+require("./RichText/TableBlot.js")
 const EventBus = require("../EventBus.js")
 
 class RichText
@@ -138,6 +139,7 @@ class RichText
         this.$bindListener("apply-bold", this.$onApplyBold)
         this.$bindListener("apply-italic", this.$onApplyItalic)
         this.$bindListener("apply-header", this.$onApplyHeader)
+        this.$bindListener("insert-table", this.$onInsertTable)
     }
 
     /**
@@ -189,6 +191,14 @@ class RichText
             "header",
             level
         )
+    }
+
+    $onInsertTable()
+    {
+        let range = this.$quill.getSelection(true)
+        this.$quill.insertText(range.index, "\n")
+        this.$quill.insertEmbed(range.index + 1, "table", [])
+        this.$quill.setSelection(range.index + 2)
     }
 }
 

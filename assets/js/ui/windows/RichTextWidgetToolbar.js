@@ -28,6 +28,7 @@ class RichTextWidgetToolbar extends Window
         this.$refs.bold.addEventListener("click", this.$onBoldClick.bind(this))
         this.$refs.italic.addEventListener("click", this.$onItalicClick.bind(this))
         this.headerPicker.on("user-pick", this.$onHeaderPick.bind(this))
+        this.$refs.table.addEventListener("click", this.$onTableClick.bind(this))
 
         RichTextWidget.bus.on("selection-change", this.$onSelectionChange.bind(this))
     }
@@ -81,6 +82,11 @@ class RichTextWidgetToolbar extends Window
             RichTextWidget.lastFocusedWidget.$quill.focus()
 
         RichTextWidget.bus.fire("apply-header", key)
+    }
+
+    $onTableClick()
+    {
+        RichTextWidget.bus.fire("insert-table")
     }
 }
 
