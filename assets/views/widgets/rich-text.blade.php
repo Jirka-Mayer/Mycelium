@@ -5,6 +5,7 @@
     $key - shroom data key
     $default - default value if no data under key
     $class - css classes to be applied
+    $cssScope - css scope for the widget
 --}}
 
 @inject("mycelium", "mycelium")
@@ -21,10 +22,13 @@
     if (!isset($class))
         $class = "";
 
+    if (!isset($cssScope))
+        $cssScope = "default";
+
     // wrap default value
     $default = ["ops" => [
         ["insert" => $default . "\n"]
-    ]]
+    ]];
 @endphp
 
 @if ($mycelium->editing())
@@ -32,7 +36,8 @@
         mycelium-widget="rich-text"
         mycelium-key="{{ $key }}"
         mycelium-default="{{ json_encode($default) }}"
-        class="{{ $class }}"
+        mycelium-css-scope="{{ $cssScope }}"
+        class="{{ $class }} {{ "css-scope__" . $cssScope }}"
     >
         {{-- print rendered content before quill loads --}}
         {!!

@@ -95,6 +95,22 @@
   margin: 0;
   padding: 0;
 }
+[mycelium-widget="rich-text"] .mc-ql-table-blot {
+  border: none;
+  background: none;
+  width: 100%;
+}
+body.mc-ql-table-blot__content {
+  background: none;
+}
+body.mc-ql-table-blot__content table {
+  border-collapse: collapse;
+  border: 1px solid #000;
+  background: none;
+}
+body.mc-ql-table-blot__content td {
+  border: 1px solid #000;
+}
 .mc-window-manager {
   display: block;
   position: fixed;
