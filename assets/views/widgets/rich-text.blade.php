@@ -47,9 +47,11 @@
         !!}
     </div>
 @else
-    {!!
-        $renderer->render(
-            $shroom->data("public")->get($key, $default)
-        )
-    !!}
+    <div class="{{ $class }} {{ "css-scope__" . $cssScope }}">
+        {!!
+            $renderer->render(
+                $shroom->data("public")->get($key, $default)
+            )
+        !!}
+    </div>
 @endif

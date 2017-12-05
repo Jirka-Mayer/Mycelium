@@ -34,6 +34,9 @@ class RichText
          */
         this.$element = element
 
+        // bind the widget to the element (used in IframeObject)
+        this.$element.widgetInstance = this
+
         /**
          * Reference to the shroom
          */

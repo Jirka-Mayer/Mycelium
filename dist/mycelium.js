@@ -381,6 +381,26 @@ module.exports = __webpack_require__(36);
 
 /***/ }),
 /* 2 */
+/***/ (function(module, exports) {
+
+/**
+ * Return an object of all refs in a given element
+ *
+ * Ref is an element with the ref="..." tag
+ */
+function getRefs(element) {
+    var refs = {};
+    var elements = element.querySelectorAll('[ref]');
+
+    for (var i = 0; i < elements.length; i++) {
+        refs[elements[i].getAttribute("ref")] = elements[i];
+    }return refs;
+}
+
+module.exports = getRefs;
+
+/***/ }),
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -480,7 +500,7 @@ module.exports = defaults;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(19)))
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
@@ -521,6 +541,9 @@ var RichText = function () {
          * Root html element
          */
         this.$element = element;
+
+        // bind the widget to the element (used in IframeObject)
+        this.$element.widgetInstance = this;
 
         /**
          * Reference to the shroom
@@ -678,26 +701,6 @@ RichText.lastFocusedWidget = null;
 
 // export
 module.exports = RichText;
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports) {
-
-/**
- * Return an object of all refs in a given element
- *
- * Ref is an element with the ref="..." tag
- */
-function getRefs(element) {
-    var refs = {};
-    var elements = element.querySelectorAll('[ref]');
-
-    for (var i = 0; i < elements.length; i++) {
-        refs[elements[i].getAttribute("ref")] = elements[i];
-    }return refs;
-}
-
-module.exports = getRefs;
 
 /***/ }),
 /* 5 */
@@ -1057,7 +1060,7 @@ module.exports = cssClass;
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(13);
-module.exports = __webpack_require__(56);
+module.exports = __webpack_require__(57);
 
 
 /***/ }),
@@ -1087,12 +1090,12 @@ window.mycelium.class.Shroom = __webpack_require__(14);
 
 if (!window.mycelium.class.widgets) window.mycelium.class.widgets = {};
 
-window.mycelium.class.widgets.RichText = __webpack_require__(3);
+window.mycelium.class.widgets.RichText = __webpack_require__(4);
 
 if (!window.mycelium.class.ui) window.mycelium.class.ui = {};
 
-window.mycelium.class.ui.Toolbar = __webpack_require__(46);
-window.mycelium.class.ui.WindowManager = __webpack_require__(55);
+window.mycelium.class.ui.Toolbar = __webpack_require__(47);
+window.mycelium.class.ui.WindowManager = __webpack_require__(56);
 
 /***/ }),
 /* 14 */
@@ -1104,7 +1107,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var axios = __webpack_require__(15);
 var TextWidget = __webpack_require__(35);
-var RichTextWidget = __webpack_require__(3);
+var RichTextWidget = __webpack_require__(4);
 
 // delay between a change and save call
 var AUTOSAVE_TIMEOUT = 2000;
@@ -1338,7 +1341,7 @@ module.exports = __webpack_require__(16);
 var utils = __webpack_require__(0);
 var bind = __webpack_require__(5);
 var Axios = __webpack_require__(18);
-var defaults = __webpack_require__(2);
+var defaults = __webpack_require__(3);
 
 /**
  * Create an instance of Axios
@@ -1421,7 +1424,7 @@ function isSlowBuffer (obj) {
 "use strict";
 
 
-var defaults = __webpack_require__(2);
+var defaults = __webpack_require__(3);
 var utils = __webpack_require__(0);
 var InterceptorManager = __webpack_require__(28);
 var dispatchRequest = __webpack_require__(29);
@@ -2143,7 +2146,7 @@ module.exports = InterceptorManager;
 var utils = __webpack_require__(0);
 var transformData = __webpack_require__(30);
 var isCancel = __webpack_require__(8);
-var defaults = __webpack_require__(2);
+var defaults = __webpack_require__(3);
 
 /**
  * Throws a `Cancel` if cancellation has been requested.
@@ -13099,9 +13102,9 @@ Quill.register(HeaderBlot);
 /* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
 var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -13110,7 +13113,66 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var Quill = __webpack_require__(1);
-var IframeBlot = __webpack_require__(61);
+var IframeBlot = __webpack_require__(46);
+var IframeObject = __webpack_require__(62);
+var getRefs = __webpack_require__(2);
+
+var TableObject = function (_IframeObject) {
+    _inherits(TableObject, _IframeObject);
+
+    function TableObject() {
+        _classCallCheck(this, TableObject);
+
+        return _possibleConstructorReturn(this, (TableObject.__proto__ || Object.getPrototypeOf(TableObject)).apply(this, arguments));
+    }
+
+    _createClass(TableObject, [{
+        key: "initialize",
+        value: function initialize() {
+            // set iframe body class
+            this.contentBody.className = "mc-ql-table-blot__content";
+
+            /**
+             * Table element
+             * (assigned in createDOM method)
+             */
+            this.table = null;
+
+            this.createDOM();
+        }
+    }, {
+        key: "createDOM",
+        value: function createDOM() {
+            this.contentDiv.innerHTML = "\n            <table ref=\"table\">\n                <tr>\n                    <td>\n                        <div class=\"hook\"></div>\n                    </td>\n                </tr>\n                <tr>\n                    <td><button ref=\"addRow\">add row</button></td>\n                </tr>\n            </table>\n        ";
+
+            var q = new Quill(this.contentDiv.querySelector(".hook"));
+        }
+    }, {
+        key: "getValue",
+        value: function getValue() {
+            return {
+                "rows": []
+            };
+        }
+    }, {
+        key: "bindEventListeners",
+        value: function bindEventListeners() {
+            var _this2 = this;
+
+            var RichText = __webpack_require__(4);
+
+            RichText.bus.on("apply-bold", function () {
+                console.log(_this2.node.contentDocument.activeElement);
+                console.log(_this2.richText);
+            });
+        }
+    }, {
+        key: "freeEventListeners",
+        value: function freeEventListeners() {}
+    }]);
+
+    return TableObject;
+}(IframeObject);
 
 var TableBlot = function (_IframeBlot) {
     _inherits(TableBlot, _IframeBlot);
@@ -13124,7 +13186,7 @@ var TableBlot = function (_IframeBlot) {
     _createClass(TableBlot, null, [{
         key: "create",
         value: function create(value) {
-            return _get(TableBlot.__proto__ || Object.getPrototypeOf(TableBlot), "create", this).call(this, value, TableBlot.createIframe);
+            return _get(TableBlot.__proto__ || Object.getPrototypeOf(TableBlot), "create", this).call(this, value, TableObject);
         }
     }, {
         key: "createIframe",
@@ -13132,17 +13194,12 @@ var TableBlot = function (_IframeBlot) {
             // set iframe body class
             node.contentDocument.body.className = "mc-ql-table-blot__content";
 
-            // setup iframe DOM
-            node.contentDiv.innerHTML = "\n            <table>\n                <tr>\n                    <td>hello</td>\n                    <td>world</td>\n                </tr>\n                <tr>\n                    <td>how RU</td>\n                    <td>doin</td>\n                </tr>\n                <tr>\n                    <td>type here:</td>\n                    <td><input type=\"text\"></td>\n                </tr>\n            </table>\n        ";
+            TableBlot.createDom(node, value);
         }
     }, {
         key: "value",
         value: function value(node) {
-            return {
-
-                // array of arrays (rows)
-                "table": []
-            };
+            return _get(TableBlot.__proto__ || Object.getPrototypeOf(TableBlot), "value", this).call(this, node);
         }
     }]);
 
@@ -13160,10 +13217,226 @@ Quill.register(TableBlot);
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var RichTextWidgetToolbar = __webpack_require__(47);
-var getRefs = __webpack_require__(4);
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Quill = __webpack_require__(1);
+var BlockEmbed = Quill.import("blots/block/embed");
+
+DIMENSION_TIMER_INTERVAL = 5000;
+CSS_SCOPE_CLASS_PREFIX = "css-scope__";
+
+var IframeBlot = function (_BlockEmbed) {
+    _inherits(IframeBlot, _BlockEmbed);
+
+    function IframeBlot() {
+        _classCallCheck(this, IframeBlot);
+
+        return _possibleConstructorReturn(this, (IframeBlot.__proto__ || Object.getPrototypeOf(IframeBlot)).apply(this, arguments));
+    }
+
+    _createClass(IframeBlot, null, [{
+        key: "create",
+        value: function create(value, iframeObjectClass) {
+            // create an element
+            var node = _get(IframeBlot.__proto__ || Object.getPrototypeOf(IframeBlot), "create", this).call(this);
+
+            // set iframe attributes
+            node.setAttribute("scrolling", "no");
+            node.setAttribute("frameborder", "0");
+
+            // we need a tick such that the contentDocument is available  
+            setTimeout(function () {
+
+                // check compatibility
+                if (!node.contentDocument || !node.contentWindow) {
+                    console.error("iframe javascript interface not supported");
+                    return;
+                }
+
+                // create content
+                IframeBlot.createContentDocument(node, value, iframeObjectClass);
+            }, 1);
+
+            return node;
+        }
+    }, {
+        key: "value",
+        value: function value(node) {
+            if (!node.iframeObject) return {};
+
+            return node.iframeObject.getValue();
+        }
+
+        /**
+         * Create content document
+         */
+
+    }, {
+        key: "createContentDocument",
+        value: function createContentDocument(node, value, iframeObjectClass) {
+            // create and register content div
+            node.contentDocument.body.innerHTML = "<div></div>";
+            node.contentDiv = node.contentDocument.body.children[0];
+
+            // remove margin and margin overflow
+            node.contentDocument.body.style.margin = "0";
+            node.contentDiv.style.padding = "1px";
+
+            // get parent widget
+            parentWidget = IframeBlot.getParentWidget(node);
+
+            // set css scopes
+            IframeBlot.setCssScopes(node, parentWidget);
+
+            // apply styles
+            IframeBlot.copyCssStyles(node);
+
+            // initialize iframe object
+            node.iframeObject = new iframeObjectClass(node, value, parentWidget);
+
+            // start dimension update loop
+            IframeBlot.startDimensionTimer(node);
+        }
+
+        /**
+         * Finds the parent widget element
+         */
+
+    }, {
+        key: "getParentWidget",
+        value: function getParentWidget(node) {
+            // find parent widet
+            var el = node;
+            var widget = null;
+
+            while (el.parentElement) {
+                if (el.getAttribute("mycelium-widget") == "rich-text") {
+                    widget = el;
+                    break;
+                }
+
+                el = el.parentElement;
+            }
+
+            if (!widget) {
+                console.error("Unable to find parent widget!");
+                return null;
+            }
+
+            return widget;
+        }
+
+        /**
+         * Sets proper css scopes to inner document
+         */
+
+    }, {
+        key: "setCssScopes",
+        value: function setCssScopes(node, parentWidget) {
+            // get css scope
+            var scope = parentWidget.getAttribute("mycelium-css-scope");
+
+            // set scope class
+            node.contentDiv.className = CSS_SCOPE_CLASS_PREFIX + scope;
+        }
+
+        /**
+         * Applies all CSS styles to the iframe content
+         * that are in the main document body
+         */
+
+    }, {
+        key: "copyCssStyles",
+        value: function copyCssStyles(node) {
+            var links = node.ownerDocument.querySelectorAll('link[rel="stylesheet"]');
+
+            for (var i = 0; i < links.length; i++) {
+                var copy = node.contentDocument.createElement("link");
+                copy.setAttribute("href", links[i].getAttribute("href"));
+                copy.setAttribute("type", links[i].getAttribute("type"));
+                copy.setAttribute("rel", links[i].getAttribute("rel"));
+
+                node.contentDocument.body.appendChild(copy);
+            }
+        }
+
+        /**
+         * Starts the dimension timer
+         */
+
+    }, {
+        key: "startDimensionTimer",
+        value: function startDimensionTimer(node) {
+            // call the update once right after initialization
+            setTimeout(function () {
+                IframeBlot.dimensionTimerTick(node);
+            }, 500);
+
+            // random offset
+            setTimeout(function () {
+
+                // interval
+                node.dimensionTimerId = setInterval(function () {
+                    IframeBlot.dimensionTimerTick(node);
+                }, DIMENSION_TIMER_INTERVAL);
+            }, Math.random() * DIMENSION_TIMER_INTERVAL);
+        }
+
+        /**
+         * Tick of the dimension check timer
+         */
+
+    }, {
+        key: "dimensionTimerTick",
+        value: function dimensionTimerTick(node) {
+            // check node removal
+            if (!node.parentElement) {
+                // remove timer
+                clearInterval(node.dimensionTimerId);
+
+                // call destructor
+                if (node.iframeObject) node.iframeObject.destructor();
+
+                return;
+            }
+
+            IframeBlot.updateDimensions(node);
+        }
+
+        /**
+         * Updates iframe height
+         */
+
+    }, {
+        key: "updateDimensions",
+        value: function updateDimensions(node) {
+            node.style.height = node.contentDiv.offsetHeight + "px";
+        }
+    }]);
+
+    return IframeBlot;
+}(BlockEmbed);
+
+IframeBlot.tagName = "iframe";
+
+module.exports = IframeBlot;
+
+/***/ }),
+/* 47 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var RichTextWidgetToolbar = __webpack_require__(48);
+var getRefs = __webpack_require__(2);
 
 var Toolbar = function () {
     function Toolbar(window, document, mycelium) {
@@ -13198,7 +13471,7 @@ var Toolbar = function () {
 
             // create toolbar element
             var element = document.createElement("div");
-            element.innerHTML = __webpack_require__(54);
+            element.innerHTML = __webpack_require__(55);
             element.className = "mc-toolbar";
 
             // create spacer
@@ -13270,7 +13543,7 @@ var Toolbar = function () {
 module.exports = Toolbar;
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -13281,11 +13554,11 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var Window = __webpack_require__(48);
-var getRefs = __webpack_require__(4);
+var Window = __webpack_require__(49);
+var getRefs = __webpack_require__(2);
 var cssClass = __webpack_require__(11);
-var Picker = __webpack_require__(51);
-var RichTextWidget = __webpack_require__(3);
+var Picker = __webpack_require__(52);
+var RichTextWidget = __webpack_require__(4);
 
 var RichTextWidgetToolbar = function (_Window) {
     _inherits(RichTextWidgetToolbar, _Window);
@@ -13295,7 +13568,7 @@ var RichTextWidgetToolbar = function (_Window) {
 
         var _this = _possibleConstructorReturn(this, (RichTextWidgetToolbar.__proto__ || Object.getPrototypeOf(RichTextWidgetToolbar)).call(this, window, document, options));
 
-        _this.$content.innerHTML = __webpack_require__(53);
+        _this.$content.innerHTML = __webpack_require__(54);
 
         _this.$refs = getRefs(_this.$content);
 
@@ -13373,16 +13646,16 @@ var RichTextWidgetToolbar = function (_Window) {
 module.exports = RichTextWidgetToolbar;
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var clamp = __webpack_require__(49);
+var clamp = __webpack_require__(50);
 var cssClass = __webpack_require__(11);
-var getRefs = __webpack_require__(4);
+var getRefs = __webpack_require__(2);
 
 var Window = function () {
     function Window(window, document, options) {
@@ -13438,7 +13711,7 @@ var Window = function () {
         value: function $createDOM() {
             var element = this.$document.createElement("div");
             element.className = "mc-window";
-            element.innerHTML = __webpack_require__(50);
+            element.innerHTML = __webpack_require__(51);
 
             this.$element = element;
             this.$handle = element.querySelector(".mc-window__handle");
@@ -13580,7 +13853,7 @@ var Window = function () {
 module.exports = Window;
 
 /***/ }),
-/* 49 */
+/* 50 */
 /***/ (function(module, exports) {
 
 /**
@@ -13593,13 +13866,13 @@ function clamp(x, min, max) {
 module.exports = clamp;
 
 /***/ }),
-/* 50 */
+/* 51 */
 /***/ (function(module, exports) {
 
 module.exports = "<div class=\"mc-window__bar\">\n    <div class=\"mc-window__handle\"></div>\n\n    <div class=\"mc-window__button\" ref=\"transparency\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M10,4.4C3.439,4.4,0,9.232,0,10c0,0.766,3.439,5.6,10,5.6c6.56,0,10-4.834,10-5.6C20,9.232,16.56,4.4,10,4.4\n            z M10,14.307c-2.455,0-4.445-1.928-4.445-4.307S7.545,5.691,10,5.691s4.444,1.93,4.444,4.309S12.455,14.307,10,14.307z M10,10\n            c-0.407-0.447,0.663-2.154,0-2.154c-1.228,0-2.223,0.965-2.223,2.154S8.772,12.154,10,12.154c1.227,0,2.223-0.965,2.223-2.154\n            C12.223,9.453,10.346,10.379,10,10z\"/>\n        </svg>\n    </div>\n\n    <div class=\"mc-window__button\" ref=\"minimize\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M4.516,7.548c0.436-0.446,1.043-0.481,1.576,0L10,11.295l3.908-3.747c0.533-0.481,1.141-0.446,1.574,0\n            c0.436,0.445,0.408,1.197,0,1.615c-0.406,0.418-4.695,4.502-4.695,4.502C10.57,13.888,10.285,14,10,14s-0.57-0.112-0.789-0.335\n            c0,0-4.287-4.084-4.695-4.502C4.107,8.745,4.08,7.993,4.516,7.548z\"/>\n        </svg>\n    </div>\n\n    <div class=\"mc-window__button\" ref=\"close\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M14.348,14.849c-0.469,0.469-1.229,0.469-1.697,0L10,11.819l-2.651,3.029c-0.469,0.469-1.229,0.469-1.697,0\n            c-0.469-0.469-0.469-1.229,0-1.697l2.758-3.15L5.651,6.849c-0.469-0.469-0.469-1.228,0-1.697s1.228-0.469,1.697,0L10,8.183\n            l2.651-3.031c0.469-0.469,1.228-0.469,1.697,0s0.469,1.229,0,1.697l-2.758,3.152l2.758,3.15\n            C14.817,13.62,14.817,14.38,14.348,14.849z\"/>\n        </svg>\n    </div>\n</div>\n<div class=\"mc-window__content\">\n    <!--window content-->\n</div>";
 
 /***/ }),
-/* 51 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -13671,7 +13944,7 @@ var Picker = function () {
         key: "$createDOM",
         value: function $createDOM() {
             this.$element.className += "mc-picker";
-            this.$element.innerHTML = __webpack_require__(52);
+            this.$element.innerHTML = __webpack_require__(53);
 
             this.$label = this.$element.querySelector(".mc-picker__label");
             this.$options = this.$element.querySelector(".mc-picker__options");
@@ -13768,25 +14041,25 @@ var Picker = function () {
 module.exports = Picker;
 
 /***/ }),
-/* 52 */
+/* 53 */
 /***/ (function(module, exports) {
 
 module.exports = "<span class=\"mc-picker\">\n    <span class=\"mc-picker__label\" data-label=\"\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-picker__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-picker__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-picker__options\" style=\"display: none\">\n    </span>\n</span>";
 
 /***/ }),
-/* 53 */
+/* 54 */
 /***/ (function(module, exports) {
 
 module.exports = "<div class=\"mc-rtwt\">\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        Table\n    </button>\n</div>";
 
 /***/ }),
-/* 54 */
+/* 55 */
 /***/ (function(module, exports) {
 
 module.exports = "<!--\n    Icons used:\n    http://www.entypo.com/\n-->\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"toggleEdit\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M17.561,2.439c-1.442-1.443-2.525-1.227-2.525-1.227L8.984,7.264L2.21,14.037L1.2,18.799l4.763-1.01\n            l6.774-6.771l6.052-6.052C18.788,4.966,19.005,3.883,17.561,2.439z M5.68,17.217l-1.624,0.35c-0.156-0.293-0.345-0.586-0.69-0.932\n            c-0.346-0.346-0.639-0.533-0.932-0.691l0.35-1.623l0.47-0.469c0,0,0.883,0.018,1.881,1.016c0.997,0.996,1.016,1.881,1.016,1.881\n            L5.68,17.217z\"/>\n        </svg>\n    </button>\n\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"richTextToolbar\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M3.135,6.89c0.933-0.725,1.707-0.225,2.74,0.971c0.116,0.135,0.272-0.023,0.361-0.1\n            C6.324,7.683,7.687,6.456,7.754,6.4C7.82,6.341,7.9,6.231,7.795,6.108C7.688,5.985,7.301,5.483,7.052,5.157\n            c-1.808-2.365,4.946-3.969,3.909-3.994c-0.528-0.014-2.646-0.039-2.963-0.004C6.715,1.294,5.104,2.493,4.293,3.052\n            C3.232,3.778,2.836,4.204,2.771,4.263c-0.3,0.262-0.048,0.867-0.592,1.344C1.604,6.11,1.245,5.729,0.912,6.021\n            C0.747,6.167,0.285,6.513,0.153,6.628C0.02,6.745-0.004,6.942,0.132,7.099c0,0,1.264,1.396,1.37,1.52\n            C1.607,8.741,1.893,8.847,2.069,8.69c0.177-0.156,0.632-0.553,0.708-0.623C2.855,8.001,2.727,7.206,3.135,6.89z M8.843,7.407\n            c-0.12-0.139-0.269-0.143-0.397-0.029L7.012,8.63c-0.113,0.1-0.129,0.283-0.027,0.4l8.294,9.439c0.194,0.223,0.53,0.246,0.751,0.053\n            L17,17.709c0.222-0.195,0.245-0.533,0.052-0.758L8.843,7.407z M19.902,3.39c-0.074-0.494-0.33-0.391-0.463-0.182\n            c-0.133,0.211-0.721,1.102-0.963,1.506c-0.24,0.4-0.832,1.191-1.934,0.41c-1.148-0.811-0.749-1.377-0.549-1.758\n            c0.201-0.383,0.818-1.457,0.907-1.59c0.089-0.135-0.015-0.527-0.371-0.363c-0.357,0.164-2.523,1.025-2.823,2.26\n            c-0.307,1.256,0.257,2.379-0.85,3.494l-1.343,1.4l1.349,1.566l1.654-1.57c0.394-0.396,1.236-0.781,1.998-0.607\n            c1.633,0.369,2.524-0.244,3.061-1.258C20.057,5.792,19.977,3.884,19.902,3.39z M2.739,17.053c-0.208,0.209-0.208,0.549,0,0.758\n            l0.951,0.93c0.208,0.209,0.538,0.121,0.746-0.088l4.907-4.824L7.84,12.115L2.739,17.053z\"/>\n        </svg>\n    </button>\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__text\">\n    Saving...\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div style=\"flex: 1\"></div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-logout\" ref=\"logout\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M19,10l-6-5v3H6v4h7v3L19,10z M3,3h8V1H3C1.9,1,1,1.9,1,3v14c0,1.1,0.9,2,2,2h8v-2H3V3z\"/>\n        </svg>\n    </button>\n</div>";
 
 /***/ }),
-/* 55 */
+/* 56 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -13831,200 +14104,127 @@ var WindowManager = function () {
 module.exports = WindowManager;
 
 /***/ }),
-/* 56 */
+/* 57 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
-/* 57 */,
 /* 58 */,
 /* 59 */,
 /* 60 */,
-/* 61 */
-/***/ (function(module, exports, __webpack_require__) {
+/* 61 */,
+/* 62 */
+/***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
-var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
-
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+/*
+    Basically a way to glue object instances on top
+    of static blot methods and provide some
+    general API via method inheritance
+ */
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+/**
+ * A base class for block embedded ifram objects
+ */
+var IframeObject = function () {
+  function IframeObject(node, value, widgetElement) {
+    _classCallCheck(this, IframeObject);
 
-var Quill = __webpack_require__(1);
-var BlockEmbed = Quill.import("blots/block/embed");
+    /**
+     * The blot element (the iframe itself)
+     */
+    this.node = node;
 
-DIMENSION_TIMER_INTERVAL = 5000;
-CSS_SCOPE_CLASS_PREFIX = "css-scope__";
+    /**
+     * The parent widget element
+     */
+    this.widgetElement = widgetElement;
 
-var IframeBlot = function (_BlockEmbed) {
-    _inherits(IframeBlot, _BlockEmbed);
+    /**
+     * The parent widget instance (rich text widget)
+     */
+    this.richText = widgetElement.widgetInstance;
 
-    function IframeBlot() {
-        _classCallCheck(this, IframeBlot);
+    /**
+     * Document of the iframe content
+     */
+    this.contentDocument = node.contentDocument;
 
-        return _possibleConstructorReturn(this, (IframeBlot.__proto__ || Object.getPrototypeOf(IframeBlot)).apply(this, arguments));
+    /**
+     * Body of the content document
+     */
+    this.contentBody = this.contentDocument.body;
+
+    /**
+     * Content div of the iframe
+     */
+    this.contentDiv = this.node.contentDiv;
+
+    this.initialize();
+
+    this.bindEventListeners();
+  }
+
+  /**
+   * Handles initialization
+   *
+   * Efectively replaces constructor
+   */
+
+
+  _createClass(IframeObject, [{
+    key: "initialize",
+    value: function initialize() {}
+    // override this
+
+
+    /**
+     * Return delta blot value
+     */
+
+  }, {
+    key: "getValue",
+    value: function getValue() {
+      // override this
+      return {};
     }
 
-    _createClass(IframeBlot, null, [{
-        key: "create",
-        value: function create(value, createIframeHandler) {
-            // create an element
-            var node = _get(IframeBlot.__proto__ || Object.getPrototypeOf(IframeBlot), "create", this).call(this);
+    /**
+     * This is called when element removal is noticed
+     * (from IframeBlot)
+     */
 
-            // set iframe attributes
-            node.setAttribute("scrolling", "no");
-            node.setAttribute("frameborder", "0");
+  }, {
+    key: "destructor",
+    value: function destructor() {
+      console.log("destructor!");
+    }
 
-            // we need a tick such that the contentDocument is available  
-            setTimeout(function () {
+    ////////////
+    // Events //
+    ////////////
 
-                // check compatibility
-                if (!node.contentDocument || !node.contentWindow) {
-                    console.error("iframe javascript interface not supported");
-                    return;
-                }
+  }, {
+    key: "bindEventListeners",
+    value: function bindEventListeners() {
+      // override this
+    }
+  }, {
+    key: "freeEventListeners",
+    value: function freeEventListeners() {
+      // override this
+      // (make sure not to forget)
+    }
+  }]);
 
-                // create content
-                IframeBlot.createContentDocument(node, value, createIframeHandler);
-            }, 1);
+  return IframeObject;
+}();
 
-            return node;
-        }
-
-        /**
-         * Create content document
-         */
-
-    }, {
-        key: "createContentDocument",
-        value: function createContentDocument(node, value, createIframeHandler) {
-            // create and register content div
-            node.contentDocument.body.innerHTML = "<div></div>";
-            node.contentDiv = node.contentDocument.body.children[0];
-
-            // remove margin and margin overflow
-            node.contentDocument.body.style.margin = "0";
-            node.contentDiv.style.padding = "1px";
-
-            // set css scopes
-            IframeBlot.setCssScopes(node);
-
-            // apply styles
-            IframeBlot.copyCssStyles(node);
-
-            // let inherited blots initialize themselves
-            if (createIframeHandler) createIframeHandler(node, value);
-
-            // start dimension update loop
-            IframeBlot.startDimensionTimer(node);
-        }
-    }, {
-        key: "setCssScopes",
-        value: function setCssScopes(node) {
-            // find parent widet
-            var el = node;
-            var widget = null;
-
-            while (el.parentElement) {
-                if (el.getAttribute("mycelium-widget") == "rich-text") {
-                    widget = el;
-                    break;
-                }
-
-                el = el.parentElement;
-            }
-
-            if (!widget) {
-                console.error("Unable to find parent widget!");
-                return;
-            }
-
-            // get css scope
-            var scope = widget.getAttribute("mycelium-css-scope");
-
-            // set scope class
-            node.contentDiv.className = CSS_SCOPE_CLASS_PREFIX + scope;
-        }
-
-        /**
-         * Applies all CSS styles to the iframe content
-         * that are in the main document body
-         */
-
-    }, {
-        key: "copyCssStyles",
-        value: function copyCssStyles(node) {
-            var links = node.ownerDocument.querySelectorAll('link[rel="stylesheet"]');
-
-            for (var i = 0; i < links.length; i++) {
-                var copy = node.contentDocument.createElement("link");
-                copy.setAttribute("href", links[i].getAttribute("href"));
-                copy.setAttribute("type", links[i].getAttribute("type"));
-                copy.setAttribute("rel", links[i].getAttribute("rel"));
-
-                node.contentDocument.body.appendChild(copy);
-            }
-        }
-
-        /**
-         * Starts the dimension timer
-         */
-
-    }, {
-        key: "startDimensionTimer",
-        value: function startDimensionTimer(node) {
-            // call the update once right after initialization
-            setTimeout(function () {
-                IframeBlot.dimensionTimerTick(node);
-            }, 500);
-
-            // random offset
-            setTimeout(function () {
-
-                // interval
-                node.dimensionTimerId = setInterval(function () {
-                    IframeBlot.dimensionTimerTick(node);
-                }, DIMENSION_TIMER_INTERVAL);
-            }, Math.random() * DIMENSION_TIMER_INTERVAL);
-        }
-
-        /**
-         * Tick of the dimension check timer
-         */
-
-    }, {
-        key: "dimensionTimerTick",
-        value: function dimensionTimerTick(node) {
-            // check node removal
-            if (!node.parentElement) {
-                clearInterval(node.dimensionTimerId);
-                return;
-            }
-
-            IframeBlot.updateDimensions(node);
-        }
-
-        /**
-         * Updates iframe height
-         */
-
-    }, {
-        key: "updateDimensions",
-        value: function updateDimensions(node) {
-            node.style.height = node.contentDiv.offsetHeight + "px";
-        }
-    }]);
-
-    return IframeBlot;
-}(BlockEmbed);
-
-IframeBlot.tagName = "iframe";
-
-module.exports = IframeBlot;
+module.exports = IframeObject;
 
 /***/ })
 /******/ ]);

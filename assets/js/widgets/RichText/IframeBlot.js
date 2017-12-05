@@ -6,7 +6,7 @@ CSS_SCOPE_CLASS_PREFIX = "css-scope__"
 
 class IframeBlot extends BlockEmbed
 {
-    static create(value, createIframeHandler)
+    static create(value, iframeObjectClass)
     {
         // create an element
         let node = super.create()
@@ -26,17 +26,25 @@ class IframeBlot extends BlockEmbed
             }
 
             // create content
-            IframeBlot.createContentDocument(node, value, createIframeHandler)
+            IframeBlot.createContentDocument(node, value, iframeObjectClass)
 
         }, 1)
 
         return node
     }
 
+    static value(node)
+    {
+        if (!node.iframeObject)
+            return {}
+
+        return node.iframeObject.getValue()
+    }
+
     /**
      * Create content document
      */
-    static createContentDocument(node, value, createIframeHandler)
+    static createContentDocument(node, value, iframeObjectClass)
     {
         // create and register content div
         node.contentDocument.body.innerHTML = "<div></div>"
@@ -46,21 +54,28 @@ class IframeBlot extends BlockEmbed
         node.contentDocument.body.style.margin = "0"
         node.contentDiv.style.padding = "1px"
 
+        // get parent widget
+        parentWidget = IframeBlot.getParentWidget(node)
+
         // set css scopes
-        IframeBlot.setCssScopes(node)
+        IframeBlot.setCssScopes(node, parentWidget)
         
         // apply styles
         IframeBlot.copyCssStyles(node)
 
-        // let inherited blots initialize themselves
-        if (createIframeHandler)
-            createIframeHandler(node, value)
+        // initialize iframe object
+        node.iframeObject = new iframeObjectClass(
+            node, value, parentWidget
+        )
 
         // start dimension update loop
         IframeBlot.startDimensionTimer(node)
     }
 
-    static setCssScopes(node)
+    /**
+     * Finds the parent widget element
+     */
+    static getParentWidget(node)
     {
         // find parent widet
         let el = node
@@ -80,11 +95,19 @@ class IframeBlot extends BlockEmbed
         if (!widget)
         {
             console.error("Unable to find parent widget!")
-            return
+            return null
         }
 
+        return widget
+    }
+
+    /**
+     * Sets proper css scopes to inner document
+     */
+    static setCssScopes(node, parentWidget)
+    {
         // get css scope
-        let scope = widget.getAttribute("mycelium-css-scope")
+        let scope = parentWidget.getAttribute("mycelium-css-scope")
 
         // set scope class
         node.contentDiv.className = CSS_SCOPE_CLASS_PREFIX + scope
@@ -140,7 +163,13 @@ class IframeBlot extends BlockEmbed
         // check node removal
         if (!node.parentElement)
         {
+            // remove timer
             clearInterval(node.dimensionTimerId)
+
+            // call destructor
+            if (node.iframeObject)
+                node.iframeObject.destructor()
+
             return
         }
 
