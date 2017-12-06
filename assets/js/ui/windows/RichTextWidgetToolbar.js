@@ -4,6 +4,7 @@ const cssClass = require("../../utils/cssClass.js")
 const Picker = require("../components/Picker.js")
 const Menu = require("../components/Menu.js")
 const RichTextWidget = require("../../widgets/RichText.js")
+const TableObject = require("../../widgets/RichText/TableBlot/TableObject.js")
 
 class RichTextWidgetToolbar extends Window
 {
@@ -33,6 +34,16 @@ class RichTextWidgetToolbar extends Window
             ]
         )
 
+        this.tableRemoveMenu = new Menu(
+            document,
+            this.refs.tableRemove,
+            "Remove",
+            [
+                { key: "row", label: "Row" },
+                { key: "column", label: "Column" }
+            ]
+        )
+
         this.registerEventListeners()
     }
 
@@ -47,8 +58,10 @@ class RichTextWidgetToolbar extends Window
         this.refs.table.addEventListener("click", this.onTableClick.bind(this))
 
         this.tableInsertMenu.on("user-click", this.onTableInsertMenuClick.bind(this))
+        this.tableInsertMenu.on("expand", this.onTableInsertMenuExapnd.bind(this))
 
-        this.refs.newRowAfter.addEventListener("click", this.onNewRowAfterClick.bind(this))
+        this.tableRemoveMenu.on("user-click", this.onTableRemoveMenuClick.bind(this))
+        this.tableRemoveMenu.on("expand", this.onTableRemoveMenuExapnd.bind(this))
 
         RichTextWidget.bus.on("selection-change", this.onSelectionChange.bind(this))
     }
@@ -111,6 +124,10 @@ class RichTextWidgetToolbar extends Window
             RichTextWidget.lastFocusedWidget.quill.focus()
     }
 
+    ////////////
+    // Tables //
+    ////////////
+
     onTableClick()
     {
         RichTextWidget.bus.fire("insert-table")
@@ -118,12 +135,58 @@ class RichTextWidgetToolbar extends Window
 
     onTableInsertMenuClick(key)
     {
-        
+        switch (key)
+        {
+            case "row-below":
+                RichTextWidget.bus.fire("insert-table-row-below")
+                break
+
+            case "row-above":
+                RichTextWidget.bus.fire("insert-table-row-above")
+                break
+
+            case "column-left":
+                RichTextWidget.bus.fire("insert-table-column-left")
+                break
+
+            case "column-right":
+                RichTextWidget.bus.fire("insert-table-column-right")
+                break
+        }
+
+        if (TableObject.lastFocusedTable)
+            TableObject.lastFocusedTable.focus()
     }
 
-    onNewRowAfterClick()
+    onTableInsertMenuExapnd()
     {
-        RichTextWidget.bus.fire("insert-table-row-after")
+        // keep table focused
+        if (TableObject.lastFocusedTable)
+            TableObject.lastFocusedTable.focus()
+    }
+
+    onTableRemoveMenuClick(key)
+    {
+        switch (key)
+        {
+            case "row":
+                RichTextWidget.bus.fire("remove-table-row")
+                break
+
+            case "column":
+                RichTextWidget.bus.fire("remove-table-column")
+                break
+        }
+
+        if (TableObject.lastFocusedTable)
+            TableObject.lastFocusedTable.focus()
+    }
+
+    onTableRemoveMenuExapnd()
+    {
+        // keep table focused
+        if (TableObject.lastFocusedTable)
+            TableObject.lastFocusedTable.focus()
     }
 }
 

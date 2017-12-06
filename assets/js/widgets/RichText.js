@@ -126,6 +126,7 @@ class RichText
         if (selection)
         {
             RichText.activeWidget = this
+            RichText.lastFocusedWidget = this
             RichText.bus.fire(
                 "selection-change", selection, this.quill.getFormat()
             )

@@ -70,7 +70,7 @@
 "use strict";
 
 
-var bind = __webpack_require__(5);
+var bind = __webpack_require__(6);
 var isBuffer = __webpack_require__(17);
 
 /*global toString:true*/
@@ -398,7 +398,7 @@ __webpack_require__(36);
 __webpack_require__(37);
 __webpack_require__(38);
 __webpack_require__(39);
-var EventBus = __webpack_require__(10);
+var EventBus = __webpack_require__(5);
 
 var RichText = function () {
     _createClass(RichText, null, [{
@@ -498,6 +498,7 @@ var RichText = function () {
             // active widget
             if (selection) {
                 RichText.activeWidget = this;
+                RichText.lastFocusedWidget = this;
                 RichText.bus.fire("selection-change", selection, this.quill.getFormat());
             } else if (selection === null && RichText.activeWidget === this) {
                 RichText.activeWidget = null;
@@ -630,10 +631,10 @@ function getDefaultAdapter() {
   var adapter;
   if (typeof XMLHttpRequest !== 'undefined') {
     // For browsers use XHR adapter
-    adapter = __webpack_require__(6);
+    adapter = __webpack_require__(7);
   } else if (typeof process !== 'undefined') {
     // For node use HTTP adapter
-    adapter = __webpack_require__(6);
+    adapter = __webpack_require__(7);
   }
   return adapter;
 }
@@ -708,6 +709,78 @@ module.exports = defaults;
 
 /***/ }),
 /* 5 */
+/***/ (function(module, exports) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var EventBus = function () {
+    function EventBus() {
+        _classCallCheck(this, EventBus);
+
+        this.listeners = {};
+        this.firing = false;
+    }
+
+    _createClass(EventBus, [{
+        key: "on",
+        value: function on(event, callback) {
+            if (this.listeners[event] === undefined) this.listeners[event] = [];
+
+            // hide some useful properties on a listener
+            // (we shouldn't write properties to the callback)
+            var listener = function listener() {
+                callback.apply(null, arguments);
+            };
+
+            listener.ignoreNext = this.firing === event;
+            listener.callback = callback;
+
+            this.listeners[event].push(listener);
+        }
+    }, {
+        key: "fire",
+        value: function fire(event, arg) {
+            this.firing = event;
+
+            var args = [];
+            for (var i = 1; i < arguments.length; i++) {
+                args.push(arguments[i]);
+            }if (this.listeners[event] === undefined) this.listeners[event] = [];
+
+            for (var _i = 0; _i < this.listeners[event].length; _i++) {
+                if (this.listeners[event][_i].ignoreNext) {
+                    this.listeners[event][_i].ignoreNext = false;
+                    continue;
+                }
+
+                this.listeners[event][_i].apply(null, args);
+            }
+
+            this.firing = false;
+        }
+    }, {
+        key: "off",
+        value: function off(event, callback) {
+            if (this.listeners[event] === undefined) return;
+
+            for (var i = 0; i < this.listeners[event].length; i++) {
+                if (this.listeners[event][i].callback === callback) {
+                    this.listeners[event].splice(i, 1);
+                    return;
+                }
+            }
+        }
+    }]);
+
+    return EventBus;
+}();
+
+module.exports = EventBus;
+
+/***/ }),
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -725,7 +798,7 @@ module.exports = function bind(fn, thisArg) {
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -736,7 +809,7 @@ var settle = __webpack_require__(21);
 var buildURL = __webpack_require__(23);
 var parseHeaders = __webpack_require__(24);
 var isURLSameOrigin = __webpack_require__(25);
-var createError = __webpack_require__(7);
+var createError = __webpack_require__(8);
 var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(26);
 
 module.exports = function xhrAdapter(config) {
@@ -912,7 +985,7 @@ module.exports = function xhrAdapter(config) {
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -937,7 +1010,7 @@ module.exports = function createError(message, config, code, request, response) 
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -949,7 +1022,7 @@ module.exports = function isCancel(value) {
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -973,78 +1046,6 @@ Cancel.prototype.__CANCEL__ = true;
 
 module.exports = Cancel;
 
-
-/***/ }),
-/* 10 */
-/***/ (function(module, exports) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var EventBus = function () {
-    function EventBus() {
-        _classCallCheck(this, EventBus);
-
-        this.listeners = {};
-        this.firing = false;
-    }
-
-    _createClass(EventBus, [{
-        key: "on",
-        value: function on(event, callback) {
-            if (this.listeners[event] === undefined) this.listeners[event] = [];
-
-            // hide some useful properties on a listener
-            // (we shouldn't write properties to the callback)
-            var listener = function listener() {
-                callback.apply(null, arguments);
-            };
-
-            listener.ignoreNext = this.firing === event;
-            listener.callback = callback;
-
-            this.listeners[event].push(listener);
-        }
-    }, {
-        key: "fire",
-        value: function fire(event, arg) {
-            this.firing = event;
-
-            var args = [];
-            for (var i = 1; i < arguments.length; i++) {
-                args.push(arguments[i]);
-            }if (this.listeners[event] === undefined) this.listeners[event] = [];
-
-            for (var _i = 0; _i < this.listeners[event].length; _i++) {
-                if (this.listeners[event][_i].ignoreNext) {
-                    this.listeners[event][_i].ignoreNext = false;
-                    continue;
-                }
-
-                this.listeners[event][_i].apply(null, args);
-            }
-
-            this.firing = false;
-        }
-    }, {
-        key: "off",
-        value: function off(event, callback) {
-            if (this.listeners[event] === undefined) return;
-
-            for (var i = 0; i < this.listeners[event].length; i++) {
-                if (this.listeners[event][i].callback === callback) {
-                    this.listeners[event].splice(i, 1);
-                    return;
-                }
-            }
-        }
-    }]);
-
-    return EventBus;
-}();
-
-module.exports = EventBus;
 
 /***/ }),
 /* 11 */
@@ -1079,7 +1080,7 @@ module.exports = cssClass;
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(13);
-module.exports = __webpack_require__(55);
+module.exports = __webpack_require__(57);
 
 
 /***/ }),
@@ -1114,7 +1115,7 @@ window.mycelium.class.widgets.RichText = __webpack_require__(2);
 if (!window.mycelium.class.ui) window.mycelium.class.ui = {};
 
 window.mycelium.class.ui.Toolbar = __webpack_require__(45);
-window.mycelium.class.ui.WindowManager = __webpack_require__(54);
+window.mycelium.class.ui.WindowManager = __webpack_require__(56);
 
 /***/ }),
 /* 14 */
@@ -1358,7 +1359,7 @@ module.exports = __webpack_require__(16);
 
 
 var utils = __webpack_require__(0);
-var bind = __webpack_require__(5);
+var bind = __webpack_require__(6);
 var Axios = __webpack_require__(18);
 var defaults = __webpack_require__(4);
 
@@ -1393,9 +1394,9 @@ axios.create = function create(instanceConfig) {
 };
 
 // Expose Cancel & CancelToken
-axios.Cancel = __webpack_require__(9);
+axios.Cancel = __webpack_require__(10);
 axios.CancelToken = __webpack_require__(33);
-axios.isCancel = __webpack_require__(8);
+axios.isCancel = __webpack_require__(9);
 
 // Expose all/spread
 axios.all = function all(promises) {
@@ -1745,7 +1746,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
 "use strict";
 
 
-var createError = __webpack_require__(7);
+var createError = __webpack_require__(8);
 
 /**
  * Resolve or reject a Promise based on response status.
@@ -2164,7 +2165,7 @@ module.exports = InterceptorManager;
 
 var utils = __webpack_require__(0);
 var transformData = __webpack_require__(30);
-var isCancel = __webpack_require__(8);
+var isCancel = __webpack_require__(9);
 var defaults = __webpack_require__(4);
 
 /**
@@ -2317,7 +2318,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
 "use strict";
 
 
-var Cancel = __webpack_require__(9);
+var Cancel = __webpack_require__(10);
 
 /**
  * A `CancelToken` is an object that can be used to request cancellation of an operation.
@@ -2901,6 +2902,12 @@ var TableObject = function (_IframeObject) {
             this.selectedCell = null;
 
             /**
+             * The last selected cell
+             * (again handled from within the cell class)
+             */
+            this.lastSelectedCell = null;
+
+            /**
              * Event handlers to be freed on removal
              */
             this.eventHandlers = [];
@@ -2927,6 +2934,8 @@ var TableObject = function (_IframeObject) {
     }, {
         key: "onQuillLoaded",
         value: function onQuillLoaded() {
+            // initial table size
+            this.addRow(3);
             this.addRow(3);
         }
 
@@ -2953,13 +2962,34 @@ var TableObject = function (_IframeObject) {
         }
 
         /**
+         * Removes a given row
+         */
+
+    }, {
+        key: "removeRow",
+        value: function removeRow(index) {
+            if (this.rows.length <= 1) return;
+
+            if (index < 0 || index > this.rows.length - 1) return;
+
+            var row = this.rows[index];
+            this.rows.splice(index, 1);
+            row.remove();
+        }
+
+        /**
          * A cell was deselected
          * (called from the TableCell class)
          */
 
     }, {
         key: "cellDeselected",
-        value: function cellDeselected() {}
+        value: function cellDeselected() {
+            if (TableObject.activeTable === this) {
+                TableObject.lastFocusedTable = this;
+                TableObject.activeTable = null;
+            }
+        }
 
         /**
          * A new cell was selected
@@ -2968,7 +2998,24 @@ var TableObject = function (_IframeObject) {
 
     }, {
         key: "cellSelected",
-        value: function cellSelected() {}
+        value: function cellSelected() {
+            TableObject.lastFocusedTable = this;
+            TableObject.activeTable = this;
+        }
+
+        /**
+         * Focus this table
+         */
+
+    }, {
+        key: "focus",
+        value: function focus() {
+            if (this.lastSelectedCell && !this.lastSelectedCell.removed) {
+                this.lastSelectedCell.quill.focus();
+            } else if (this.rows.length > 0 && this.rows[0].cells.length > 0) {
+                this.rows[0].cells[0].quill.focus();
+            }
+        }
 
         /**
          * Returns quill delta value
@@ -2988,6 +3035,10 @@ var TableObject = function (_IframeObject) {
             };
         }
 
+        ////////////
+        // Events //
+        ////////////
+
         /**
          * Register all event handlers
          * (called from the super class)
@@ -2996,17 +3047,29 @@ var TableObject = function (_IframeObject) {
     }, {
         key: "bindEventListeners",
         value: function bindEventListeners() {
-            this.bindToRichTextBus("insert-table-row-after", this.onInsertRowAfter);
+            this.bindToRichTextBus("insert-table-row-below", this.onInsertRowBelow);
+
+            this.bindToRichTextBus("insert-table-row-above", this.onInsertRowAbove);
+
+            this.bindToRichTextBus("remove-table-row", this.onRemoveRow);
         }
-
-        /**
-         * When toolbar "add row after" is clicked
-         */
-
     }, {
-        key: "onInsertRowAfter",
-        value: function onInsertRowAfter() {
+        key: "onInsertRowBelow",
+        value: function onInsertRowBelow() {
             this.addRow(this.selectedCell.element.parentElement.children.length, this.selectedCell.getPosition().row + 1);
+        }
+    }, {
+        key: "onInsertRowAbove",
+        value: function onInsertRowAbove() {
+            this.addRow(this.selectedCell.element.parentElement.children.length, this.selectedCell.getPosition().row);
+        }
+    }, {
+        key: "onRemoveRow",
+        value: function onRemoveRow() {
+            var pos = this.selectedCell.getPosition();
+            this.removeRow(pos.row);
+
+            if (pos.row >= 0 && pos.row < this.rows.length) this.rows[pos.row].cells[pos.column].focus();
         }
 
         /**
@@ -3025,7 +3088,7 @@ var TableObject = function (_IframeObject) {
             RichText.bus.on(event, function () {
 
                 // only if active
-                if (!this.selectedCell) return;
+                if (TableObject.lastFocusedTable !== this) return;
 
                 // call the handler
                 handler.apply(this, arguments);
@@ -3053,6 +3116,20 @@ var TableObject = function (_IframeObject) {
 
     return TableObject;
 }(IframeObject);
+
+/**
+ * Stores the currently active table
+ */
+
+
+TableObject.activeTable = null;
+
+/**
+ * The table that has been the last one to be blurred (/focused)
+ *
+ * For regaining focus after UI interactions
+ */
+TableObject.lastFocusedTable = null;
 
 module.exports = TableObject;
 
@@ -3245,6 +3322,11 @@ var TableRow = function () {
          */
         this.cells = [];
 
+        /**
+         * Indicates if the row has been removed from the table
+         */
+        this.removed = false;
+
         this.createElement();
 
         for (var i = 0; i < cellCount; i++) {
@@ -3282,6 +3364,22 @@ var TableRow = function () {
                 this.element.appendChild(cell.element);
             }
         }
+
+        /**
+         * Remove the row from table
+         */
+
+    }, {
+        key: "remove",
+        value: function remove() {
+            this.element.remove();
+
+            this.removed = true;
+
+            for (var i = 0; i < this.cells.length; i++) {
+                this.cells[i].remove();
+            }
+        }
     }]);
 
     return TableRow;
@@ -3305,6 +3403,11 @@ var TableCell = function () {
          * Table object reference
          */
         this.tableObject = tableObject;
+
+        /**
+         * Indicates if the cell has been removed from the table
+         */
+        this.removed = false;
 
         this.createElement();
     }
@@ -3337,13 +3440,25 @@ var TableCell = function () {
             if (selection === null) {
                 if (this.tableObject.selectedCell === this) {
                     this.tableObject.selectedCell = null;
+                    this.tableObject.lastSelectedCell = this;
 
                     this.tableObject.cellDeselected();
                 }
             } else {
                 this.tableObject.selectedCell = this;
+                this.tableObject.lastSelectedCell = this;
                 this.tableObject.cellSelected();
             }
+        }
+
+        /**
+         * Focus this cell
+         */
+
+    }, {
+        key: "focus",
+        value: function focus() {
+            this.quill.focus();
         }
 
         /**
@@ -3367,6 +3482,8 @@ var TableCell = function () {
         key: "remove",
         value: function remove() {
             this.element.remove();
+
+            this.removed = true;
 
             // remove event listeners
             this.quill.off("selection-change", this.selectionChangeListener);
@@ -3422,7 +3539,7 @@ var Toolbar = function () {
 
             // create toolbar element
             var element = document.createElement("div");
-            element.innerHTML = __webpack_require__(53);
+            element.innerHTML = __webpack_require__(55);
             element.className = "mc-toolbar";
 
             // create spacer
@@ -3509,8 +3626,9 @@ var Window = __webpack_require__(47);
 var getRefs = __webpack_require__(3);
 var cssClass = __webpack_require__(11);
 var Picker = __webpack_require__(50);
-var Menu = __webpack_require__(60);
+var Menu = __webpack_require__(52);
 var RichTextWidget = __webpack_require__(2);
+var TableObject = __webpack_require__(41);
 
 var RichTextWidgetToolbar = function (_Window) {
     _inherits(RichTextWidgetToolbar, _Window);
@@ -3520,13 +3638,15 @@ var RichTextWidgetToolbar = function (_Window) {
 
         var _this = _possibleConstructorReturn(this, (RichTextWidgetToolbar.__proto__ || Object.getPrototypeOf(RichTextWidgetToolbar)).call(this, window, document, options));
 
-        _this.content.innerHTML = __webpack_require__(52);
+        _this.content.innerHTML = __webpack_require__(54);
 
         _this.refs = getRefs(_this.content);
 
         _this.headerPicker = new Picker(document, _this.refs.header, [{ key: "p", label: "Normal" }, { key: "h1", label: "Heading 1" }, { key: "h2", label: "Heading 2" }]);
 
         _this.tableInsertMenu = new Menu(document, _this.refs.tableInsert, "Insert", [{ key: "row-below", label: "Row below" }, { key: "row-above", label: "Row above" }, { key: "column-left", label: "Column left" }, { key: "column-right", label: "Column right" }]);
+
+        _this.tableRemoveMenu = new Menu(document, _this.refs.tableRemove, "Remove", [{ key: "row", label: "Row" }, { key: "column", label: "Column" }]);
 
         _this.registerEventListeners();
         return _this;
@@ -3544,8 +3664,10 @@ var RichTextWidgetToolbar = function (_Window) {
             this.refs.table.addEventListener("click", this.onTableClick.bind(this));
 
             this.tableInsertMenu.on("user-click", this.onTableInsertMenuClick.bind(this));
+            this.tableInsertMenu.on("expand", this.onTableInsertMenuExapnd.bind(this));
 
-            this.refs.newRowAfter.addEventListener("click", this.onNewRowAfterClick.bind(this));
+            this.tableRemoveMenu.on("user-click", this.onTableRemoveMenuClick.bind(this));
+            this.tableRemoveMenu.on("expand", this.onTableRemoveMenuExapnd.bind(this));
 
             RichTextWidget.bus.on("selection-change", this.onSelectionChange.bind(this));
         }
@@ -3600,6 +3722,11 @@ var RichTextWidgetToolbar = function (_Window) {
             // keep the widget focused
             if (RichTextWidget.lastFocusedWidget) RichTextWidget.lastFocusedWidget.quill.focus();
         }
+
+        ////////////
+        // Tables //
+        ////////////
+
     }, {
         key: "onTableClick",
         value: function onTableClick() {
@@ -3607,11 +3734,53 @@ var RichTextWidgetToolbar = function (_Window) {
         }
     }, {
         key: "onTableInsertMenuClick",
-        value: function onTableInsertMenuClick(key) {}
+        value: function onTableInsertMenuClick(key) {
+            switch (key) {
+                case "row-below":
+                    RichTextWidget.bus.fire("insert-table-row-below");
+                    break;
+
+                case "row-above":
+                    RichTextWidget.bus.fire("insert-table-row-above");
+                    break;
+
+                case "column-left":
+                    RichTextWidget.bus.fire("insert-table-column-left");
+                    break;
+
+                case "column-right":
+                    RichTextWidget.bus.fire("insert-table-column-right");
+                    break;
+            }
+
+            if (TableObject.lastFocusedTable) TableObject.lastFocusedTable.focus();
+        }
     }, {
-        key: "onNewRowAfterClick",
-        value: function onNewRowAfterClick() {
-            RichTextWidget.bus.fire("insert-table-row-after");
+        key: "onTableInsertMenuExapnd",
+        value: function onTableInsertMenuExapnd() {
+            // keep table focused
+            if (TableObject.lastFocusedTable) TableObject.lastFocusedTable.focus();
+        }
+    }, {
+        key: "onTableRemoveMenuClick",
+        value: function onTableRemoveMenuClick(key) {
+            switch (key) {
+                case "row":
+                    RichTextWidget.bus.fire("remove-table-row");
+                    break;
+
+                case "column":
+                    RichTextWidget.bus.fire("remove-table-column");
+                    break;
+            }
+
+            if (TableObject.lastFocusedTable) TableObject.lastFocusedTable.focus();
+        }
+    }, {
+        key: "onTableRemoveMenuExapnd",
+        value: function onTableRemoveMenuExapnd() {
+            // keep table focused
+            if (TableObject.lastFocusedTable) TableObject.lastFocusedTable.focus();
         }
     }]);
 
@@ -3854,7 +4023,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventBus = __webpack_require__(10);
+var EventBus = __webpack_require__(5);
 
 /*
     Events:
@@ -4026,80 +4195,13 @@ module.exports = "<span class=\"mc-picker\">\n    <span class=\"mc-picker__label
 
 /***/ }),
 /* 52 */
-/***/ (function(module, exports) {
-
-module.exports = "<div class=\"mc-rtwt\">\n\n    <!-- set bold style -->\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <!-- set italic style -->\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- pick header type -->\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- add a table -->\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        <svg viewBox=\"0 0 26 28\">\n            <g fill=\"#444\" transform=\"scale(0.02734375 0.02734375)\">\n                <path d=\"M292.571 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM950.857 164.571v621.714c0 50.286-41.143 91.429-91.429 91.429h-768c-50.286 0-91.429-41.143-91.429-91.429v-621.714c0-50.286 41.143-91.429 91.429-91.429h768c50.286 0 91.429 41.143 91.429 91.429z\" />\n            </g>\n        </svg>\n    </button>\n\n    <!-- insert something -->\n    <span ref=\"tableInsert\"></span>\n\n    <!-- insert table row after current -->\n    <button class=\"mc-rtwt__button\" ref=\"newRowAfter\">\n        row after\n    </button>\n</div>";
-
-/***/ }),
-/* 53 */
-/***/ (function(module, exports) {
-
-module.exports = "<!--\n    Icons used:\n    http://www.entypo.com/\n-->\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"toggleEdit\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M17.561,2.439c-1.442-1.443-2.525-1.227-2.525-1.227L8.984,7.264L2.21,14.037L1.2,18.799l4.763-1.01\n            l6.774-6.771l6.052-6.052C18.788,4.966,19.005,3.883,17.561,2.439z M5.68,17.217l-1.624,0.35c-0.156-0.293-0.345-0.586-0.69-0.932\n            c-0.346-0.346-0.639-0.533-0.932-0.691l0.35-1.623l0.47-0.469c0,0,0.883,0.018,1.881,1.016c0.997,0.996,1.016,1.881,1.016,1.881\n            L5.68,17.217z\"/>\n        </svg>\n    </button>\n\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"richTextToolbar\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M3.135,6.89c0.933-0.725,1.707-0.225,2.74,0.971c0.116,0.135,0.272-0.023,0.361-0.1\n            C6.324,7.683,7.687,6.456,7.754,6.4C7.82,6.341,7.9,6.231,7.795,6.108C7.688,5.985,7.301,5.483,7.052,5.157\n            c-1.808-2.365,4.946-3.969,3.909-3.994c-0.528-0.014-2.646-0.039-2.963-0.004C6.715,1.294,5.104,2.493,4.293,3.052\n            C3.232,3.778,2.836,4.204,2.771,4.263c-0.3,0.262-0.048,0.867-0.592,1.344C1.604,6.11,1.245,5.729,0.912,6.021\n            C0.747,6.167,0.285,6.513,0.153,6.628C0.02,6.745-0.004,6.942,0.132,7.099c0,0,1.264,1.396,1.37,1.52\n            C1.607,8.741,1.893,8.847,2.069,8.69c0.177-0.156,0.632-0.553,0.708-0.623C2.855,8.001,2.727,7.206,3.135,6.89z M8.843,7.407\n            c-0.12-0.139-0.269-0.143-0.397-0.029L7.012,8.63c-0.113,0.1-0.129,0.283-0.027,0.4l8.294,9.439c0.194,0.223,0.53,0.246,0.751,0.053\n            L17,17.709c0.222-0.195,0.245-0.533,0.052-0.758L8.843,7.407z M19.902,3.39c-0.074-0.494-0.33-0.391-0.463-0.182\n            c-0.133,0.211-0.721,1.102-0.963,1.506c-0.24,0.4-0.832,1.191-1.934,0.41c-1.148-0.811-0.749-1.377-0.549-1.758\n            c0.201-0.383,0.818-1.457,0.907-1.59c0.089-0.135-0.015-0.527-0.371-0.363c-0.357,0.164-2.523,1.025-2.823,2.26\n            c-0.307,1.256,0.257,2.379-0.85,3.494l-1.343,1.4l1.349,1.566l1.654-1.57c0.394-0.396,1.236-0.781,1.998-0.607\n            c1.633,0.369,2.524-0.244,3.061-1.258C20.057,5.792,19.977,3.884,19.902,3.39z M2.739,17.053c-0.208,0.209-0.208,0.549,0,0.758\n            l0.951,0.93c0.208,0.209,0.538,0.121,0.746-0.088l4.907-4.824L7.84,12.115L2.739,17.053z\"/>\n        </svg>\n    </button>\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__text\">\n    Saving...\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div style=\"flex: 1\"></div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-logout\" ref=\"logout\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M19,10l-6-5v3H6v4h7v3L19,10z M3,3h8V1H3C1.9,1,1,1.9,1,3v14c0,1.1,0.9,2,2,2h8v-2H3V3z\"/>\n        </svg>\n    </button>\n</div>";
-
-/***/ }),
-/* 54 */
-/***/ (function(module, exports) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var WindowManager = function () {
-    function WindowManager(document) {
-        _classCallCheck(this, WindowManager);
-
-        this.windows = [];
-
-        this.createDOM(document);
-    }
-
-    _createClass(WindowManager, [{
-        key: "createDOM",
-        value: function createDOM(document) {
-            var element = document.createElement("div");
-            element.className = "mc-window-manager";
-
-            document.body.appendChild(element);
-
-            this.element = element;
-        }
-
-        /**
-         * Registers a new window
-         */
-
-    }, {
-        key: "registerWindow",
-        value: function registerWindow(win) {
-            this.windows.push(win);
-            this.element.appendChild(win.element);
-        }
-    }]);
-
-    return WindowManager;
-}();
-
-module.exports = WindowManager;
-
-/***/ }),
-/* 55 */
-/***/ (function(module, exports) {
-
-// removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 56 */,
-/* 57 */,
-/* 58 */,
-/* 59 */,
-/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventBus = __webpack_require__(10);
+var EventBus = __webpack_require__(5);
 
 /*
     Events:
@@ -4160,7 +4262,7 @@ var Menu = function () {
         key: "createDOM",
         value: function createDOM(label) {
             this.element.className += "mc-menu";
-            this.element.innerHTML = __webpack_require__(61);
+            this.element.innerHTML = __webpack_require__(53);
 
             this.label = this.element.querySelector(".mc-menu__label");
             this.itemsElement = this.element.querySelector(".mc-menu__items");
@@ -4256,10 +4358,73 @@ var Menu = function () {
 module.exports = Menu;
 
 /***/ }),
-/* 61 */
+/* 53 */
 /***/ (function(module, exports) {
 
 module.exports = "<span class=\"mc-menu\">\n    <span class=\"mc-menu__label\" data-label=\"\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-menu__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-menu__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-menu__items\" style=\"display: none\">\n    </span>\n</span>";
+
+/***/ }),
+/* 54 */
+/***/ (function(module, exports) {
+
+module.exports = "<div class=\"mc-rtwt\">\n\n    <!-- set bold style -->\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <!-- set italic style -->\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- pick header type -->\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- add a table -->\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        <svg viewBox=\"0 0 26 28\">\n            <g fill=\"#444\" transform=\"scale(0.02734375 0.02734375)\">\n                <path d=\"M292.571 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM950.857 164.571v621.714c0 50.286-41.143 91.429-91.429 91.429h-768c-50.286 0-91.429-41.143-91.429-91.429v-621.714c0-50.286 41.143-91.429 91.429-91.429h768c50.286 0 91.429 41.143 91.429 91.429z\" />\n            </g>\n        </svg>\n    </button>\n\n    <!-- insert something to a table -->\n    <span ref=\"tableInsert\"></span>\n\n    <!-- remove something from a table -->\n    <span ref=\"tableRemove\"></span>\n</div>";
+
+/***/ }),
+/* 55 */
+/***/ (function(module, exports) {
+
+module.exports = "<!--\n    Icons used:\n    http://www.entypo.com/\n-->\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"toggleEdit\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M17.561,2.439c-1.442-1.443-2.525-1.227-2.525-1.227L8.984,7.264L2.21,14.037L1.2,18.799l4.763-1.01\n            l6.774-6.771l6.052-6.052C18.788,4.966,19.005,3.883,17.561,2.439z M5.68,17.217l-1.624,0.35c-0.156-0.293-0.345-0.586-0.69-0.932\n            c-0.346-0.346-0.639-0.533-0.932-0.691l0.35-1.623l0.47-0.469c0,0,0.883,0.018,1.881,1.016c0.997,0.996,1.016,1.881,1.016,1.881\n            L5.68,17.217z\"/>\n        </svg>\n    </button>\n\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"richTextToolbar\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M3.135,6.89c0.933-0.725,1.707-0.225,2.74,0.971c0.116,0.135,0.272-0.023,0.361-0.1\n            C6.324,7.683,7.687,6.456,7.754,6.4C7.82,6.341,7.9,6.231,7.795,6.108C7.688,5.985,7.301,5.483,7.052,5.157\n            c-1.808-2.365,4.946-3.969,3.909-3.994c-0.528-0.014-2.646-0.039-2.963-0.004C6.715,1.294,5.104,2.493,4.293,3.052\n            C3.232,3.778,2.836,4.204,2.771,4.263c-0.3,0.262-0.048,0.867-0.592,1.344C1.604,6.11,1.245,5.729,0.912,6.021\n            C0.747,6.167,0.285,6.513,0.153,6.628C0.02,6.745-0.004,6.942,0.132,7.099c0,0,1.264,1.396,1.37,1.52\n            C1.607,8.741,1.893,8.847,2.069,8.69c0.177-0.156,0.632-0.553,0.708-0.623C2.855,8.001,2.727,7.206,3.135,6.89z M8.843,7.407\n            c-0.12-0.139-0.269-0.143-0.397-0.029L7.012,8.63c-0.113,0.1-0.129,0.283-0.027,0.4l8.294,9.439c0.194,0.223,0.53,0.246,0.751,0.053\n            L17,17.709c0.222-0.195,0.245-0.533,0.052-0.758L8.843,7.407z M19.902,3.39c-0.074-0.494-0.33-0.391-0.463-0.182\n            c-0.133,0.211-0.721,1.102-0.963,1.506c-0.24,0.4-0.832,1.191-1.934,0.41c-1.148-0.811-0.749-1.377-0.549-1.758\n            c0.201-0.383,0.818-1.457,0.907-1.59c0.089-0.135-0.015-0.527-0.371-0.363c-0.357,0.164-2.523,1.025-2.823,2.26\n            c-0.307,1.256,0.257,2.379-0.85,3.494l-1.343,1.4l1.349,1.566l1.654-1.57c0.394-0.396,1.236-0.781,1.998-0.607\n            c1.633,0.369,2.524-0.244,3.061-1.258C20.057,5.792,19.977,3.884,19.902,3.39z M2.739,17.053c-0.208,0.209-0.208,0.549,0,0.758\n            l0.951,0.93c0.208,0.209,0.538,0.121,0.746-0.088l4.907-4.824L7.84,12.115L2.739,17.053z\"/>\n        </svg>\n    </button>\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__text\">\n    Saving...\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div style=\"flex: 1\"></div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-logout\" ref=\"logout\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M19,10l-6-5v3H6v4h7v3L19,10z M3,3h8V1H3C1.9,1,1,1.9,1,3v14c0,1.1,0.9,2,2,2h8v-2H3V3z\"/>\n        </svg>\n    </button>\n</div>";
+
+/***/ }),
+/* 56 */
+/***/ (function(module, exports) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var WindowManager = function () {
+    function WindowManager(document) {
+        _classCallCheck(this, WindowManager);
+
+        this.windows = [];
+
+        this.createDOM(document);
+    }
+
+    _createClass(WindowManager, [{
+        key: "createDOM",
+        value: function createDOM(document) {
+            var element = document.createElement("div");
+            element.className = "mc-window-manager";
+
+            document.body.appendChild(element);
+
+            this.element = element;
+        }
+
+        /**
+         * Registers a new window
+         */
+
+    }, {
+        key: "registerWindow",
+        value: function registerWindow(win) {
+            this.windows.push(win);
+            this.element.appendChild(win.element);
+        }
+    }]);
+
+    return WindowManager;
+}();
+
+module.exports = WindowManager;
+
+/***/ }),
+/* 57 */
+/***/ (function(module, exports) {
+
+// removed by extract-text-webpack-plugin
 
 /***/ })
 /******/ ]);

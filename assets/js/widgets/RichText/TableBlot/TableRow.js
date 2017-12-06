@@ -14,6 +14,11 @@ class TableRow
          */
         this.cells = []
 
+        /**
+         * Indicates if the row has been removed from the table
+         */
+        this.removed = false
+
         this.createElement()
 
         for (let i = 0; i < cellCount; i++)
@@ -47,6 +52,19 @@ class TableRow
             this.cells.push(cell)
             this.element.appendChild(cell.element)
         }
+    }
+
+    /**
+     * Remove the row from table
+     */
+    remove()
+    {
+        this.element.remove()
+
+        this.removed = true
+
+        for (let i = 0; i < this.cells.length; i++)
+            this.cells[i].remove()
     }
 }
 

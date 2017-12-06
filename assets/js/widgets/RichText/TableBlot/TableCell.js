@@ -7,6 +7,11 @@ class TableCell
          */
         this.tableObject = tableObject
 
+        /**
+         * Indicates if the cell has been removed from the table
+         */
+        this.removed = false
+
         this.createElement()
     }
 
@@ -35,6 +40,7 @@ class TableCell
             if (this.tableObject.selectedCell === this)
             {
                 this.tableObject.selectedCell = null
+                this.tableObject.lastSelectedCell = this
 
                 this.tableObject.cellDeselected()
             }
@@ -42,8 +48,17 @@ class TableCell
         else
         {
             this.tableObject.selectedCell = this
+            this.tableObject.lastSelectedCell = this
             this.tableObject.cellSelected()
         }
+    }
+
+    /**
+     * Focus this cell
+     */
+    focus()
+    {
+        this.quill.focus()
     }
 
     /**
@@ -69,6 +84,8 @@ class TableCell
     remove()
     {
         this.element.remove()
+
+        this.removed = true
 
         // remove event listeners
         this.quill.off("selection-change", this.selectionChangeListener)

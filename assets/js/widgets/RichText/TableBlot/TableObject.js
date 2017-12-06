@@ -27,6 +27,12 @@ class TableObject extends IframeObject
         this.selectedCell = null
 
         /**
+         * The last selected cell
+         * (again handled from within the cell class)
+         */
+        this.lastSelectedCell = null
+
+        /**
          * Event handlers to be freed on removal
          */
         this.eventHandlers = []
@@ -56,6 +62,8 @@ class TableObject extends IframeObject
      */
     onQuillLoaded()
     {
+        // initial table size
+        this.addRow(3)
         this.addRow(3)
     }
 
@@ -83,12 +91,32 @@ class TableObject extends IframeObject
     }
 
     /**
+     * Removes a given row
+     */
+    removeRow(index)
+    {
+        if (this.rows.length <= 1)
+            return
+
+        if (index < 0 || index > this.rows.length - 1)
+            return
+
+        let row = this.rows[index]
+        this.rows.splice(index, 1)
+        row.remove()
+    }
+
+    /**
      * A cell was deselected
      * (called from the TableCell class)
      */
     cellDeselected()
     {
-
+        if (TableObject.activeTable === this)
+        {
+            TableObject.lastFocusedTable = this
+            TableObject.activeTable = null
+        }
     }
 
     /**
@@ -97,7 +125,23 @@ class TableObject extends IframeObject
      */
     cellSelected()
     {
-        
+        TableObject.lastFocusedTable = this
+        TableObject.activeTable = this
+    }
+
+    /**
+     * Focus this table
+     */
+    focus()
+    {
+        if (this.lastSelectedCell && !this.lastSelectedCell.removed)
+        {
+            this.lastSelectedCell.quill.focus()
+        }
+        else if (this.rows.length > 0 && this.rows[0].cells.length > 0)
+        {
+            this.rows[0].cells[0].quill.focus()
+        }
     }
 
     /**
@@ -116,6 +160,10 @@ class TableObject extends IframeObject
         }
     }
 
+    ////////////
+    // Events //
+    ////////////
+
     /**
      * Register all event handlers
      * (called from the super class)
@@ -123,20 +171,44 @@ class TableObject extends IframeObject
     bindEventListeners()
     {
         this.bindToRichTextBus(
-            "insert-table-row-after",
-            this.onInsertRowAfter
+            "insert-table-row-below",
+            this.onInsertRowBelow
+        )
+
+        this.bindToRichTextBus(
+            "insert-table-row-above",
+            this.onInsertRowAbove
+        )
+
+        this.bindToRichTextBus(
+            "remove-table-row",
+            this.onRemoveRow
         )
     }
 
-    /**
-     * When toolbar "add row after" is clicked
-     */
-    onInsertRowAfter()
+    onInsertRowBelow()
     {
         this.addRow(
             this.selectedCell.element.parentElement.children.length,
             this.selectedCell.getPosition().row + 1
         )
+    }
+
+    onInsertRowAbove()
+    {
+        this.addRow(
+            this.selectedCell.element.parentElement.children.length,
+            this.selectedCell.getPosition().row
+        )
+    }
+
+    onRemoveRow()
+    {
+        let pos = this.selectedCell.getPosition()
+        this.removeRow(pos.row)
+
+        if (pos.row >= 0 && pos.row < this.rows.length)
+            this.rows[pos.row].cells[pos.column].focus()
     }
 
     /**
@@ -153,7 +225,7 @@ class TableObject extends IframeObject
         RichText.bus.on(event, function() {
 
             // only if active
-            if (!this.selectedCell)
+            if (TableObject.lastFocusedTable !== this)
                 return
 
             // call the handler
@@ -177,5 +249,17 @@ class TableObject extends IframeObject
             RichText.bus.off(i, this.eventHandlers)
     }
 }
+
+/**
+ * Stores the currently active table
+ */
+TableObject.activeTable = null
+
+/**
+ * The table that has been the last one to be blurred (/focused)
+ *
+ * For regaining focus after UI interactions
+ */
+TableObject.lastFocusedTable = null
 
 module.exports = TableObject
