@@ -30,6 +30,10 @@ class MyceliumServiceProvider extends ServiceProvider
         $this->publishes([
             __DIR__ . "/../dist/mycelium.js" =>
                 public_path("js/vendor/mycelium/mycelium.js"),
+            
+            __DIR__ . "/../lib/quill.core.1.3.4.js" =>
+                public_path("js/vendor/mycelium/quill.js"),
+
             __DIR__ . "/../dist/mycelium.css" =>
                 public_path("css/vendor/mycelium/mycelium.css")
         ], "public");

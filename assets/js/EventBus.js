@@ -11,11 +11,14 @@ class EventBus
         if (this.listeners[event] === undefined)
             this.listeners[event] = []
 
+        // hide some useful properties on a listener
+        // (we shouldn't write properties to the callback)
         let listener = function () {
             callback.apply(null, arguments)
         }
         
         listener.ignoreNext = this.firing === event
+        listener.callback = callback
 
         this.listeners[event].push(listener)
     }
@@ -43,6 +46,21 @@ class EventBus
         }
 
         this.firing = false
+    }
+
+    off(event, callback)
+    {
+        if (this.listeners[event] === undefined)
+            return
+
+        for (let i = 0; i < this.listeners[event].length; i++)
+        {
+            if (this.listeners[event][i].callback === callback)
+            {
+                this.listeners[event].splice(i, 1)
+                return
+            }
+        }
     }
 }
 

@@ -173,15 +173,8 @@ class IframeBlot extends BlockEmbed
             return
         }
 
-        IframeBlot.updateDimensions(node)
-    }
-
-    /**
-     * Updates iframe height
-     */
-    static updateDimensions(node)
-    {
-        node.style.height = node.contentDiv.offsetHeight + "px"
+        if (node.iframeObject)
+            node.iframeObject.updateDimensions()
     }
 }
 

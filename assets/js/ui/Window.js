@@ -6,8 +6,8 @@ class Window
 {
     constructor(window, document, options)
     {
-        this.$window = window
-        this.$document = document
+        this.window = window
+        this.document = document
 
         /**
          * Window position
@@ -34,46 +34,46 @@ class Window
         this.dragStartWindowPosition = null
 
         // create html stuff
-        this.$createDOM()
+        this.createDOM()
 
         this.updateDisplay()
 
-        this.$handle.addEventListener(
-            "mousedown", this.$onHandleMouseDown.bind(this)
+        this.handle.addEventListener(
+            "mousedown", this.onHandleMouseDown.bind(this)
         )
 
-        this.$window.addEventListener(
-            "mousemove", this.$onWindowMouseMove.bind(this)
+        this.window.addEventListener(
+            "mousemove", this.onWindowMouseMove.bind(this)
         )
 
-        this.$window.addEventListener(
-            "mouseup", this.$onWindowMouseUp.bind(this)
+        this.window.addEventListener(
+            "mouseup", this.onWindowMouseUp.bind(this)
         )
 
-        this.$window.addEventListener(
-            "resize", this.$onWindowResize.bind(this)
+        this.window.addEventListener(
+            "resize", this.onWindowResize.bind(this)
         )
 
-        this.$refs.transparency.addEventListener(
-            "click", this.$onTransparencyToggleClick.bind(this)
+        this.refs.transparency.addEventListener(
+            "click", this.onTransparencyToggleClick.bind(this)
         )
 
-        this.$refs.minimize.addEventListener(
+        this.refs.minimize.addEventListener(
             "click", this.minimize.bind(this)
         )
     }
 
-    $createDOM()
+    createDOM()
     {
-        let element = this.$document.createElement("div")
+        let element = this.document.createElement("div")
         element.className = "mc-window"
         element.innerHTML = require("./Window.html")
 
-        this.$element = element
-        this.$handle = element.querySelector(".mc-window__handle")
-        this.$content = element.querySelector(".mc-window__content")
+        this.element = element
+        this.handle = element.querySelector(".mc-window__handle")
+        this.content = element.querySelector(".mc-window__content")
 
-        this.$refs = getRefs(this.$element)
+        this.refs = getRefs(this.element)
     }
 
     /**
@@ -84,17 +84,17 @@ class Window
         // clip window position
         this.position.x = clamp(
             this.position.x, 0,
-            this.$window.innerWidth - this.$element.clientWidth
+            this.window.innerWidth - this.element.clientWidth
         )
         this.position.y = clamp(
             this.position.y, 0,
-            this.$window.innerHeight - this.$element.clientHeight
+            this.window.innerHeight - this.element.clientHeight
              - 50 // toolbar
         )
 
         // update rendered position
-        this.$element.style.left = this.position.x + "px"
-        this.$element.style.top = this.position.y + "px"
+        this.element.style.left = this.position.x + "px"
+        this.element.style.top = this.position.y + "px"
     }
 
     /**
@@ -105,10 +105,10 @@ class Window
         if (this.minimized)
             return
 
-        cssClass(this.$element, "mc-window--minimized", true)
+        cssClass(this.element, "mc-window--minimized", true)
 
         setTimeout(() => {
-            this.$element.style.display = "none"
+            this.element.style.display = "none"
             
             this.minimized = true
         }, 500)
@@ -122,9 +122,9 @@ class Window
         if (!this.minimized)
             return
 
-        this.$element.style.display = "block"
+        this.element.style.display = "block"
 
-        cssClass(this.$element, "mc-window--minimized", false)
+        cssClass(this.element, "mc-window--minimized", false)
 
         this.minimized = false
     }
@@ -139,7 +139,7 @@ class Window
 
         this.transparent = true
 
-        cssClass(this.$element, "mc-window--transparent", true)
+        cssClass(this.element, "mc-window--transparent", true)
     }
 
     /**
@@ -152,14 +152,14 @@ class Window
 
         this.transparent = false
 
-        cssClass(this.$element, "mc-window--transparent", false)
+        cssClass(this.element, "mc-window--transparent", false)
     }
 
     /////////////////////
     // Event listeners //
     /////////////////////
 
-    $onHandleMouseDown(e)
+    onHandleMouseDown(e)
     {
         this.dragged = true
 
@@ -167,7 +167,7 @@ class Window
         this.dragStartWindowPosition = {x: this.position.x, y: this.position.y}
     }
 
-    $onWindowMouseMove(e)
+    onWindowMouseMove(e)
     {
         if (!this.dragged)
             return
@@ -183,7 +183,7 @@ class Window
         this.updateDisplay()
     }
 
-    $onWindowMouseUp(e)
+    onWindowMouseUp(e)
     {
         if (!this.dragged)
             return
@@ -193,12 +193,12 @@ class Window
         this.dragged = false
     }
 
-    $onWindowResize()
+    onWindowResize()
     {
         this.updateDisplay()
     }
 
-    $onTransparencyToggleClick()
+    onTransparencyToggleClick()
     {
         if (this.transparent)
             this.disableTransparency()

@@ -32,6 +32,11 @@ class IframeObject
         this.contentDocument = node.contentDocument
 
         /**
+         * Window of the iframe content
+         */
+        this.contentWindow = node.contentWindow
+
+        /**
          * Body of the content document
          */
         this.contentBody = this.contentDocument.body
@@ -72,6 +77,48 @@ class IframeObject
     destructor()
     {
         console.log("destructor!")
+    }
+
+    /**
+     * Updates iframe height
+     */
+    updateDimensions()
+    {
+        this.node.style.height = this.contentDiv.offsetHeight + "px"
+    }
+
+    /**
+     * Loads quill.js in the iframe
+     */
+    loadQuill()
+    {
+        let rootQuillScript = document.querySelector(
+            'script[mycelium-quill-script]'
+        )
+
+        if (!rootQuillScript)
+        {
+            console.error("Mycelium quill script not found!")
+            return
+        }
+
+        quillLink = this.contentDocument.createElement("script")
+        
+        quillLink.onload = () => {
+            this.onQuillLoaded()
+        }
+
+        quillLink.src = rootQuillScript.src
+
+        this.contentBody.appendChild(quillLink)
+    }
+
+    /**
+     * Called when quill is loaded in the iframe
+     */
+    onQuillLoaded()
+    {
+        // override me
     }
 
     ////////////

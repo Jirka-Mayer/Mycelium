@@ -9,6 +9,13 @@
 {{-- if the user is an editor --}}
 @if ($mycelium->editor())
 
+    {{-- load quill.js --}}
+    <script
+        mycelium-quill-script="here"
+        type="text/javascript"
+        src="{{ asset("js/vendor/mycelium/quill.js") }}"
+    ></script>
+
     {{-- load mycelium --}}
     <script
         type="text/javascript"

@@ -4,17 +4,17 @@ class WindowManager
     {
         this.windows = []
 
-        this.$createDOM(document)
+        this.createDOM(document)
     }
 
-    $createDOM(document)
+    createDOM(document)
     {
         let element = document.createElement("div")
         element.className = "mc-window-manager"
 
         document.body.appendChild(element)
 
-        this.$element = element
+        this.element = element
     }
 
     /**
@@ -23,7 +23,7 @@ class WindowManager
     registerWindow(win)
     {
         this.windows.push(win)
-        this.$element.appendChild(win.$element)
+        this.element.appendChild(win.element)
     }
 }
 
