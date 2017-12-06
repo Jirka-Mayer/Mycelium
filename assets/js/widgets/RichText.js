@@ -25,17 +25,17 @@ class RichText
     constructor(window, document, element, mycelium, shroom)
     {
         // useful references
-        this.$mycelium = mycelium
-        this.$window = window
-        this.$document = document
+        this.mycelium = mycelium
+        this.window = window
+        this.document = document
         
         /**
          * Root html element
          */
-        this.$element = element
+        this.element = element
 
         // bind the widget to the element (used in IframeObject)
-        this.$element.widgetInstance = this
+        this.element.widgetInstance = this
 
         /**
          * Reference to the shroom
@@ -45,7 +45,7 @@ class RichText
         /**
          * Shroom data key
          */
-        this.key = this.$element.getAttribute("mycelium-key")
+        this.key = this.element.getAttribute("mycelium-key")
         
         if (!this.key)
             throw new Error("RichText widget missing 'key' attribute.")
@@ -53,7 +53,7 @@ class RichText
         /**
          * Default widget value
          */
-        this.defaultValue = this.$element.getAttribute("mycelium-default")
+        this.defaultValue = this.element.getAttribute("mycelium-default")
 
         try
         {
@@ -61,27 +61,27 @@ class RichText
         }
         catch (e) {}
 
-        this.$createQuillInstance()
+        this.createQuillInstance()
 
-        this.$registerEvents()
+        this.registerEvents()
     }
 
-    $createQuillInstance()
+    createQuillInstance()
     {
-        this.$quill = new Quill(this.$element)
+        this.quill = new Quill(this.element)
 
-        this.$loadQuillContents()
+        this.loadQuillContents()
 
-        this.$quill.on("text-change",
-            this.$onTextChange.bind(this)
+        this.quill.on("text-change",
+            this.onTextChange.bind(this)
         )
 
-        this.$quill.on("selection-change",
-            this.$onSelectionChange.bind(this)
+        this.quill.on("selection-change",
+            this.onSelectionChange.bind(this)
         )
     }
 
-    $loadQuillContents()
+    loadQuillContents()
     {
         let data = this.shroom.getData(
             this.key,
@@ -91,32 +91,32 @@ class RichText
         try
         {
             if (typeof(data) === "object")
-                this.$quill.setContents(data)
+                this.quill.setContents(data)
             else if (typeof(data) === "string")
-                this.$quill.setText(data)
+                this.quill.setText(data)
             else
-                this.$quill.setText(JSON.stringify(data, null, 2))
+                this.quill.setText(JSON.stringify(data, null, 2))
         }
         catch (e)
         {
             console.error(e)
 
-            this.$quill.setText("")
+            this.quill.setText("")
         }
     }
 
-    $onTextChange(delta, oldContents, source)
+    onTextChange(delta, oldContents, source)
     {
         this.shroom.setData(
             this.key,
-            this.$quill.getContents()
+            this.quill.getContents()
         )
     }
 
     /**
      * When quill selection changes
      */
-    $onSelectionChange(selection)
+    onSelectionChange(selection)
     {
         // last active widget
         if (selection === null)
@@ -127,7 +127,7 @@ class RichText
         {
             RichText.activeWidget = this
             RichText.bus.fire(
-                "selection-change", selection, this.$quill.getFormat()
+                "selection-change", selection, this.quill.getFormat()
             )
         }
         else if (selection === null && RichText.activeWidget === this)
@@ -137,21 +137,21 @@ class RichText
         }
     }
 
-    $registerEvents()
+    registerEvents()
     {
-        this.$bindListener("apply-bold", this.$onApplyBold)
-        this.$bindListener("apply-italic", this.$onApplyItalic)
-        this.$bindListener("apply-header", this.$onApplyHeader)
-        this.$bindListener("insert-table", this.$onInsertTable)
+        this.bindListener("apply-bold", this.onApplyBold)
+        this.bindListener("apply-italic", this.onApplyItalic)
+        this.bindListener("apply-header", this.onApplyHeader)
+        this.bindListener("insert-table", this.onInsertTable)
     }
 
     /**
      * Bind a rich-text bus listener
      */
-    $bindListener(event, listener)
+    bindListener(event, listener)
     {
         RichText.bus.on(event, function (a) {
-            if (!this.$quill.getSelection())
+            if (!this.quill.getSelection())
                 return
 
             listener.apply(this, arguments)
@@ -159,8 +159,8 @@ class RichText
             // selection properties have changed
             RichText.bus.fire(
                 "selection-change",
-                this.$quill.getSelection(),
-                this.$quill.getFormat()
+                this.quill.getSelection(),
+                this.quill.getFormat()
             )
         }.bind(this))
     }
@@ -169,39 +169,39 @@ class RichText
     // Event listeners //
     /////////////////////
 
-    $onApplyBold()
+    onApplyBold()
     {
-        this.$quill.format(
+        this.quill.format(
             "bold",
-            !this.$quill.getFormat().bold
+            !this.quill.getFormat().bold
         )
     }
 
-    $onApplyItalic()
+    onApplyItalic()
     {
-        this.$quill.format(
+        this.quill.format(
             "italic",
-            !this.$quill.getFormat().italic
+            !this.quill.getFormat().italic
         )
     }
 
-    $onApplyHeader(level)
+    onApplyHeader(level)
     {
-        if (level == this.$quill.getFormat().header)
+        if (level == this.quill.getFormat().header)
             level = false
 
-        this.$quill.format(
+        this.quill.format(
             "header",
             level
         )
     }
 
-    $onInsertTable()
+    onInsertTable()
     {
-        let range = this.$quill.getSelection(true)
-        this.$quill.insertText(range.index, "\n")
-        this.$quill.insertEmbed(range.index + 1, "table", [])
-        this.$quill.setSelection(range.index + 2)
+        let range = this.quill.getSelection(true)
+        this.quill.insertText(range.index, "\n")
+        this.quill.insertEmbed(range.index + 1, "table", [])
+        this.quill.setSelection(range.index + 2)
     }
 }
 

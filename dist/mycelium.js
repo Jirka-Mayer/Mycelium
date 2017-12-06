@@ -394,10 +394,10 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Quill = __webpack_require__(1);
-__webpack_require__(42);
-__webpack_require__(43);
-__webpack_require__(44);
-__webpack_require__(45);
+__webpack_require__(36);
+__webpack_require__(37);
+__webpack_require__(38);
+__webpack_require__(39);
 var EventBus = __webpack_require__(10);
 
 var RichText = function () {
@@ -417,17 +417,17 @@ var RichText = function () {
         _classCallCheck(this, RichText);
 
         // useful references
-        this.$mycelium = mycelium;
-        this.$window = window;
-        this.$document = document;
+        this.mycelium = mycelium;
+        this.window = window;
+        this.document = document;
 
         /**
          * Root html element
          */
-        this.$element = element;
+        this.element = element;
 
         // bind the widget to the element (used in IframeObject)
-        this.$element.widgetInstance = this;
+        this.element.widgetInstance = this;
 
         /**
          * Reference to the shroom
@@ -437,52 +437,52 @@ var RichText = function () {
         /**
          * Shroom data key
          */
-        this.key = this.$element.getAttribute("mycelium-key");
+        this.key = this.element.getAttribute("mycelium-key");
 
         if (!this.key) throw new Error("RichText widget missing 'key' attribute.");
 
         /**
          * Default widget value
          */
-        this.defaultValue = this.$element.getAttribute("mycelium-default");
+        this.defaultValue = this.element.getAttribute("mycelium-default");
 
         try {
             this.defaultValue = JSON.parse(this.defaultValue);
         } catch (e) {}
 
-        this.$createQuillInstance();
+        this.createQuillInstance();
 
-        this.$registerEvents();
+        this.registerEvents();
     }
 
     _createClass(RichText, [{
-        key: "$createQuillInstance",
-        value: function $createQuillInstance() {
-            this.$quill = new Quill(this.$element);
+        key: "createQuillInstance",
+        value: function createQuillInstance() {
+            this.quill = new Quill(this.element);
 
-            this.$loadQuillContents();
+            this.loadQuillContents();
 
-            this.$quill.on("text-change", this.$onTextChange.bind(this));
+            this.quill.on("text-change", this.onTextChange.bind(this));
 
-            this.$quill.on("selection-change", this.$onSelectionChange.bind(this));
+            this.quill.on("selection-change", this.onSelectionChange.bind(this));
         }
     }, {
-        key: "$loadQuillContents",
-        value: function $loadQuillContents() {
+        key: "loadQuillContents",
+        value: function loadQuillContents() {
             var data = this.shroom.getData(this.key, this.defaultValue);
 
             try {
-                if ((typeof data === "undefined" ? "undefined" : _typeof(data)) === "object") this.$quill.setContents(data);else if (typeof data === "string") this.$quill.setText(data);else this.$quill.setText(JSON.stringify(data, null, 2));
+                if ((typeof data === "undefined" ? "undefined" : _typeof(data)) === "object") this.quill.setContents(data);else if (typeof data === "string") this.quill.setText(data);else this.quill.setText(JSON.stringify(data, null, 2));
             } catch (e) {
                 console.error(e);
 
-                this.$quill.setText("");
+                this.quill.setText("");
             }
         }
     }, {
-        key: "$onTextChange",
-        value: function $onTextChange(delta, oldContents, source) {
-            this.shroom.setData(this.key, this.$quill.getContents());
+        key: "onTextChange",
+        value: function onTextChange(delta, oldContents, source) {
+            this.shroom.setData(this.key, this.quill.getContents());
         }
 
         /**
@@ -490,27 +490,27 @@ var RichText = function () {
          */
 
     }, {
-        key: "$onSelectionChange",
-        value: function $onSelectionChange(selection) {
+        key: "onSelectionChange",
+        value: function onSelectionChange(selection) {
             // last active widget
             if (selection === null) RichText.lastFocusedWidget = this;
 
             // active widget
             if (selection) {
                 RichText.activeWidget = this;
-                RichText.bus.fire("selection-change", selection, this.$quill.getFormat());
+                RichText.bus.fire("selection-change", selection, this.quill.getFormat());
             } else if (selection === null && RichText.activeWidget === this) {
                 RichText.activeWidget = null;
                 RichText.bus.fire("selection-change", null, {});
             }
         }
     }, {
-        key: "$registerEvents",
-        value: function $registerEvents() {
-            this.$bindListener("apply-bold", this.$onApplyBold);
-            this.$bindListener("apply-italic", this.$onApplyItalic);
-            this.$bindListener("apply-header", this.$onApplyHeader);
-            this.$bindListener("insert-table", this.$onInsertTable);
+        key: "registerEvents",
+        value: function registerEvents() {
+            this.bindListener("apply-bold", this.onApplyBold);
+            this.bindListener("apply-italic", this.onApplyItalic);
+            this.bindListener("apply-header", this.onApplyHeader);
+            this.bindListener("insert-table", this.onInsertTable);
         }
 
         /**
@@ -518,15 +518,15 @@ var RichText = function () {
          */
 
     }, {
-        key: "$bindListener",
-        value: function $bindListener(event, listener) {
+        key: "bindListener",
+        value: function bindListener(event, listener) {
             RichText.bus.on(event, function (a) {
-                if (!this.$quill.getSelection()) return;
+                if (!this.quill.getSelection()) return;
 
                 listener.apply(this, arguments);
 
                 // selection properties have changed
-                RichText.bus.fire("selection-change", this.$quill.getSelection(), this.$quill.getFormat());
+                RichText.bus.fire("selection-change", this.quill.getSelection(), this.quill.getFormat());
             }.bind(this));
         }
 
@@ -535,29 +535,29 @@ var RichText = function () {
         /////////////////////
 
     }, {
-        key: "$onApplyBold",
-        value: function $onApplyBold() {
-            this.$quill.format("bold", !this.$quill.getFormat().bold);
+        key: "onApplyBold",
+        value: function onApplyBold() {
+            this.quill.format("bold", !this.quill.getFormat().bold);
         }
     }, {
-        key: "$onApplyItalic",
-        value: function $onApplyItalic() {
-            this.$quill.format("italic", !this.$quill.getFormat().italic);
+        key: "onApplyItalic",
+        value: function onApplyItalic() {
+            this.quill.format("italic", !this.quill.getFormat().italic);
         }
     }, {
-        key: "$onApplyHeader",
-        value: function $onApplyHeader(level) {
-            if (level == this.$quill.getFormat().header) level = false;
+        key: "onApplyHeader",
+        value: function onApplyHeader(level) {
+            if (level == this.quill.getFormat().header) level = false;
 
-            this.$quill.format("header", level);
+            this.quill.format("header", level);
         }
     }, {
-        key: "$onInsertTable",
-        value: function $onInsertTable() {
-            var range = this.$quill.getSelection(true);
-            this.$quill.insertText(range.index, "\n");
-            this.$quill.insertEmbed(range.index + 1, "table", []);
-            this.$quill.setSelection(range.index + 2);
+        key: "onInsertTable",
+        value: function onInsertTable() {
+            var range = this.quill.getSelection(true);
+            this.quill.insertText(range.index, "\n");
+            this.quill.insertEmbed(range.index + 1, "table", []);
+            this.quill.setSelection(range.index + 2);
         }
     }]);
 
@@ -1079,7 +1079,7 @@ module.exports = cssClass;
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(13);
-module.exports = __webpack_require__(58);
+module.exports = __webpack_require__(55);
 
 
 /***/ }),
@@ -1113,8 +1113,8 @@ window.mycelium.class.widgets.RichText = __webpack_require__(2);
 
 if (!window.mycelium.class.ui) window.mycelium.class.ui = {};
 
-window.mycelium.class.ui.Toolbar = __webpack_require__(48);
-window.mycelium.class.ui.WindowManager = __webpack_require__(57);
+window.mycelium.class.ui.Toolbar = __webpack_require__(45);
+window.mycelium.class.ui.WindowManager = __webpack_require__(54);
 
 /***/ }),
 /* 14 */
@@ -2501,13 +2501,7 @@ var Text = function () {
 module.exports = Text;
 
 /***/ }),
-/* 36 */,
-/* 37 */,
-/* 38 */,
-/* 39 */,
-/* 40 */,
-/* 41 */,
-/* 42 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2537,7 +2531,7 @@ BoldBlot.tagName = "strong";
 Quill.register(BoldBlot);
 
 /***/ }),
-/* 43 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2567,7 +2561,7 @@ ItalicBlot.tagName = "em";
 Quill.register(ItalicBlot);
 
 /***/ }),
-/* 44 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2606,7 +2600,7 @@ HeaderBlot.tagName = ["H1", "H2"];
 Quill.register(HeaderBlot);
 
 /***/ }),
-/* 45 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2620,8 +2614,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var Quill = __webpack_require__(1);
-var IframeBlot = __webpack_require__(46);
-var TableObject = __webpack_require__(63);
+var IframeBlot = __webpack_require__(40);
+var TableObject = __webpack_require__(41);
 
 var TableBlot = function (_IframeBlot) {
     _inherits(TableBlot, _IframeBlot);
@@ -2653,7 +2647,7 @@ TableBlot.className = "mc-ql-table-blot";
 Quill.register(TableBlot);
 
 /***/ }),
-/* 46 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2859,7 +2853,211 @@ IframeBlot.tagName = "iframe";
 module.exports = IframeBlot;
 
 /***/ }),
-/* 47 */
+/* 41 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var IframeObject = __webpack_require__(42);
+var getRefs = __webpack_require__(3);
+var TableRow = __webpack_require__(43);
+
+var TableObject = function (_IframeObject) {
+    _inherits(TableObject, _IframeObject);
+
+    function TableObject() {
+        _classCallCheck(this, TableObject);
+
+        return _possibleConstructorReturn(this, (TableObject.__proto__ || Object.getPrototypeOf(TableObject)).apply(this, arguments));
+    }
+
+    _createClass(TableObject, [{
+        key: "initialize",
+        value: function initialize() {
+            // set iframe body class
+            this.contentBody.className = "mc-ql-table-blot__content";
+
+            /**
+             * Table element
+             * (assigned in createDOM method)
+             */
+            this.tableElement = null;
+
+            /**
+             * Rows of the table
+             */
+            this.rows = [];
+
+            /**
+             * The selected cell
+             * (set from within the TableCell class)
+             */
+            this.selectedCell = null;
+
+            /**
+             * Event handlers to be freed on removal
+             */
+            this.eventHandlers = [];
+
+            this.createDOM();
+        }
+    }, {
+        key: "createDOM",
+        value: function createDOM() {
+            this.contentDiv.innerHTML = "\n            <table>\n                <tbody ref=\"table\">\n                </tbody>\n            </table>\n        ";
+
+            // get table reference
+            var refs = getRefs(this.contentDiv);
+            this.tableElement = refs.table;
+
+            // super class method
+            this.loadQuill();
+        }
+
+        /**
+         * Called when quill is loaded in the iframe
+         */
+
+    }, {
+        key: "onQuillLoaded",
+        value: function onQuillLoaded() {
+            this.addRow(3);
+        }
+
+        /**
+         * Add new row at a position
+         */
+
+    }, {
+        key: "addRow",
+        value: function addRow(cellCount, at) {
+            var row = new TableRow(this, cellCount);
+
+            var before = this.tableElement.children[at];
+
+            if (before) {
+                this.tableElement.insertBefore(row.element, before);
+                this.rows.splice(at, 0, row);
+            } else {
+                this.tableElement.appendChild(row.element);
+                this.rows.push(row);
+            }
+
+            this.updateDimensions();
+        }
+
+        /**
+         * A cell was deselected
+         * (called from the TableCell class)
+         */
+
+    }, {
+        key: "cellDeselected",
+        value: function cellDeselected() {}
+
+        /**
+         * A new cell was selected
+         * (called from the TableCell class)
+         */
+
+    }, {
+        key: "cellSelected",
+        value: function cellSelected() {}
+
+        /**
+         * Returns quill delta value
+         */
+
+    }, {
+        key: "getValue",
+        value: function getValue() {
+            var rows = this.rows.map(function (row) {
+                return row.cells.map(function (cell) {
+                    return cell.quill.getContents();
+                });
+            });
+
+            return {
+                "rows": rows
+            };
+        }
+
+        /**
+         * Register all event handlers
+         * (called from the super class)
+         */
+
+    }, {
+        key: "bindEventListeners",
+        value: function bindEventListeners() {
+            this.bindToRichTextBus("insert-table-row-after", this.onInsertRowAfter);
+        }
+
+        /**
+         * When toolbar "add row after" is clicked
+         */
+
+    }, {
+        key: "onInsertRowAfter",
+        value: function onInsertRowAfter() {
+            this.addRow(this.selectedCell.element.parentElement.children.length, this.selectedCell.getPosition().row + 1);
+        }
+
+        /**
+         * Register event handler
+         */
+
+    }, {
+        key: "bindToRichTextBus",
+        value: function bindToRichTextBus(event, callback) {
+            var handler = function () {
+                callback.apply(this, arguments);
+            }.bind(this);
+
+            var RichText = __webpack_require__(2);
+
+            RichText.bus.on(event, function () {
+
+                // only if active
+                if (!this.selectedCell) return;
+
+                // call the handler
+                handler.apply(this, arguments);
+            }.bind(this));
+
+            // add to handler list
+            this.eventHandlers[event] = handler;
+        }
+
+        /**
+         * Free event handlers
+         * (called from destructor)
+         */
+
+    }, {
+        key: "freeEventListeners",
+        value: function freeEventListeners() {
+            var RichText = __webpack_require__(2);
+
+            for (var i in this.eventHandlers) {
+                RichText.bus.off(i, this.eventHandlers);
+            }
+        }
+    }]);
+
+    return TableObject;
+}(IframeObject);
+
+module.exports = TableObject;
+
+/***/ }),
+/* 42 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3024,14 +3222,171 @@ var IframeObject = function () {
 module.exports = IframeObject;
 
 /***/ }),
-/* 48 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var RichTextWidgetToolbar = __webpack_require__(49);
+var TableCell = __webpack_require__(44);
+
+var TableRow = function () {
+    function TableRow(tableObject, cellCount) {
+        _classCallCheck(this, TableRow);
+
+        /**
+         * Table object reference
+         */
+        this.tableObject = tableObject;
+
+        /**
+         * Cells in the row
+         */
+        this.cells = [];
+
+        this.createElement();
+
+        for (var i = 0; i < cellCount; i++) {
+            this.addCell(0);
+        }
+    }
+
+    /**
+     * Creates the html element
+     */
+
+
+    _createClass(TableRow, [{
+        key: "createElement",
+        value: function createElement() {
+            this.element = this.tableObject.contentDocument.createElement("tr");
+        }
+
+        /**
+         * Add new cell at a given index (or the end if undefined)
+         */
+
+    }, {
+        key: "addCell",
+        value: function addCell(at) {
+            var cell = new TableCell(this.tableObject);
+
+            var before = this.element.children[at];
+
+            if (before) {
+                this.cells.splice(at, 0, cell);
+                this.element.insertBefore(cell.element, before);
+            } else {
+                this.cells.push(cell);
+                this.element.appendChild(cell.element);
+            }
+        }
+    }]);
+
+    return TableRow;
+}();
+
+module.exports = TableRow;
+
+/***/ }),
+/* 44 */
+/***/ (function(module, exports) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var TableCell = function () {
+    function TableCell(tableObject) {
+        _classCallCheck(this, TableCell);
+
+        /**
+         * Table object reference
+         */
+        this.tableObject = tableObject;
+
+        this.createElement();
+    }
+
+    /**
+     * Creates the html element
+     */
+
+
+    _createClass(TableCell, [{
+        key: "createElement",
+        value: function createElement() {
+            this.element = this.tableObject.contentDocument.createElement("td");
+
+            this.quill = new this.tableObject.contentWindow.Quill(this.element);
+
+            this.quill.setText("lorem");
+
+            this.selectionChangeListener = this.onQuillSelectionChange.bind(this);
+            this.quill.on("selection-change", this.selectionChangeListener);
+        }
+
+        /**
+         * Called when quill selection changes
+         */
+
+    }, {
+        key: "onQuillSelectionChange",
+        value: function onQuillSelectionChange(selection) {
+            if (selection === null) {
+                if (this.tableObject.selectedCell === this) {
+                    this.tableObject.selectedCell = null;
+
+                    this.tableObject.cellDeselected();
+                }
+            } else {
+                this.tableObject.selectedCell = this;
+                this.tableObject.cellSelected();
+            }
+        }
+
+        /**
+         * Returns an object specifying cell position
+         */
+
+    }, {
+        key: "getPosition",
+        value: function getPosition() {
+            return {
+                column: Array.prototype.indexOf.call(this.element.parentElement.children, this.element),
+                row: Array.prototype.indexOf.call(this.element.parentElement.parentElement.children, this.element.parentElement)
+            };
+        }
+
+        /**
+         * Remove the cell from table
+         */
+
+    }, {
+        key: "remove",
+        value: function remove() {
+            this.element.remove();
+
+            // remove event listeners
+            this.quill.off("selection-change", this.selectionChangeListener);
+        }
+    }]);
+
+    return TableCell;
+}();
+
+module.exports = TableCell;
+
+/***/ }),
+/* 45 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var RichTextWidgetToolbar = __webpack_require__(46);
 var getRefs = __webpack_require__(3);
 
 var Toolbar = function () {
@@ -3067,7 +3422,7 @@ var Toolbar = function () {
 
             // create toolbar element
             var element = document.createElement("div");
-            element.innerHTML = __webpack_require__(56);
+            element.innerHTML = __webpack_require__(53);
             element.className = "mc-toolbar";
 
             // create spacer
@@ -3139,7 +3494,7 @@ var Toolbar = function () {
 module.exports = Toolbar;
 
 /***/ }),
-/* 49 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3150,10 +3505,11 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var Window = __webpack_require__(50);
+var Window = __webpack_require__(47);
 var getRefs = __webpack_require__(3);
 var cssClass = __webpack_require__(11);
-var Picker = __webpack_require__(53);
+var Picker = __webpack_require__(50);
+var Menu = __webpack_require__(60);
 var RichTextWidget = __webpack_require__(2);
 
 var RichTextWidgetToolbar = function (_Window) {
@@ -3164,11 +3520,13 @@ var RichTextWidgetToolbar = function (_Window) {
 
         var _this = _possibleConstructorReturn(this, (RichTextWidgetToolbar.__proto__ || Object.getPrototypeOf(RichTextWidgetToolbar)).call(this, window, document, options));
 
-        _this.content.innerHTML = __webpack_require__(55);
+        _this.content.innerHTML = __webpack_require__(52);
 
         _this.refs = getRefs(_this.content);
 
         _this.headerPicker = new Picker(document, _this.refs.header, [{ key: "p", label: "Normal" }, { key: "h1", label: "Heading 1" }, { key: "h2", label: "Heading 2" }]);
+
+        _this.tableInsertMenu = new Menu(document, _this.refs.tableInsert, "Insert", [{ key: "row-below", label: "Row below" }, { key: "row-above", label: "Row above" }, { key: "column-left", label: "Column left" }, { key: "column-right", label: "Column right" }]);
 
         _this.registerEventListeners();
         return _this;
@@ -3179,9 +3537,14 @@ var RichTextWidgetToolbar = function (_Window) {
         value: function registerEventListeners() {
             this.refs.bold.addEventListener("click", this.onBoldClick.bind(this));
             this.refs.italic.addEventListener("click", this.onItalicClick.bind(this));
+
             this.headerPicker.on("user-pick", this.onHeaderPick.bind(this));
+            this.headerPicker.on("expand", this.onHeaderPickerExpand.bind(this));
 
             this.refs.table.addEventListener("click", this.onTableClick.bind(this));
+
+            this.tableInsertMenu.on("user-click", this.onTableInsertMenuClick.bind(this));
+
             this.refs.newRowAfter.addEventListener("click", this.onNewRowAfterClick.bind(this));
 
             RichTextWidget.bus.on("selection-change", this.onSelectionChange.bind(this));
@@ -3232,10 +3595,19 @@ var RichTextWidgetToolbar = function (_Window) {
             RichTextWidget.bus.fire("apply-header", key);
         }
     }, {
+        key: "onHeaderPickerExpand",
+        value: function onHeaderPickerExpand() {
+            // keep the widget focused
+            if (RichTextWidget.lastFocusedWidget) RichTextWidget.lastFocusedWidget.quill.focus();
+        }
+    }, {
         key: "onTableClick",
         value: function onTableClick() {
             RichTextWidget.bus.fire("insert-table");
         }
+    }, {
+        key: "onTableInsertMenuClick",
+        value: function onTableInsertMenuClick(key) {}
     }, {
         key: "onNewRowAfterClick",
         value: function onNewRowAfterClick() {
@@ -3249,14 +3621,14 @@ var RichTextWidgetToolbar = function (_Window) {
 module.exports = RichTextWidgetToolbar;
 
 /***/ }),
-/* 50 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var clamp = __webpack_require__(51);
+var clamp = __webpack_require__(48);
 var cssClass = __webpack_require__(11);
 var getRefs = __webpack_require__(3);
 
@@ -3314,7 +3686,7 @@ var Window = function () {
         value: function createDOM() {
             var element = this.document.createElement("div");
             element.className = "mc-window";
-            element.innerHTML = __webpack_require__(52);
+            element.innerHTML = __webpack_require__(49);
 
             this.element = element;
             this.handle = element.querySelector(".mc-window__handle");
@@ -3456,7 +3828,7 @@ var Window = function () {
 module.exports = Window;
 
 /***/ }),
-/* 51 */
+/* 48 */
 /***/ (function(module, exports) {
 
 /**
@@ -3469,13 +3841,13 @@ function clamp(x, min, max) {
 module.exports = clamp;
 
 /***/ }),
-/* 52 */
+/* 49 */
 /***/ (function(module, exports) {
 
 module.exports = "<div class=\"mc-window__bar\">\n    <div class=\"mc-window__handle\"></div>\n\n    <div class=\"mc-window__button\" ref=\"transparency\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M10,4.4C3.439,4.4,0,9.232,0,10c0,0.766,3.439,5.6,10,5.6c6.56,0,10-4.834,10-5.6C20,9.232,16.56,4.4,10,4.4\n            z M10,14.307c-2.455,0-4.445-1.928-4.445-4.307S7.545,5.691,10,5.691s4.444,1.93,4.444,4.309S12.455,14.307,10,14.307z M10,10\n            c-0.407-0.447,0.663-2.154,0-2.154c-1.228,0-2.223,0.965-2.223,2.154S8.772,12.154,10,12.154c1.227,0,2.223-0.965,2.223-2.154\n            C12.223,9.453,10.346,10.379,10,10z\"/>\n        </svg>\n    </div>\n\n    <div class=\"mc-window__button\" ref=\"minimize\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M4.516,7.548c0.436-0.446,1.043-0.481,1.576,0L10,11.295l3.908-3.747c0.533-0.481,1.141-0.446,1.574,0\n            c0.436,0.445,0.408,1.197,0,1.615c-0.406,0.418-4.695,4.502-4.695,4.502C10.57,13.888,10.285,14,10,14s-0.57-0.112-0.789-0.335\n            c0,0-4.287-4.084-4.695-4.502C4.107,8.745,4.08,7.993,4.516,7.548z\"/>\n        </svg>\n    </div>\n\n    <div class=\"mc-window__button\" ref=\"close\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M14.348,14.849c-0.469,0.469-1.229,0.469-1.697,0L10,11.819l-2.651,3.029c-0.469,0.469-1.229,0.469-1.697,0\n            c-0.469-0.469-0.469-1.229,0-1.697l2.758-3.15L5.651,6.849c-0.469-0.469-0.469-1.228,0-1.697s1.228-0.469,1.697,0L10,8.183\n            l2.651-3.031c0.469-0.469,1.228-0.469,1.697,0s0.469,1.229,0,1.697l-2.758,3.152l2.758,3.15\n            C14.817,13.62,14.817,14.38,14.348,14.849z\"/>\n        </svg>\n    </div>\n</div>\n<div class=\"mc-window__content\">\n    <!--window content-->\n</div>";
 
 /***/ }),
-/* 53 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3488,6 +3860,7 @@ var EventBus = __webpack_require__(10);
     Events:
     "pick" - when the pick() method is succesfully called
     "user-pick" - when the user picks an item by clicking an option
+    "expand" - when the picker is expanded
  */
 
 var Picker = function () {
@@ -3497,12 +3870,12 @@ var Picker = function () {
         /**
          * Document reference
          */
-        this.$document = document;
+        this.document = document;
 
         /**
          * Root element
          */
-        this.$element = element;
+        this.element = element;
 
         /**
          * Is the picker expanded?
@@ -3524,18 +3897,18 @@ var Picker = function () {
         /**
          * Event bus
          */
-        this.$bus = new EventBus();
+        this.bus = new EventBus();
 
         // create all necessary elements
-        this.$createDOM();
+        this.createDOM();
 
         // pick the first item in the list
         this.pick(this.options[0].key);
 
         // bind event handlers
-        this.$label.addEventListener("click", this.$onLabelClick.bind(this));
-        this.$element.addEventListener("mouseleave", this.$onPickerMouseLeave.bind(this));
-        this.$options.addEventListener("click", this.$onOptionsClick.bind(this));
+        this.label.addEventListener("click", this.onLabelClick.bind(this));
+        this.element.addEventListener("mouseleave", this.onPickerMouseLeave.bind(this));
+        this.optionsElement.addEventListener("click", this.onOptionsClick.bind(this));
     }
 
     /**
@@ -3544,19 +3917,19 @@ var Picker = function () {
 
 
     _createClass(Picker, [{
-        key: "$createDOM",
-        value: function $createDOM() {
-            this.$element.className += "mc-picker";
-            this.$element.innerHTML = __webpack_require__(54);
+        key: "createDOM",
+        value: function createDOM() {
+            this.element.className += "mc-picker";
+            this.element.innerHTML = __webpack_require__(51);
 
-            this.$label = this.$element.querySelector(".mc-picker__label");
-            this.$options = this.$element.querySelector(".mc-picker__options");
+            this.label = this.element.querySelector(".mc-picker__label");
+            this.optionsElement = this.element.querySelector(".mc-picker__options");
 
             for (var i = 0; i < this.options.length; i++) {
-                var option = this.$document.createElement("div");
+                var option = this.document.createElement("div");
                 option.innerHTML = this.options[i].label;
                 option.setAttribute("mc-picker-key", this.options[i].key);
-                this.$options.appendChild(option);
+                this.optionsElement.appendChild(option);
             }
         }
 
@@ -3568,7 +3941,7 @@ var Picker = function () {
         key: "collapse",
         value: function collapse() {
             this.expanded = false;
-            this.$options.style.display = "none";
+            this.optionsElement.style.display = "none";
         }
 
         /**
@@ -3579,7 +3952,9 @@ var Picker = function () {
         key: "expand",
         value: function expand() {
             this.expanded = true;
-            this.$options.style.display = "block";
+            this.optionsElement.style.display = "block";
+
+            this.bus.fire("expand");
         }
 
         /**
@@ -3592,9 +3967,9 @@ var Picker = function () {
             for (var i = 0; i < this.options.length; i++) {
                 if (this.options[i].key == optionKey) {
                     this.pickedOption = this.options[i];
-                    this.$label.setAttribute("data-label", this.options[i].label);
+                    this.label.setAttribute("data-label", this.options[i].label);
 
-                    this.$bus.fire("pick", this.options[i].key);
+                    this.bus.fire("pick", this.options[i].key);
                     break;
                 }
             }
@@ -3607,7 +3982,7 @@ var Picker = function () {
     }, {
         key: "on",
         value: function on(event, listener) {
-            this.$bus.on(event, listener);
+            this.bus.on(event, listener);
         }
 
         ////////////////////
@@ -3615,18 +3990,18 @@ var Picker = function () {
         ////////////////////
 
     }, {
-        key: "$onLabelClick",
-        value: function $onLabelClick(e) {
+        key: "onLabelClick",
+        value: function onLabelClick(e) {
             if (this.expanded) this.collapse();else this.expand();
         }
     }, {
-        key: "$onPickerMouseLeave",
-        value: function $onPickerMouseLeave() {
+        key: "onPickerMouseLeave",
+        value: function onPickerMouseLeave() {
             this.collapse();
         }
     }, {
-        key: "$onOptionsClick",
-        value: function $onOptionsClick(e) {
+        key: "onOptionsClick",
+        value: function onOptionsClick(e) {
             var key = e.target.getAttribute("mc-picker-key");
 
             if (key === null) return;
@@ -3634,7 +4009,7 @@ var Picker = function () {
             this.pick(key);
             this.collapse();
 
-            this.$bus.fire("user-pick", key);
+            this.bus.fire("user-pick", key);
         }
     }]);
 
@@ -3644,25 +4019,25 @@ var Picker = function () {
 module.exports = Picker;
 
 /***/ }),
-/* 54 */
+/* 51 */
 /***/ (function(module, exports) {
 
 module.exports = "<span class=\"mc-picker\">\n    <span class=\"mc-picker__label\" data-label=\"\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-picker__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-picker__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-picker__options\" style=\"display: none\">\n    </span>\n</span>";
 
 /***/ }),
-/* 55 */
+/* 52 */
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"mc-rtwt\">\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        table\n    </button>\n\n    <button class=\"mc-rtwt__button\" ref=\"newRowAfter\">\n        row\n    </button>\n</div>";
+module.exports = "<div class=\"mc-rtwt\">\n\n    <!-- set bold style -->\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <!-- set italic style -->\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- pick header type -->\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- add a table -->\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        <svg viewBox=\"0 0 26 28\">\n            <g fill=\"#444\" transform=\"scale(0.02734375 0.02734375)\">\n                <path d=\"M292.571 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM950.857 164.571v621.714c0 50.286-41.143 91.429-91.429 91.429h-768c-50.286 0-91.429-41.143-91.429-91.429v-621.714c0-50.286 41.143-91.429 91.429-91.429h768c50.286 0 91.429 41.143 91.429 91.429z\" />\n            </g>\n        </svg>\n    </button>\n\n    <!-- insert something -->\n    <span ref=\"tableInsert\"></span>\n\n    <!-- insert table row after current -->\n    <button class=\"mc-rtwt__button\" ref=\"newRowAfter\">\n        row after\n    </button>\n</div>";
 
 /***/ }),
-/* 56 */
+/* 53 */
 /***/ (function(module, exports) {
 
 module.exports = "<!--\n    Icons used:\n    http://www.entypo.com/\n-->\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"toggleEdit\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M17.561,2.439c-1.442-1.443-2.525-1.227-2.525-1.227L8.984,7.264L2.21,14.037L1.2,18.799l4.763-1.01\n            l6.774-6.771l6.052-6.052C18.788,4.966,19.005,3.883,17.561,2.439z M5.68,17.217l-1.624,0.35c-0.156-0.293-0.345-0.586-0.69-0.932\n            c-0.346-0.346-0.639-0.533-0.932-0.691l0.35-1.623l0.47-0.469c0,0,0.883,0.018,1.881,1.016c0.997,0.996,1.016,1.881,1.016,1.881\n            L5.68,17.217z\"/>\n        </svg>\n    </button>\n\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"richTextToolbar\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M3.135,6.89c0.933-0.725,1.707-0.225,2.74,0.971c0.116,0.135,0.272-0.023,0.361-0.1\n            C6.324,7.683,7.687,6.456,7.754,6.4C7.82,6.341,7.9,6.231,7.795,6.108C7.688,5.985,7.301,5.483,7.052,5.157\n            c-1.808-2.365,4.946-3.969,3.909-3.994c-0.528-0.014-2.646-0.039-2.963-0.004C6.715,1.294,5.104,2.493,4.293,3.052\n            C3.232,3.778,2.836,4.204,2.771,4.263c-0.3,0.262-0.048,0.867-0.592,1.344C1.604,6.11,1.245,5.729,0.912,6.021\n            C0.747,6.167,0.285,6.513,0.153,6.628C0.02,6.745-0.004,6.942,0.132,7.099c0,0,1.264,1.396,1.37,1.52\n            C1.607,8.741,1.893,8.847,2.069,8.69c0.177-0.156,0.632-0.553,0.708-0.623C2.855,8.001,2.727,7.206,3.135,6.89z M8.843,7.407\n            c-0.12-0.139-0.269-0.143-0.397-0.029L7.012,8.63c-0.113,0.1-0.129,0.283-0.027,0.4l8.294,9.439c0.194,0.223,0.53,0.246,0.751,0.053\n            L17,17.709c0.222-0.195,0.245-0.533,0.052-0.758L8.843,7.407z M19.902,3.39c-0.074-0.494-0.33-0.391-0.463-0.182\n            c-0.133,0.211-0.721,1.102-0.963,1.506c-0.24,0.4-0.832,1.191-1.934,0.41c-1.148-0.811-0.749-1.377-0.549-1.758\n            c0.201-0.383,0.818-1.457,0.907-1.59c0.089-0.135-0.015-0.527-0.371-0.363c-0.357,0.164-2.523,1.025-2.823,2.26\n            c-0.307,1.256,0.257,2.379-0.85,3.494l-1.343,1.4l1.349,1.566l1.654-1.57c0.394-0.396,1.236-0.781,1.998-0.607\n            c1.633,0.369,2.524-0.244,3.061-1.258C20.057,5.792,19.977,3.884,19.902,3.39z M2.739,17.053c-0.208,0.209-0.208,0.549,0,0.758\n            l0.951,0.93c0.208,0.209,0.538,0.121,0.746-0.088l4.907-4.824L7.84,12.115L2.739,17.053z\"/>\n        </svg>\n    </button>\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__text\">\n    Saving...\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div style=\"flex: 1\"></div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-logout\" ref=\"logout\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M19,10l-6-5v3H6v4h7v3L19,10z M3,3h8V1H3C1.9,1,1,1.9,1,3v14c0,1.1,0.9,2,2,2h8v-2H3V3z\"/>\n        </svg>\n    </button>\n</div>";
 
 /***/ }),
-/* 57 */
+/* 54 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3707,369 +4082,184 @@ var WindowManager = function () {
 module.exports = WindowManager;
 
 /***/ }),
-/* 58 */
+/* 55 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
 
 /***/ }),
+/* 56 */,
+/* 57 */,
+/* 58 */,
 /* 59 */,
-/* 60 */,
-/* 61 */,
-/* 62 */,
-/* 63 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+var EventBus = __webpack_require__(10);
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+/*
+    Events:
+    "click" - when the click method is called
+    "user-click" - when the user clicks an item
+    "expand" - when the menu is expanded
+ */
 
-var IframeObject = __webpack_require__(47);
-var getRefs = __webpack_require__(3);
-var TableRow = __webpack_require__(64);
-
-var TableObject = function (_IframeObject) {
-    _inherits(TableObject, _IframeObject);
-
-    function TableObject() {
-        _classCallCheck(this, TableObject);
-
-        return _possibleConstructorReturn(this, (TableObject.__proto__ || Object.getPrototypeOf(TableObject)).apply(this, arguments));
-    }
-
-    _createClass(TableObject, [{
-        key: "initialize",
-        value: function initialize() {
-            // set iframe body class
-            this.contentBody.className = "mc-ql-table-blot__content";
-
-            /**
-             * Table element
-             * (assigned in createDOM method)
-             */
-            this.tableElement = null;
-
-            /**
-             * Rows of the table
-             */
-            this.rows = [];
-
-            /**
-             * The selected cell
-             * (set from within the TableCell class)
-             */
-            this.selectedCell = null;
-
-            /**
-             * Event handlers to be freed on removal
-             */
-            this.eventHandlers = [];
-
-            this.createDOM();
-        }
-    }, {
-        key: "createDOM",
-        value: function createDOM() {
-            this.contentDiv.innerHTML = "\n            <table>\n                <tbody ref=\"table\">\n                </tbody>\n            </table>\n        ";
-
-            // get table reference
-            var refs = getRefs(this.contentDiv);
-            this.tableElement = refs.table;
-
-            // super class method
-            this.loadQuill();
-        }
+var Menu = function () {
+    function Menu(document, element, label, items) {
+        _classCallCheck(this, Menu);
 
         /**
-         * Called when quill is loaded in the iframe
+         * Document reference
          */
-
-    }, {
-        key: "onQuillLoaded",
-        value: function onQuillLoaded() {
-            this.addRow(3);
-        }
+        this.document = document;
 
         /**
-         * Add new row at a position
+         * Root element
          */
-
-    }, {
-        key: "addRow",
-        value: function addRow(cellCount, at) {
-            var row = new TableRow(this, cellCount);
-
-            var before = this.tableElement.children[at];
-
-            if (before) {
-                this.tableElement.insertBefore(row.element, before);
-                this.rows.splice(at, 0, row);
-            } else {
-                this.tableElement.appendChild(row.element);
-                this.rows.push(row);
-            }
-
-            this.updateDimensions();
-        }
+        this.element = element;
 
         /**
-         * A cell was deselected
-         * (called from the TableCell class)
+         * Is the menu expanded?
          */
-
-    }, {
-        key: "cellDeselected",
-        value: function cellDeselected() {}
+        this.expanded = false;
 
         /**
-         * A new cell was selected
-         * (called from the TableCell class)
+         * Items to click
+         *
+         * An array of objects: { key: string, label: string }
          */
-
-    }, {
-        key: "cellSelected",
-        value: function cellSelected() {}
+        this.items = items;
 
         /**
-         * Returns quill delta value
+         * Event bus
          */
+        this.bus = new EventBus();
 
-    }, {
-        key: "getValue",
-        value: function getValue() {
-            return {
-                "rows": []
-            };
-        }
+        // create all necessary elements
+        this.createDOM();
 
-        /**
-         * Register all event handlers
-         * (called from the super class)
-         */
+        // set the label
+        this.label.setAttribute("data-label", label);
 
-    }, {
-        key: "bindEventListeners",
-        value: function bindEventListeners() {
-            this.bindToRichTextBus("insert-table-row-after", this.onInsertRowAfter);
-        }
-
-        /**
-         * When toolbar "add row after" is clicked
-         */
-
-    }, {
-        key: "onInsertRowAfter",
-        value: function onInsertRowAfter() {
-            this.addRow(this.selectedCell.element.parentElement.children.length, this.selectedCell.getPosition().row + 1);
-        }
-
-        /**
-         * Register event handler
-         */
-
-    }, {
-        key: "bindToRichTextBus",
-        value: function bindToRichTextBus(event, callback) {
-            var handler = function () {
-                callback.apply(this, arguments);
-            }.bind(this);
-
-            var RichText = __webpack_require__(2);
-
-            RichText.bus.on(event, function () {
-
-                // only if active
-                if (!this.selectedCell) return;
-
-                // call the handler
-                handler.apply(this, arguments);
-            }.bind(this));
-
-            // add to handler list
-            this.eventHandlers[event] = handler;
-        }
-
-        /**
-         * Free event handlers
-         * (called from destructor)
-         */
-
-    }, {
-        key: "freeEventListeners",
-        value: function freeEventListeners() {
-            var RichText = __webpack_require__(2);
-
-            for (var i in this.eventHandlers) {
-                RichText.bus.off(i, this.eventHandlers);
-            }
-        }
-    }]);
-
-    return TableObject;
-}(IframeObject);
-
-module.exports = TableObject;
-
-/***/ }),
-/* 64 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var TableCell = __webpack_require__(65);
-
-var TableRow = function () {
-    function TableRow(tableObject, cellCount) {
-        _classCallCheck(this, TableRow);
-
-        /**
-         * Table object reference
-         */
-        this.tableObject = tableObject;
-
-        /**
-         * Cells in the row
-         */
-        this.cells = [];
-
-        this.createElement();
-
-        for (var i = 0; i < cellCount; i++) {
-            this.addCell(0);
-        }
+        // bind event handlers
+        this.label.addEventListener("click", this.onLabelClick.bind(this));
+        this.element.addEventListener("mouseleave", this.onMenuMouseLeave.bind(this));
+        this.itemsElement.addEventListener("click", this.onItemsClick.bind(this));
     }
 
     /**
-     * Creates the html element
+     * Creates all necessary html elements
      */
 
 
-    _createClass(TableRow, [{
-        key: "createElement",
-        value: function createElement() {
-            this.element = this.tableObject.contentDocument.createElement("tr");
+    _createClass(Menu, [{
+        key: "createDOM",
+        value: function createDOM(label) {
+            this.element.className += "mc-menu";
+            this.element.innerHTML = __webpack_require__(61);
+
+            this.label = this.element.querySelector(".mc-menu__label");
+            this.itemsElement = this.element.querySelector(".mc-menu__items");
+
+            for (var i = 0; i < this.items.length; i++) {
+                var item = this.document.createElement("div");
+                item.innerHTML = this.items[i].label;
+                item.setAttribute("mc-menu-key", this.items[i].key);
+                this.itemsElement.appendChild(item);
+            }
         }
 
         /**
-         * Add new cell at a given index (or the end if undefined)
+         * Collapse the menu
          */
 
     }, {
-        key: "addCell",
-        value: function addCell(at) {
-            var cell = new TableCell(this.tableObject);
+        key: "collapse",
+        value: function collapse() {
+            this.expanded = false;
+            this.itemsElement.style.display = "none";
+        }
 
-            var before = this.element.children[at];
+        /**
+         * Expand the menu
+         */
 
-            if (before) {
-                this.cells.splice(at, 0, cell);
-                this.element.insertBefore(cell.element, before);
-            } else {
-                this.cells.push(cell);
-                this.element.appendChild(cell.element);
+    }, {
+        key: "expand",
+        value: function expand() {
+            this.expanded = true;
+            this.itemsElement.style.display = "block";
+
+            this.bus.fire("expand");
+        }
+
+        /**
+         * Click an item
+         */
+
+    }, {
+        key: "click",
+        value: function click(itemKey) {
+            for (var i = 0; i < this.items.length; i++) {
+                if (this.items[i].key == itemKey) {
+                    this.bus.fire("click", this.items[i].key);
+                    break;
+                }
             }
+        }
+
+        /**
+         * Register an event listener
+         */
+
+    }, {
+        key: "on",
+        value: function on(event, listener) {
+            this.bus.on(event, listener);
+        }
+
+        ////////////////////
+        // Event handlers //
+        ////////////////////
+
+    }, {
+        key: "onLabelClick",
+        value: function onLabelClick(e) {
+            if (this.expanded) this.collapse();else this.expand();
+        }
+    }, {
+        key: "onMenuMouseLeave",
+        value: function onMenuMouseLeave() {
+            this.collapse();
+        }
+    }, {
+        key: "onItemsClick",
+        value: function onItemsClick(e) {
+            var key = e.target.getAttribute("mc-menu-key");
+
+            if (key === null) return;
+
+            this.click(key);
+            this.collapse();
+
+            this.bus.fire("user-click", key);
         }
     }]);
 
-    return TableRow;
+    return Menu;
 }();
 
-module.exports = TableRow;
+module.exports = Menu;
 
 /***/ }),
-/* 65 */
+/* 61 */
 /***/ (function(module, exports) {
 
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var TableCell = function () {
-    function TableCell(tableObject) {
-        _classCallCheck(this, TableCell);
-
-        /**
-         * Table object reference
-         */
-        this.tableObject = tableObject;
-
-        this.createElement();
-    }
-
-    /**
-     * Creates the html element
-     */
-
-
-    _createClass(TableCell, [{
-        key: "createElement",
-        value: function createElement() {
-            this.element = this.tableObject.contentDocument.createElement("td");
-
-            this.quill = new this.tableObject.contentWindow.Quill(this.element);
-
-            this.quill.setText("lorem");
-
-            this.selectionChangeListener = this.onQuillSelectionChange.bind(this);
-            this.quill.on("selection-change", this.selectionChangeListener);
-        }
-
-        /**
-         * Called when quill selection changes
-         */
-
-    }, {
-        key: "onQuillSelectionChange",
-        value: function onQuillSelectionChange(selection) {
-            if (selection === null) {
-                if (this.tableObject.selectedCell === this) {
-                    this.tableObject.selectedCell = null;
-
-                    this.tableObject.cellDeselected();
-                }
-            } else {
-                this.tableObject.selectedCell = this;
-                this.tableObject.cellSelected();
-            }
-        }
-
-        /**
-         * Returns an object specifying cell position
-         */
-
-    }, {
-        key: "getPosition",
-        value: function getPosition() {
-            return {
-                column: Array.prototype.indexOf.call(this.element.parentElement.children, this.element),
-                row: Array.prototype.indexOf.call(this.element.parentElement.parentElement.children, this.element.parentElement)
-            };
-        }
-
-        /**
-         * Remove the cell from table
-         */
-
-    }, {
-        key: "remove",
-        value: function remove() {
-            this.element.remove();
-
-            // remove event listeners
-            this.quill.off("selection-change", this.selectionChangeListener);
-        }
-    }]);
-
-    return TableCell;
-}();
-
-module.exports = TableCell;
+module.exports = "<span class=\"mc-menu\">\n    <span class=\"mc-menu__label\" data-label=\"\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-menu__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-menu__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-menu__items\" style=\"display: none\">\n    </span>\n</span>";
 
 /***/ })
 /******/ ]);

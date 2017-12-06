@@ -55,6 +55,63 @@
 .mc-picker .mc-picker__options div:hover {
   background: #ddd;
 }
+.mc-menu {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: stretch;
+      -ms-flex-align: stretch;
+          align-items: stretch;
+  margin: 0;
+  font-size: 16px;
+  font-family: "Helvetica", sans-serif;
+  cursor: pointer;
+}
+.mc-menu:hover {
+  background: #ccc;
+}
+.mc-menu .mc-menu__stroke {
+  fill: none;
+  stroke: #444;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+.mc-menu .mc-menu__label {
+  display: -webkit-box;
+  display: -ms-flexbox;
+  display: flex;
+  -webkit-box-align: center;
+      -ms-flex-align: center;
+          align-items: center;
+  padding-left: 5px;
+}
+.mc-menu .mc-menu__label:before {
+  content: attr(data-label);
+  display: block;
+  min-width: 50px;
+  white-space: nowrap;
+}
+.mc-menu .mc-menu__label svg {
+  display: block;
+  width: 25px;
+  height: 25px;
+}
+.mc-menu .mc-menu__items {
+  display: block;
+  position: absolute;
+  top: 30px;
+  background: #fff;
+  -webkit-box-shadow: 0 0 5px 0 rgba(0,0,0,0.4);
+          box-shadow: 0 0 5px 0 rgba(0,0,0,0.4);
+}
+.mc-menu .mc-menu__items div {
+  padding: 5px 10px;
+  white-space: nowrap;
+}
+.mc-menu .mc-menu__items div:hover {
+  background: #ddd;
+}
 [mycelium-widget="text"] {
   min-width: 3em;
   outline: 0px solid rgba(0,0,0,0.2);

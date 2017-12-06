@@ -2,6 +2,7 @@ const Window = require("../Window.js")
 const getRefs = require("../../utils/getRefs.js")
 const cssClass = require("../../utils/cssClass.js")
 const Picker = require("../components/Picker.js")
+const Menu = require("../components/Menu.js")
 const RichTextWidget = require("../../widgets/RichText.js")
 
 class RichTextWidgetToolbar extends Window
@@ -20,6 +21,18 @@ class RichTextWidgetToolbar extends Window
             { key: "h2", label: "Heading 2" }
         ])
 
+        this.tableInsertMenu = new Menu(
+            document,
+            this.refs.tableInsert,
+            "Insert",
+            [
+                { key: "row-below", label: "Row below" },
+                { key: "row-above", label: "Row above" },
+                { key: "column-left", label: "Column left" },
+                { key: "column-right", label: "Column right" }
+            ]
+        )
+
         this.registerEventListeners()
     }
 
@@ -27,9 +40,14 @@ class RichTextWidgetToolbar extends Window
     {
         this.refs.bold.addEventListener("click", this.onBoldClick.bind(this))
         this.refs.italic.addEventListener("click", this.onItalicClick.bind(this))
+
         this.headerPicker.on("user-pick", this.onHeaderPick.bind(this))
+        this.headerPicker.on("expand", this.onHeaderPickerExpand.bind(this))
         
         this.refs.table.addEventListener("click", this.onTableClick.bind(this))
+
+        this.tableInsertMenu.on("user-click", this.onTableInsertMenuClick.bind(this))
+
         this.refs.newRowAfter.addEventListener("click", this.onNewRowAfterClick.bind(this))
 
         RichTextWidget.bus.on("selection-change", this.onSelectionChange.bind(this))
@@ -86,9 +104,21 @@ class RichTextWidgetToolbar extends Window
         RichTextWidget.bus.fire("apply-header", key)
     }
 
+    onHeaderPickerExpand()
+    {
+        // keep the widget focused
+        if (RichTextWidget.lastFocusedWidget)
+            RichTextWidget.lastFocusedWidget.quill.focus()
+    }
+
     onTableClick()
     {
         RichTextWidget.bus.fire("insert-table")
+    }
+
+    onTableInsertMenuClick(key)
+    {
+        
     }
 
     onNewRowAfterClick()

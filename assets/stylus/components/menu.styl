@@ -1,0 +1,53 @@
+.mc-menu
+    display: flex
+    align-items: stretch
+    margin: 0
+    
+    font-size: 16px
+    font-family: "Helvetica", sans-serif
+    
+    cursor: pointer
+    
+    &:hover
+        background: #ccc
+        
+    .mc-menu__stroke
+        fill: none
+        stroke: #444
+        stroke-linecap: round
+        stroke-linejoin: round
+        stroke-width: 2
+
+    .mc-menu__label
+        display: flex
+        align-items: center
+        
+        padding-left: 5px
+        
+        &:before
+            content: attr(data-label)
+            display: block
+            min-width: 50px
+            
+            white-space: nowrap
+            
+        svg
+            display: block
+            width: 25px
+            height: 25px
+
+    .mc-menu__items
+        display: block
+        position: absolute
+        
+        top: 30px
+        
+        background: white
+        box-shadow: 0 0 5px 0 rgba(black, 0.4)
+        
+        div
+            padding: 5px 10px
+            white-space: nowrap
+            
+            &:hover
+                background: #ddd

@@ -105,8 +105,14 @@ class TableObject extends IframeObject
      */
     getValue()
     {
+        let rows = this.rows.map((row) => {
+            return row.cells.map((cell) => {
+                return cell.quill.getContents()
+            })
+        })
+
         return {
-            "rows": []
+            "rows": rows
         }
     }
 

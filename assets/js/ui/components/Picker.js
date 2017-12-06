@@ -4,6 +4,7 @@ const EventBus = require("../../EventBus.js")
     Events:
     "pick" - when the pick() method is succesfully called
     "user-pick" - when the user picks an item by clicking an option
+    "expand" - when the picker is expanded
  */
 
 class Picker
@@ -13,12 +14,12 @@ class Picker
         /**
          * Document reference
          */
-        this.$document = document
+        this.document = document
 
         /**
          * Root element
          */
-        this.$element = element
+        this.element = element
 
         /**
          * Is the picker expanded?
@@ -40,43 +41,43 @@ class Picker
         /**
          * Event bus
          */
-        this.$bus = new EventBus();
+        this.bus = new EventBus();
 
         // create all necessary elements
-        this.$createDOM()
+        this.createDOM()
 
         // pick the first item in the list
         this.pick(this.options[0].key)
 
         // bind event handlers
-        this.$label.addEventListener(
-            "click", this.$onLabelClick.bind(this)
+        this.label.addEventListener(
+            "click", this.onLabelClick.bind(this)
         )
-        this.$element.addEventListener(
-            "mouseleave", this.$onPickerMouseLeave.bind(this)
+        this.element.addEventListener(
+            "mouseleave", this.onPickerMouseLeave.bind(this)
         )
-        this.$options.addEventListener(
-            "click", this.$onOptionsClick.bind(this)
+        this.optionsElement.addEventListener(
+            "click", this.onOptionsClick.bind(this)
         )
     }
 
     /**
      * Creates all necessary html elements
      */
-    $createDOM()
+    createDOM()
     {
-        this.$element.className += "mc-picker"
-        this.$element.innerHTML = require("./Picker.html")
+        this.element.className += "mc-picker"
+        this.element.innerHTML = require("./Picker.html")
         
-        this.$label = this.$element.querySelector(".mc-picker__label")
-        this.$options = this.$element.querySelector(".mc-picker__options")
+        this.label = this.element.querySelector(".mc-picker__label")
+        this.optionsElement = this.element.querySelector(".mc-picker__options")
 
         for (let i = 0; i < this.options.length; i++)
         {
-            let option = this.$document.createElement("div")
+            let option = this.document.createElement("div")
             option.innerHTML = this.options[i].label
             option.setAttribute("mc-picker-key", this.options[i].key)
-            this.$options.appendChild(option)
+            this.optionsElement.appendChild(option)
         }
     }
 
@@ -86,7 +87,7 @@ class Picker
     collapse()
     {
         this.expanded = false
-        this.$options.style.display = "none"
+        this.optionsElement.style.display = "none"
     }
 
     /**
@@ -95,7 +96,9 @@ class Picker
     expand()
     {
         this.expanded = true
-        this.$options.style.display = "block"
+        this.optionsElement.style.display = "block"
+
+        this.bus.fire("expand")
     }
 
     /**
@@ -108,9 +111,9 @@ class Picker
             if (this.options[i].key == optionKey)
             {
                 this.pickedOption = this.options[i]
-                this.$label.setAttribute("data-label", this.options[i].label)
+                this.label.setAttribute("data-label", this.options[i].label)
 
-                this.$bus.fire("pick", this.options[i].key)
+                this.bus.fire("pick", this.options[i].key)
                 break
             }
         }
@@ -121,14 +124,14 @@ class Picker
      */
     on(event, listener)
     {
-        this.$bus.on(event, listener)
+        this.bus.on(event, listener)
     }
 
     ////////////////////
     // Event handlers //
     ////////////////////
 
-    $onLabelClick(e)
+    onLabelClick(e)
     {
         if (this.expanded)
             this.collapse()
@@ -136,12 +139,12 @@ class Picker
             this.expand()
     }
 
-    $onPickerMouseLeave()
+    onPickerMouseLeave()
     {
         this.collapse()
     }
 
-    $onOptionsClick(e)
+    onOptionsClick(e)
     {
         let key = e.target.getAttribute("mc-picker-key")
 
@@ -151,7 +154,7 @@ class Picker
         this.pick(key)
         this.collapse()
 
-        this.$bus.fire("user-pick", key)
+        this.bus.fire("user-pick", key)
     }
 }
 
