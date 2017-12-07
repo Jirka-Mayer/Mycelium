@@ -61,7 +61,7 @@ class Menu
      */
     createDOM(label)
     {
-        this.element.className += "mc-menu"
+        this.element.className += " mc-menu"
         this.element.innerHTML = require("./Menu.html")
         
         this.label = this.element.querySelector(".mc-menu__label")

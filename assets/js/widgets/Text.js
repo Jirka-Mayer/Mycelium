@@ -17,84 +17,84 @@ class Text
 
     constructor(window, document, element, shroom)
     {
-        this.$window = window
-        this.$document = document
+        this.window = window
+        this.document = document
         
-        this.$el = element
+        this.el = element
 
         this.shroom = shroom
-        this.key = this.$el.getAttribute("mycelium-key")
+        this.key = this.el.getAttribute("mycelium-key")
         
         if (!this.key)
             throw new Error("Text widget missing 'key' attribute.")
 
-        this.$el.addEventListener(
-            "input", this.$onInput.bind(this)
+        this.el.addEventListener(
+            "input", this.onInput.bind(this)
         )
 
-        this.$el.addEventListener(
-            "paste", this.$onPaste.bind(this)
+        this.el.addEventListener(
+            "paste", this.onPaste.bind(this)
         )
 
-        this.$el.addEventListener(
-            "drop", this.$onDrop.bind(this)
+        this.el.addEventListener(
+            "drop", this.onDrop.bind(this)
         )
     }
 
-    $onInput(e)
+    onInput(e)
     {
         this.shroom.setData(this.key, this.getText())
     }
 
-    $onPaste(e)
+    onPaste(e)
     {
         e.preventDefault()
 
         if (e.clipboardData && e.clipboardData.getData)
         {
             var text = e.clipboardData.getData("text/plain")
-            this.$insertTextAtCursor(text)
+            this.insertTextAtCursor(text)
         }
         else if (
-            this.$window.clipboardData &&
-            this.$window.clipboardData.getData
+            this.window.clipboardData &&
+            this.window.clipboardData.getData
         )
         {
-            var text = this.$window.clipboardData.getData("Text")
-            this.$insertTextAtCursor(text)
+            var text = this.window.clipboardData.getData("Text")
+            this.insertTextAtCursor(text)
         }
     }
 
-    $onDrop(e)
+    onDrop(e)
     {
         e.preventDefault()
 
         // browser ain't support, we ain't support
-        if (!this.$document.caretRangeFromPoint)
+        if (!this.document.caretRangeFromPoint)
             return
 
-        let range = this.$document.caretRangeFromPoint(
+        let range = this.document.caretRangeFromPoint(
             e.clientX,
             e.clientY
         )
 
-        let selection = this.$window.getSelection()
+        let selection = this.window.getSelection()
         selection.removeAllRanges()
         selection.addRange(range)
 
-        this.$insertTextAtCursor(
+        this.insertTextAtCursor(
             e.dataTransfer.getData("text/plain")
         )
     }
 
-    $insertTextAtCursor(text)
+    insertTextAtCursor(text)
     {
-        this.$document.execCommand("insertHTML", false, text)
+        this.document.execCommand("insertHTML", false, text)
     }
 
     getText()
     {
-        return this.$el.innerText
+        return this.el.innerText
     }
 }
 

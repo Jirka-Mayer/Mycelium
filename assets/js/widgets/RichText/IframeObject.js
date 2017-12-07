@@ -17,6 +17,11 @@ class IframeObject
         this.node = node
 
         /**
+         * Initial embed value
+         */
+        this.initialValue = value
+
+        /**
          * The parent widget element
          */
         this.widgetElement = widgetElement
@@ -76,7 +81,7 @@ class IframeObject
      */
     destructor()
     {
-        console.log("destructor!")
+        this.freeEventListeners()
     }
 
     /**

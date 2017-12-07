@@ -2,7 +2,7 @@ const TableCell = require("./TableCell.js")
 
 class TableRow
 {
-    constructor(tableObject, cellCount)
+    constructor(tableObject, cells)
     {
         /**
          * Table object reference
@@ -21,8 +21,19 @@ class TableRow
 
         this.createElement()
 
-        for (let i = 0; i < cellCount; i++)
-            this.addCell(0)
+        // number of empty cells
+        if (typeof(cells) === "number")
+        {
+            for (let i = 0; i < cells; i++)
+                this.addCell()
+        }
+
+        // cells with content
+        else if (cells instanceof Array)
+        {
+            for (let i = 0; i < cells.length; i++)
+                this.addCell(undefined, cells[i])
+        }
     }
 
     /**
@@ -36,9 +47,9 @@ class TableRow
     /**
      * Add new cell at a given index (or the end if undefined)
      */
-    addCell(at)
+    addCell(at, content)
     {
-        let cell = new TableCell(this.tableObject)
+        let cell = new TableCell(this.tableObject, content)
         
         let before = this.element.children[at]
 
@@ -52,6 +63,19 @@ class TableRow
             this.cells.push(cell)
             this.element.appendChild(cell.element)
         }
+    }
+
+    /**
+     * Removes a cell at a given index
+     */
+    removeCell(index)
+    {
+        if (index < 0 || index >= this.cells.length)
+            return
+
+        let cell = this.cells[index]
+        this.cells.splice(index, 1)
+        cell.remove()
     }
 
     /**

@@ -160,6 +160,30 @@
 body.mc-ql-table-blot__content {
   background: none;
 }
+body.mc-ql-table-blot__content .mc-ql-table-blot__table {
+  padding: 0.2em;
+}
+body.mc-ql-table-blot__content .mc-ql-table-blot__table > table {
+  border-collapse: collapse;
+}
+body.mc-ql-table-blot__content .mc-ql-table-blot__table > table td {
+  border: 1px solid rgba(0,0,0,0.2);
+}
+body.mc-ql-table-blot__content .ql-editor {
+  outline: 0px solid rgba(0,0,0,0.2);
+  outline-offset: 0.2em;
+  min-width: 20px;
+}
+body.mc-ql-table-blot__content .ql-editor:focus,
+body.mc-ql-table-blot__content .ql-editor:hover {
+  outline-width: 2px;
+}
+body.mc-ql-table-blot__content .ql-editor *::-moz-selection {
+  background: rgba(0,0,0,0.2);
+}
+body.mc-ql-table-blot__content .ql-editor *::selection {
+  background: rgba(0,0,0,0.2);
+}
 body.mc-ql-table-blot__content .ql-clipboard {
   left: -100000px;
   height: 1px;
@@ -170,14 +194,6 @@ body.mc-ql-table-blot__content .ql-clipboard {
 body.mc-ql-table-blot__content .ql-clipboard p {
   margin: 0;
   padding: 0;
-}
-body.mc-ql-table-blot__content table {
-  border-collapse: collapse;
-  border: 1px solid #000;
-  background: none;
-}
-body.mc-ql-table-blot__content td {
-  border: 1px solid #000;
 }
 .mc-window-manager {
   display: block;
@@ -324,4 +340,7 @@ body.mc-ql-table-blot__content td {
   border: none;
   border-left: 1.5px solid #555;
   border-radius: 1px;
+}
+.mc-rtwt .mc-rtwt--hidden-item {
+  display: none;
 }

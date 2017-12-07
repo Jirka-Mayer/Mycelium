@@ -21,32 +21,32 @@ class Shroom
     constructor(window, document, mycelium, serializedData)
     {
         // mycelium namespace reference
-        this.$mycelium = mycelium
+        this.mycelium = mycelium
 
         /**
          * DOM access
          */
-        this.$window = window
-        this.$document = document
+        this.window = window
+        this.document = document
 
         // load shroom from serialized JSON data
-        this.$loadSerializedData(serializedData)
+        this.loadSerializedData(serializedData)
 
         /**
          * Saving stuff
          */
-        this.$autosaveEnabled = false // automatic saving
-        this.$savingTimerId = null // autosave timer
-        this.$saving = false // save request pending
-        this.$saved = true // no changes made since last save
+        this.autosaveEnabled = false // automatic saving
+        this.savingTimerId = null // autosave timer
+        this.saving = false // save request pending
+        this.saved = true // no changes made since last save
 
         /**
          * Widgets
          */
-        this.$widgets = []
+        this.widgets = []
 
         // create instances of all widgets
-        this.$createWidgetInstances()
+        this.createWidgetInstances()
 
         // initializeAutosave() has to be called externally
         // depending on the usecase (e.g. you don't want
@@ -58,7 +58,7 @@ class Shroom
      *
      * The argument is an object, not string
      */
-    $loadSerializedData(data)
+    loadSerializedData(data)
     {
         this.id = data.id
         this.slug = data.slug
@@ -82,17 +82,17 @@ class Shroom
      * Instantiates controllers for all widgets
      * and handles their registration
      */
-    $createWidgetInstances()
+    createWidgetInstances()
     {
-        this.$widgets = this.$widgets.concat(
+        this.widgets = this.widgets.concat(
             TextWidget.createInstances(
-                this.$window, this.$document, this
+                this.window, this.document, this
             )
         )
 
-        this.$widgets = this.$widgets.concat(
+        this.widgets = this.widgets.concat(
             RichTextWidget.createInstances(
-                this.$window, this.$document, this.$mycelium, this
+                this.window, this.document, this.mycelium, this
             )
         )
     }
@@ -108,7 +108,7 @@ class Shroom
     {
         this.data[key] = value
 
-        this.$onDataChange()
+        this.onDataChange()
     }
 
     /**
@@ -136,10 +136,10 @@ class Shroom
      */
     initializeAutosave()
     {
-        this.$autosaveEnabled = true
+        this.autosaveEnabled = true
 
-        if (!this.$saved)
-            this.$scheduleAutosave()
+        if (!this.saved)
+            this.scheduleAutosave()
     }
 
     /**
@@ -147,23 +147,23 @@ class Shroom
      */
     save()
     {
-        this.$saving = true
-        this.$saved = true
+        this.saving = true
+        this.saved = true
 
-        if (this.$savingTimerId !== null)
+        if (this.savingTimerId !== null)
         {
-            clearTimeout(this.$savingTimerId)
-            this.$savingTimerId = null
+            clearTimeout(this.savingTimerId)
+            this.savingTimerId = null
         }
 
-        axios.post(this.$window.location.href, {
+        axios.post(this.window.location.href, {
             data: this.data
         })
         .then((response) => {
             console.warn("Shroom saved.")
 
-            this.$saving = false
-            this.$afterSave()
+            this.saving = false
+            this.afterSave()
         })
     }
 
@@ -172,15 +172,15 @@ class Shroom
      *
      * Autosave enabled checks have to be made externally
      */
-    $scheduleAutosave()
+    scheduleAutosave()
     {
-        if (this.$saving)
+        if (this.saving)
             return
 
-        if (this.$savingTimerId !== null)
-            clearTimeout(this.$savingTimerId)
+        if (this.savingTimerId !== null)
+            clearTimeout(this.savingTimerId)
 
-        this.$savingTimerId = setTimeout(
+        this.savingTimerId = setTimeout(
             this.save.bind(this),
             AUTOSAVE_TIMEOUT
         )
@@ -193,22 +193,22 @@ class Shroom
     /**
      * When some data changes (in the data object)
      */
-    $onDataChange()
+    onDataChange()
     {
-        this.$saved = false
+        this.saved = false
 
-        if (this.$autosaveEnabled)
-            this.$scheduleAutosave()
+        if (this.autosaveEnabled)
+            this.scheduleAutosave()
     }
 
     /**
      * Called after a successful save() execution
      */
-    $afterSave()
+    afterSave()
     {
         // changes were made during saving
-        if (!this.$saved)
-            this.$scheduleAutosave()
+        if (!this.saved)
+            this.scheduleAutosave()
     }
 }
 

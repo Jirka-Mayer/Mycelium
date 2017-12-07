@@ -25,13 +25,39 @@
         border: none
         background: none
         width: 100%
-        
-// style for iframe content
+
+////////////////////////
+// Table blot content //
+////////////////////////
+
 body.mc-ql-table-blot__content
     background: none
     
+    // to prevent outline from begin cropped by the iframe edge
+    .mc-ql-table-blot__table // div, not table
+        padding: 0.2em
+        
+        > table
+            border-collapse: collapse
+            
+            td
+                border: 1px solid rgba(black, 0.2)
+    
+    .ql-editor
+        outline: 0px solid rgba(black, 0.2)
+        outline-offset: 0.2em
+        
+        // prevent total collapse
+        min-width: 20px
+        
+        &:focus, &:hover
+            outline-width: 2px
+            
+        *::selection
+            background: rgba(black, 0.2)
+    
     .ql-clipboard
-        left: -100000px
+        left: -100000px 
         height: 1px
         overflow-y: hidden
         position: absolute
@@ -40,12 +66,3 @@ body.mc-ql-table-blot__content
         p
             margin: 0
             padding: 0
-    
-    table
-        border-collapse: collapse
-        border: 1px solid black
-        
-        background: none
-        
-    td
-        border: 1px solid black

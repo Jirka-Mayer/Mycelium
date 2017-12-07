@@ -5,6 +5,11 @@ require("./RichText/HeaderBlot.js")
 require("./RichText/TableBlot.js")
 const EventBus = require("../EventBus.js")
 
+// quill events are registered a little bit later,
+// because loading may trigger "text-change" which
+// triggers autosave, but that is wrong behaviour
+const QUILL_EVENT_REGISTRATION_DELAY = 1000
+
 class RichText
 {
     static createInstances(window, document, mycelium, shroom)
@@ -66,21 +71,31 @@ class RichText
         this.registerEvents()
     }
 
+    /**
+     * Create and initialize quill instance
+     */
     createQuillInstance()
     {
         this.quill = new Quill(this.element)
 
         this.loadQuillContents()
 
-        this.quill.on("text-change",
-            this.onTextChange.bind(this)
-        )
+        setTimeout(() => {
 
-        this.quill.on("selection-change",
-            this.onSelectionChange.bind(this)
-        )
+            this.quill.on("text-change",
+                this.onTextChange.bind(this)
+            )
+
+            this.quill.on("selection-change",
+                this.onSelectionChange.bind(this)
+            )
+
+        }, QUILL_EVENT_REGISTRATION_DELAY)
     }
 
+    /**
+     * Load contents from shroom data
+     */
     loadQuillContents()
     {
         let data = this.shroom.getData(
@@ -90,22 +105,40 @@ class RichText
 
         try
         {
-            if (typeof(data) === "object")
-                this.quill.setContents(data)
+            // data as delta
+            if ((data instanceof Object) && (data.ops instanceof Array))
+            {
+                this.quill.setContents(data, "silent")
+            }
+
+            // data as string
             else if (typeof(data) === "string")
-                this.quill.setText(data)
+            {
+                this.quill.setText(data, "silent")
+            }
+
+            // when something strange happens, put the data as JSON
+            // into the editor body
             else
-                this.quill.setText(JSON.stringify(data, null, 2))
+            {
+                this.quill.setText(JSON.stringify(data, null, 2), "silent")
+            }
         }
+
+        // silence any crashes
         catch (e)
         {
             console.error(e)
 
-            this.quill.setText("")
+            this.quill.setText("", "silent")
         }
+
     }
 
-    onTextChange(delta, oldContents, source)
+    /**
+     * When quill content changes
+     */
+    onTextChange()
     {
         this.shroom.setData(
             this.key,
@@ -130,11 +163,13 @@ class RichText
             RichText.bus.fire(
                 "selection-change", selection, this.quill.getFormat()
             )
+            RichText.bus.fire("active-widget-change", this)
         }
         else if (selection === null && RichText.activeWidget === this)
         {
             RichText.activeWidget = null
             RichText.bus.fire("selection-change", null, {})
+            RichText.bus.fire("active-widget-change", null)
         }
     }
 
@@ -201,7 +236,7 @@ class RichText
     {
         let range = this.quill.getSelection(true)
         this.quill.insertText(range.index, "\n")
-        this.quill.insertEmbed(range.index + 1, "table", [])
+        this.quill.insertEmbed(range.index + 1, "table", {})
         this.quill.setSelection(range.index + 2)
     }
 }

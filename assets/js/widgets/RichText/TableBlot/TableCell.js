@@ -1,6 +1,6 @@
 class TableCell
 {
-    constructor(tableObject)
+    constructor(tableObject, content)
     {
         /**
          * Table object reference
@@ -13,6 +13,8 @@ class TableCell
         this.removed = false
 
         this.createElement()
+
+        this.loadContent(content)
     }
 
     /**
@@ -24,10 +26,40 @@ class TableCell
 
         this.quill = new this.tableObject.contentWindow.Quill(this.element)
         
-        this.quill.setText("lorem")
-
+        // bind listener for selection change
         this.selectionChangeListener = this.onQuillSelectionChange.bind(this)
         this.quill.on("selection-change", this.selectionChangeListener)
+
+        // bind listener for text change
+        this.textChangeListener = this.onQuillTextChange.bind(this)
+        this.quill.on("text-change", this.textChangeListener)
+    }
+
+    /**
+     * Load cell content
+     */
+    loadContent(content)
+    {
+        if (content === undefined || content === null)
+            return
+
+        // string argument
+        if (typeof(content) === "string")
+        {
+            this.quill.setText(content, "silent")
+            return
+        }
+
+        // delta argument
+        if ((content instanceof Object) && (content.ops instanceof Array))
+        {
+            this.quill.setContents(content, "silent")
+            return
+        }
+
+        // when something strange happens, put the data as JSON
+        // into the editor body
+        this.quill.setText(JSON.stringify(content, null, 2), "silent")
     }
 
     /**
@@ -51,6 +83,18 @@ class TableCell
             this.tableObject.lastSelectedCell = this
             this.tableObject.cellSelected()
         }
+    }
+
+    /**
+     * Called when the quill text changes
+     */
+    onQuillTextChange()
+    {
+        // update iframe dimensions
+        this.tableObject.updateDimensions()
+
+        // change has happened
+        this.tableObject.triggerShroomUpdate()
     }
 
     /**

@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 12);
+/******/ 	return __webpack_require__(__webpack_require__.s = 13);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -71,7 +71,7 @@
 
 
 var bind = __webpack_require__(6);
-var isBuffer = __webpack_require__(17);
+var isBuffer = __webpack_require__(18);
 
 /*global toString:true*/
 
@@ -387,18 +387,21 @@ module.exports = window.Quill;
 /* 2 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Quill = __webpack_require__(1);
-__webpack_require__(36);
 __webpack_require__(37);
 __webpack_require__(38);
 __webpack_require__(39);
+__webpack_require__(40);
 var EventBus = __webpack_require__(5);
+
+// quill events are registered a little bit later,
+// because loading may trigger "text-change" which
+// triggers autosave, but that is wrong behaviour
+var QUILL_EVENT_REGISTRATION_DELAY = 1000;
 
 var RichText = function () {
     _createClass(RichText, null, [{
@@ -455,33 +458,70 @@ var RichText = function () {
         this.registerEvents();
     }
 
+    /**
+     * Create and initialize quill instance
+     */
+
+
     _createClass(RichText, [{
         key: "createQuillInstance",
         value: function createQuillInstance() {
+            var _this = this;
+
             this.quill = new Quill(this.element);
 
             this.loadQuillContents();
 
-            this.quill.on("text-change", this.onTextChange.bind(this));
+            setTimeout(function () {
 
-            this.quill.on("selection-change", this.onSelectionChange.bind(this));
+                _this.quill.on("text-change", _this.onTextChange.bind(_this));
+
+                _this.quill.on("selection-change", _this.onSelectionChange.bind(_this));
+            }, QUILL_EVENT_REGISTRATION_DELAY);
         }
+
+        /**
+         * Load contents from shroom data
+         */
+
     }, {
         key: "loadQuillContents",
         value: function loadQuillContents() {
             var data = this.shroom.getData(this.key, this.defaultValue);
 
             try {
-                if ((typeof data === "undefined" ? "undefined" : _typeof(data)) === "object") this.quill.setContents(data);else if (typeof data === "string") this.quill.setText(data);else this.quill.setText(JSON.stringify(data, null, 2));
-            } catch (e) {
+                // data as delta
+                if (data instanceof Object && data.ops instanceof Array) {
+                    this.quill.setContents(data, "silent");
+                }
+
+                // data as string
+                else if (typeof data === "string") {
+                        this.quill.setText(data, "silent");
+                    }
+
+                    // when something strange happens, put the data as JSON
+                    // into the editor body
+                    else {
+                            this.quill.setText(JSON.stringify(data, null, 2), "silent");
+                        }
+            }
+
+            // silence any crashes
+            catch (e) {
                 console.error(e);
 
-                this.quill.setText("");
+                this.quill.setText("", "silent");
             }
         }
+
+        /**
+         * When quill content changes
+         */
+
     }, {
         key: "onTextChange",
-        value: function onTextChange(delta, oldContents, source) {
+        value: function onTextChange() {
             this.shroom.setData(this.key, this.quill.getContents());
         }
 
@@ -500,9 +540,11 @@ var RichText = function () {
                 RichText.activeWidget = this;
                 RichText.lastFocusedWidget = this;
                 RichText.bus.fire("selection-change", selection, this.quill.getFormat());
+                RichText.bus.fire("active-widget-change", this);
             } else if (selection === null && RichText.activeWidget === this) {
                 RichText.activeWidget = null;
                 RichText.bus.fire("selection-change", null, {});
+                RichText.bus.fire("active-widget-change", null);
             }
         }
     }, {
@@ -557,7 +599,7 @@ var RichText = function () {
         value: function onInsertTable() {
             var range = this.quill.getSelection(true);
             this.quill.insertText(range.index, "\n");
-            this.quill.insertEmbed(range.index + 1, "table", []);
+            this.quill.insertEmbed(range.index + 1, "table", {});
             this.quill.setSelection(range.index + 2);
         }
     }]);
@@ -615,7 +657,7 @@ module.exports = getRefs;
 /* WEBPACK VAR INJECTION */(function(process) {
 
 var utils = __webpack_require__(0);
-var normalizeHeaderName = __webpack_require__(20);
+var normalizeHeaderName = __webpack_require__(21);
 
 var DEFAULT_CONTENT_TYPE = {
   'Content-Type': 'application/x-www-form-urlencoded'
@@ -705,7 +747,7 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = defaults;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(19)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(20)))
 
 /***/ }),
 /* 5 */
@@ -805,12 +847,12 @@ module.exports = function bind(fn, thisArg) {
 
 
 var utils = __webpack_require__(0);
-var settle = __webpack_require__(21);
-var buildURL = __webpack_require__(23);
-var parseHeaders = __webpack_require__(24);
-var isURLSameOrigin = __webpack_require__(25);
+var settle = __webpack_require__(22);
+var buildURL = __webpack_require__(24);
+var parseHeaders = __webpack_require__(25);
+var isURLSameOrigin = __webpack_require__(26);
 var createError = __webpack_require__(8);
-var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(26);
+var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(27);
 
 module.exports = function xhrAdapter(config) {
   return new Promise(function dispatchXhrRequest(resolve, reject) {
@@ -907,7 +949,7 @@ module.exports = function xhrAdapter(config) {
     // This is only done if running in a standard browser environment.
     // Specifically not if we're in a web worker, or react-native.
     if (utils.isStandardBrowserEnv()) {
-      var cookies = __webpack_require__(27);
+      var cookies = __webpack_require__(28);
 
       // Add xsrf header
       var xsrfValue = (config.withCredentials || isURLSameOrigin(config.url)) && config.xsrfCookieName ?
@@ -991,7 +1033,7 @@ module.exports = function xhrAdapter(config) {
 "use strict";
 
 
-var enhanceError = __webpack_require__(22);
+var enhanceError = __webpack_require__(23);
 
 /**
  * Create an Error with the specified message, config, error code, request and response.
@@ -1049,6 +1091,407 @@ module.exports = Cancel;
 
 /***/ }),
 /* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var IframeObject = __webpack_require__(42);
+var getRefs = __webpack_require__(3);
+var TableRow = __webpack_require__(43);
+var EventBus = __webpack_require__(5);
+
+var TableObject = function (_IframeObject) {
+    _inherits(TableObject, _IframeObject);
+
+    function TableObject() {
+        _classCallCheck(this, TableObject);
+
+        return _possibleConstructorReturn(this, (TableObject.__proto__ || Object.getPrototypeOf(TableObject)).apply(this, arguments));
+    }
+
+    _createClass(TableObject, [{
+        key: "initialize",
+        value: function initialize() {
+            // set iframe body class
+            this.contentBody.className = "mc-ql-table-blot__content";
+
+            /**
+             * Table element
+             * (assigned in createDOM method)
+             */
+            this.tableElement = null;
+
+            /**
+             * Rows of the table
+             */
+            this.rows = [];
+
+            /**
+             * The selected cell
+             * (set from within the TableCell class)
+             */
+            this.selectedCell = null;
+
+            /**
+             * The last selected cell
+             * (again handled from within the cell class)
+             */
+            this.lastSelectedCell = null;
+
+            /**
+             * Event handlers to be freed on removal
+             */
+            this.eventHandlers = [];
+
+            this.createDOM();
+        }
+    }, {
+        key: "createDOM",
+        value: function createDOM() {
+            this.contentDiv.innerHTML = "\n            <div class=\"mc-ql-table-blot__table\">\n                <table>\n                    <tbody ref=\"table\">\n                    </tbody>\n                </table>\n            </div>\n        ";
+
+            // get table reference
+            var refs = getRefs(this.contentDiv);
+            this.tableElement = refs.table;
+
+            // super class method
+            this.loadQuill();
+        }
+
+        /**
+         * Called when quill is loaded in the iframe
+         */
+
+    }, {
+        key: "onQuillLoaded",
+        value: function onQuillLoaded() {
+            // load table data
+            this.loadValue();
+
+            // if still empty, setup initial table
+            if (this.rows.length <= 0) this.createInitialTable();
+
+            this.updateDimensions();
+        }
+
+        /**
+         * Load table value from delta
+         */
+
+    }, {
+        key: "loadValue",
+        value: function loadValue() {
+            if (!(this.initialValue.rows instanceof Array)) this.initialValue.rows = [];
+
+            for (var i = 0; i < this.initialValue.rows.length; i++) {
+                if (!(this.initialValue.rows[i] instanceof Array)) continue;
+
+                this.addRow(this.initialValue.rows[i]);
+            }
+        }
+
+        /**
+         * Trigger shroom data update
+         */
+
+    }, {
+        key: "triggerShroomUpdate",
+        value: function triggerShroomUpdate() {
+            // tell richtext widget that a change occured
+            // (trigger text-change event)
+            this.richText.quill.insertText(0, "");
+        }
+
+        /**
+         * Sets up the initial table layout
+         */
+
+    }, {
+        key: "createInitialTable",
+        value: function createInitialTable() {
+            this.addRow(3);
+            this.addRow(3);
+        }
+
+        /**
+         * Add new row at a position
+         * cells - if int, then count, if array, then content
+         */
+
+    }, {
+        key: "addRow",
+        value: function addRow(cells, at) {
+            var row = new TableRow(this, cells);
+
+            var before = this.tableElement.children[at];
+
+            if (before) {
+                this.tableElement.insertBefore(row.element, before);
+                this.rows.splice(at, 0, row);
+            } else {
+                this.tableElement.appendChild(row.element);
+                this.rows.push(row);
+            }
+
+            this.updateDimensions();
+            this.triggerShroomUpdate();
+        }
+
+        /**
+         * Adds a new column at a position
+         */
+
+    }, {
+        key: "addColumn",
+        value: function addColumn(at) {
+            for (var i = 0; i < this.rows.length; i++) {
+                this.rows[i].addCell(at);
+            }this.triggerShroomUpdate();
+        }
+
+        /**
+         * Removes a given row
+         */
+
+    }, {
+        key: "removeRow",
+        value: function removeRow(index) {
+            if (this.rows.length <= 1) return;
+
+            if (index < 0 || index > this.rows.length - 1) return;
+
+            var row = this.rows[index];
+            this.rows.splice(index, 1);
+            row.remove();
+
+            this.updateDimensions();
+            this.triggerShroomUpdate();
+        }
+
+        /**
+         * Removes a given column
+         */
+
+    }, {
+        key: "removeColumn",
+        value: function removeColumn(index) {
+            // check table width
+            if (index < 0 || index >= this.rows[0].cells.length) return;
+
+            // remove the column from all rows
+            for (var i = 0; i < this.rows.length; i++) {
+                this.rows[i].removeCell(index);
+            }this.triggerShroomUpdate();
+        }
+
+        /**
+         * A cell was deselected
+         * (called from the TableCell class)
+         */
+
+    }, {
+        key: "cellDeselected",
+        value: function cellDeselected() {
+            if (TableObject.activeTable === this) {
+                TableObject.lastFocusedTable = this;
+                TableObject.activeTable = null;
+                TableObject.bus.fire("active-table-change", null);
+            }
+        }
+
+        /**
+         * A new cell was selected
+         * (called from the TableCell class)
+         */
+
+    }, {
+        key: "cellSelected",
+        value: function cellSelected() {
+            TableObject.lastFocusedTable = this;
+            TableObject.activeTable = this;
+            TableObject.bus.fire("active-table-change", this);
+        }
+
+        /**
+         * Focus this table
+         */
+
+    }, {
+        key: "focus",
+        value: function focus() {
+            if (this.lastSelectedCell && !this.lastSelectedCell.removed) {
+                this.lastSelectedCell.quill.focus();
+            } else if (this.rows.length > 0 && this.rows[0].cells.length > 0) {
+                this.rows[0].cells[0].quill.focus();
+            }
+        }
+
+        /**
+         * Returns quill delta value
+         */
+
+    }, {
+        key: "getValue",
+        value: function getValue() {
+            var rows = this.rows.map(function (row) {
+                return row.cells.map(function (cell) {
+                    // convert delta to object
+                    return {
+                        ops: cell.quill.getContents().ops
+                    };
+                });
+            });
+
+            return {
+                "rows": rows
+            };
+        }
+
+        ////////////
+        // Events //
+        ////////////
+
+        /**
+         * Register all event handlers
+         * (called from the super class)
+         */
+
+    }, {
+        key: "bindEventListeners",
+        value: function bindEventListeners() {
+            this.bindToRichTextBus("active-widget-change", this.onActiveWidgetChange);
+
+            this.bindToRichTextBus("insert-table-row-below", this.onInsertRowBelow);
+
+            this.bindToRichTextBus("insert-table-row-above", this.onInsertRowAbove);
+
+            this.bindToRichTextBus("insert-table-column-left", this.onInsertColumnLeft);
+
+            this.bindToRichTextBus("insert-table-column-right", this.onInsertColumnRight);
+
+            this.bindToRichTextBus("remove-table-row", this.onRemoveRow);
+
+            this.bindToRichTextBus("remove-table-column", this.onRemoveColumn);
+        }
+    }, {
+        key: "onActiveWidgetChange",
+        value: function onActiveWidgetChange(activeWidget) {
+            // if the user makes a selection in a richtext widget, then
+            // he has probbably left this table so blurr it
+            // (to make sure the UI updates itself properly)
+            this.cellDeselected();
+        }
+    }, {
+        key: "onInsertRowBelow",
+        value: function onInsertRowBelow() {
+            this.addRow(this.selectedCell.element.parentElement.children.length, this.selectedCell.getPosition().row + 1);
+        }
+    }, {
+        key: "onInsertRowAbove",
+        value: function onInsertRowAbove() {
+            this.addRow(this.selectedCell.element.parentElement.children.length, this.selectedCell.getPosition().row);
+        }
+    }, {
+        key: "onInsertColumnLeft",
+        value: function onInsertColumnLeft() {
+            this.addColumn(this.selectedCell.getPosition().column);
+        }
+    }, {
+        key: "onInsertColumnRight",
+        value: function onInsertColumnRight() {
+            this.addColumn(this.selectedCell.getPosition().column + 1);
+        }
+    }, {
+        key: "onRemoveRow",
+        value: function onRemoveRow() {
+            var pos = this.selectedCell.getPosition();
+            this.removeRow(pos.row);
+
+            if (pos.row >= 0 && pos.row < this.rows.length) this.rows[pos.row].cells[pos.column].focus();
+        }
+    }, {
+        key: "onRemoveColumn",
+        value: function onRemoveColumn() {
+            var pos = this.selectedCell.getPosition();
+            this.removeColumn(pos.column);
+
+            if (pos.column >= 0 && pos.column < this.rows[pos.row].cells.length) this.rows[pos.row].cells[pos.column].focus();
+        }
+
+        /**
+         * Register event handler
+         */
+
+    }, {
+        key: "bindToRichTextBus",
+        value: function bindToRichTextBus(event, callback) {
+            var handler = function () {
+                callback.apply(this, arguments);
+            }.bind(this);
+
+            var RichText = __webpack_require__(2);
+
+            RichText.bus.on(event, function () {
+
+                // only if active
+                if (TableObject.lastFocusedTable !== this) return;
+
+                // call the handler
+                handler.apply(this, arguments);
+            }.bind(this));
+
+            // add to handler list
+            this.eventHandlers[event] = handler;
+        }
+
+        /**
+         * Free event handlers
+         * (called from destructor)
+         */
+
+    }, {
+        key: "freeEventListeners",
+        value: function freeEventListeners() {
+            var RichText = __webpack_require__(2);
+
+            for (var i in this.eventHandlers) {
+                RichText.bus.off(i, this.eventHandlers);
+            }
+        }
+    }]);
+
+    return TableObject;
+}(IframeObject);
+
+/**
+ * Event bus for tables
+ */
+
+
+TableObject.bus = new EventBus();
+
+/**
+ * Stores the currently active table
+ */
+TableObject.activeTable = null;
+
+/**
+ * The table that has been the last one to be blurred (/focused)
+ *
+ * For regaining focus after UI interactions
+ */
+TableObject.lastFocusedTable = null;
+
+module.exports = TableObject;
+
+/***/ }),
+/* 12 */
 /***/ (function(module, exports) {
 
 /**
@@ -1076,15 +1519,15 @@ function cssClass(element, cssClass, enable) {
 module.exports = cssClass;
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(13);
+__webpack_require__(14);
 module.exports = __webpack_require__(57);
 
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 ///////////////////////////////
@@ -1106,7 +1549,7 @@ if (!window.mycelium.class) window.mycelium.class = {};
 // Register classes //
 //////////////////////
 
-window.mycelium.class.Shroom = __webpack_require__(14);
+window.mycelium.class.Shroom = __webpack_require__(15);
 
 if (!window.mycelium.class.widgets) window.mycelium.class.widgets = {};
 
@@ -1118,15 +1561,15 @@ window.mycelium.class.ui.Toolbar = __webpack_require__(45);
 window.mycelium.class.ui.WindowManager = __webpack_require__(56);
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var axios = __webpack_require__(15);
-var TextWidget = __webpack_require__(35);
+var axios = __webpack_require__(16);
+var TextWidget = __webpack_require__(36);
 var RichTextWidget = __webpack_require__(2);
 
 // delay between a change and save call
@@ -1149,32 +1592,32 @@ var Shroom = function () {
         _classCallCheck(this, Shroom);
 
         // mycelium namespace reference
-        this.$mycelium = mycelium;
+        this.mycelium = mycelium;
 
         /**
          * DOM access
          */
-        this.$window = window;
-        this.$document = document;
+        this.window = window;
+        this.document = document;
 
         // load shroom from serialized JSON data
-        this.$loadSerializedData(serializedData);
+        this.loadSerializedData(serializedData);
 
         /**
          * Saving stuff
          */
-        this.$autosaveEnabled = false; // automatic saving
-        this.$savingTimerId = null; // autosave timer
-        this.$saving = false; // save request pending
-        this.$saved = true; // no changes made since last save
+        this.autosaveEnabled = false; // automatic saving
+        this.savingTimerId = null; // autosave timer
+        this.saving = false; // save request pending
+        this.saved = true; // no changes made since last save
 
         /**
          * Widgets
          */
-        this.$widgets = [];
+        this.widgets = [];
 
         // create instances of all widgets
-        this.$createWidgetInstances();
+        this.createWidgetInstances();
 
         // initializeAutosave() has to be called externally
         // depending on the usecase (e.g. you don't want
@@ -1189,8 +1632,8 @@ var Shroom = function () {
 
 
     _createClass(Shroom, [{
-        key: "$loadSerializedData",
-        value: function $loadSerializedData(data) {
+        key: "loadSerializedData",
+        value: function loadSerializedData(data) {
             this.id = data.id;
             this.slug = data.slug;
             this.cluster = data.cluster;
@@ -1214,11 +1657,11 @@ var Shroom = function () {
          */
 
     }, {
-        key: "$createWidgetInstances",
-        value: function $createWidgetInstances() {
-            this.$widgets = this.$widgets.concat(TextWidget.createInstances(this.$window, this.$document, this));
+        key: "createWidgetInstances",
+        value: function createWidgetInstances() {
+            this.widgets = this.widgets.concat(TextWidget.createInstances(this.window, this.document, this));
 
-            this.$widgets = this.$widgets.concat(RichTextWidget.createInstances(this.$window, this.$document, this.$mycelium, this));
+            this.widgets = this.widgets.concat(RichTextWidget.createInstances(this.window, this.document, this.mycelium, this));
         }
 
         //////////
@@ -1234,7 +1677,7 @@ var Shroom = function () {
         value: function setData(key, value) {
             this.data[key] = value;
 
-            this.$onDataChange();
+            this.onDataChange();
         }
 
         /**
@@ -1264,9 +1707,9 @@ var Shroom = function () {
     }, {
         key: "initializeAutosave",
         value: function initializeAutosave() {
-            this.$autosaveEnabled = true;
+            this.autosaveEnabled = true;
 
-            if (!this.$saved) this.$scheduleAutosave();
+            if (!this.saved) this.scheduleAutosave();
         }
 
         /**
@@ -1278,21 +1721,21 @@ var Shroom = function () {
         value: function save() {
             var _this = this;
 
-            this.$saving = true;
-            this.$saved = true;
+            this.saving = true;
+            this.saved = true;
 
-            if (this.$savingTimerId !== null) {
-                clearTimeout(this.$savingTimerId);
-                this.$savingTimerId = null;
+            if (this.savingTimerId !== null) {
+                clearTimeout(this.savingTimerId);
+                this.savingTimerId = null;
             }
 
-            axios.post(this.$window.location.href, {
+            axios.post(this.window.location.href, {
                 data: this.data
             }).then(function (response) {
                 console.warn("Shroom saved.");
 
-                _this.$saving = false;
-                _this.$afterSave();
+                _this.saving = false;
+                _this.afterSave();
             });
         }
 
@@ -1303,13 +1746,13 @@ var Shroom = function () {
          */
 
     }, {
-        key: "$scheduleAutosave",
-        value: function $scheduleAutosave() {
-            if (this.$saving) return;
+        key: "scheduleAutosave",
+        value: function scheduleAutosave() {
+            if (this.saving) return;
 
-            if (this.$savingTimerId !== null) clearTimeout(this.$savingTimerId);
+            if (this.savingTimerId !== null) clearTimeout(this.savingTimerId);
 
-            this.$savingTimerId = setTimeout(this.save.bind(this), AUTOSAVE_TIMEOUT);
+            this.savingTimerId = setTimeout(this.save.bind(this), AUTOSAVE_TIMEOUT);
         }
 
         ////////////
@@ -1321,11 +1764,11 @@ var Shroom = function () {
          */
 
     }, {
-        key: "$onDataChange",
-        value: function $onDataChange() {
-            this.$saved = false;
+        key: "onDataChange",
+        value: function onDataChange() {
+            this.saved = false;
 
-            if (this.$autosaveEnabled) this.$scheduleAutosave();
+            if (this.autosaveEnabled) this.scheduleAutosave();
         }
 
         /**
@@ -1333,10 +1776,10 @@ var Shroom = function () {
          */
 
     }, {
-        key: "$afterSave",
-        value: function $afterSave() {
+        key: "afterSave",
+        value: function afterSave() {
             // changes were made during saving
-            if (!this.$saved) this.$scheduleAutosave();
+            if (!this.saved) this.scheduleAutosave();
         }
     }]);
 
@@ -1346,13 +1789,13 @@ var Shroom = function () {
 module.exports = Shroom;
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(16);
+module.exports = __webpack_require__(17);
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1360,7 +1803,7 @@ module.exports = __webpack_require__(16);
 
 var utils = __webpack_require__(0);
 var bind = __webpack_require__(6);
-var Axios = __webpack_require__(18);
+var Axios = __webpack_require__(19);
 var defaults = __webpack_require__(4);
 
 /**
@@ -1395,14 +1838,14 @@ axios.create = function create(instanceConfig) {
 
 // Expose Cancel & CancelToken
 axios.Cancel = __webpack_require__(10);
-axios.CancelToken = __webpack_require__(33);
+axios.CancelToken = __webpack_require__(34);
 axios.isCancel = __webpack_require__(9);
 
 // Expose all/spread
 axios.all = function all(promises) {
   return Promise.all(promises);
 };
-axios.spread = __webpack_require__(34);
+axios.spread = __webpack_require__(35);
 
 module.exports = axios;
 
@@ -1411,7 +1854,7 @@ module.exports.default = axios;
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports) {
 
 /*!
@@ -1438,7 +1881,7 @@ function isSlowBuffer (obj) {
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1446,10 +1889,10 @@ function isSlowBuffer (obj) {
 
 var defaults = __webpack_require__(4);
 var utils = __webpack_require__(0);
-var InterceptorManager = __webpack_require__(28);
-var dispatchRequest = __webpack_require__(29);
-var isAbsoluteURL = __webpack_require__(31);
-var combineURLs = __webpack_require__(32);
+var InterceptorManager = __webpack_require__(29);
+var dispatchRequest = __webpack_require__(30);
+var isAbsoluteURL = __webpack_require__(32);
+var combineURLs = __webpack_require__(33);
 
 /**
  * Create a new instance of Axios
@@ -1531,7 +1974,7 @@ module.exports = Axios;
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -1721,7 +2164,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1740,7 +2183,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1773,7 +2216,7 @@ module.exports = function settle(resolve, reject, response) {
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1801,7 +2244,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1876,7 +2319,7 @@ module.exports = function buildURL(url, params, paramsSerializer) {
 
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1920,7 +2363,7 @@ module.exports = function parseHeaders(headers) {
 
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1995,7 +2438,7 @@ module.exports = (
 
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2038,7 +2481,7 @@ module.exports = btoa;
 
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2098,7 +2541,7 @@ module.exports = (
 
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2157,14 +2600,14 @@ module.exports = InterceptorManager;
 
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var utils = __webpack_require__(0);
-var transformData = __webpack_require__(30);
+var transformData = __webpack_require__(31);
 var isCancel = __webpack_require__(9);
 var defaults = __webpack_require__(4);
 
@@ -2243,7 +2686,7 @@ module.exports = function dispatchRequest(config) {
 
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2270,7 +2713,7 @@ module.exports = function transformData(data, headers, fns) {
 
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2291,7 +2734,7 @@ module.exports = function isAbsoluteURL(url) {
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2312,7 +2755,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2376,7 +2819,7 @@ module.exports = CancelToken;
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2410,7 +2853,7 @@ module.exports = function spread(callback) {
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2433,66 +2876,66 @@ var Text = function () {
     function Text(window, document, element, shroom) {
         _classCallCheck(this, Text);
 
-        this.$window = window;
-        this.$document = document;
+        this.window = window;
+        this.document = document;
 
-        this.$el = element;
+        this.el = element;
 
         this.shroom = shroom;
-        this.key = this.$el.getAttribute("mycelium-key");
+        this.key = this.el.getAttribute("mycelium-key");
 
         if (!this.key) throw new Error("Text widget missing 'key' attribute.");
 
-        this.$el.addEventListener("input", this.$onInput.bind(this));
+        this.el.addEventListener("input", this.onInput.bind(this));
 
-        this.$el.addEventListener("paste", this.$onPaste.bind(this));
+        this.el.addEventListener("paste", this.onPaste.bind(this));
 
-        this.$el.addEventListener("drop", this.$onDrop.bind(this));
+        this.el.addEventListener("drop", this.onDrop.bind(this));
     }
 
     _createClass(Text, [{
-        key: "$onInput",
-        value: function $onInput(e) {
+        key: "onInput",
+        value: function onInput(e) {
             this.shroom.setData(this.key, this.getText());
         }
     }, {
-        key: "$onPaste",
-        value: function $onPaste(e) {
+        key: "onPaste",
+        value: function onPaste(e) {
             e.preventDefault();
 
             if (e.clipboardData && e.clipboardData.getData) {
                 var text = e.clipboardData.getData("text/plain");
-                this.$insertTextAtCursor(text);
-            } else if (this.$window.clipboardData && this.$window.clipboardData.getData) {
-                var text = this.$window.clipboardData.getData("Text");
-                this.$insertTextAtCursor(text);
+                this.insertTextAtCursor(text);
+            } else if (this.window.clipboardData && this.window.clipboardData.getData) {
+                var text = this.window.clipboardData.getData("Text");
+                this.insertTextAtCursor(text);
             }
         }
     }, {
-        key: "$onDrop",
-        value: function $onDrop(e) {
+        key: "onDrop",
+        value: function onDrop(e) {
             e.preventDefault();
 
             // browser ain't support, we ain't support
-            if (!this.$document.caretRangeFromPoint) return;
+            if (!this.document.caretRangeFromPoint) return;
 
-            var range = this.$document.caretRangeFromPoint(e.clientX, e.clientY);
+            var range = this.document.caretRangeFromPoint(e.clientX, e.clientY);
 
-            var selection = this.$window.getSelection();
+            var selection = this.window.getSelection();
             selection.removeAllRanges();
             selection.addRange(range);
 
-            this.$insertTextAtCursor(e.dataTransfer.getData("text/plain"));
+            this.insertTextAtCursor(e.dataTransfer.getData("text/plain"));
         }
     }, {
-        key: "$insertTextAtCursor",
-        value: function $insertTextAtCursor(text) {
-            this.$document.execCommand("insertHTML", false, text);
+        key: "insertTextAtCursor",
+        value: function insertTextAtCursor(text) {
+            this.document.execCommand("insertHTML", false, text);
         }
     }, {
         key: "getText",
         value: function getText() {
-            return this.$el.innerText;
+            return this.el.innerText;
         }
     }]);
 
@@ -2502,7 +2945,7 @@ var Text = function () {
 module.exports = Text;
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2532,7 +2975,7 @@ BoldBlot.tagName = "strong";
 Quill.register(BoldBlot);
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2562,7 +3005,7 @@ ItalicBlot.tagName = "em";
 Quill.register(ItalicBlot);
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2601,7 +3044,7 @@ HeaderBlot.tagName = ["H1", "H2"];
 Quill.register(HeaderBlot);
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2615,8 +3058,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var Quill = __webpack_require__(1);
-var IframeBlot = __webpack_require__(40);
-var TableObject = __webpack_require__(41);
+var IframeBlot = __webpack_require__(41);
+var TableObject = __webpack_require__(11);
 
 var TableBlot = function (_IframeBlot) {
     _inherits(TableBlot, _IframeBlot);
@@ -2648,7 +3091,7 @@ TableBlot.className = "mc-ql-table-blot";
 Quill.register(TableBlot);
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2854,286 +3297,6 @@ IframeBlot.tagName = "iframe";
 module.exports = IframeBlot;
 
 /***/ }),
-/* 41 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var IframeObject = __webpack_require__(42);
-var getRefs = __webpack_require__(3);
-var TableRow = __webpack_require__(43);
-
-var TableObject = function (_IframeObject) {
-    _inherits(TableObject, _IframeObject);
-
-    function TableObject() {
-        _classCallCheck(this, TableObject);
-
-        return _possibleConstructorReturn(this, (TableObject.__proto__ || Object.getPrototypeOf(TableObject)).apply(this, arguments));
-    }
-
-    _createClass(TableObject, [{
-        key: "initialize",
-        value: function initialize() {
-            // set iframe body class
-            this.contentBody.className = "mc-ql-table-blot__content";
-
-            /**
-             * Table element
-             * (assigned in createDOM method)
-             */
-            this.tableElement = null;
-
-            /**
-             * Rows of the table
-             */
-            this.rows = [];
-
-            /**
-             * The selected cell
-             * (set from within the TableCell class)
-             */
-            this.selectedCell = null;
-
-            /**
-             * The last selected cell
-             * (again handled from within the cell class)
-             */
-            this.lastSelectedCell = null;
-
-            /**
-             * Event handlers to be freed on removal
-             */
-            this.eventHandlers = [];
-
-            this.createDOM();
-        }
-    }, {
-        key: "createDOM",
-        value: function createDOM() {
-            this.contentDiv.innerHTML = "\n            <table>\n                <tbody ref=\"table\">\n                </tbody>\n            </table>\n        ";
-
-            // get table reference
-            var refs = getRefs(this.contentDiv);
-            this.tableElement = refs.table;
-
-            // super class method
-            this.loadQuill();
-        }
-
-        /**
-         * Called when quill is loaded in the iframe
-         */
-
-    }, {
-        key: "onQuillLoaded",
-        value: function onQuillLoaded() {
-            // initial table size
-            this.addRow(3);
-            this.addRow(3);
-        }
-
-        /**
-         * Add new row at a position
-         */
-
-    }, {
-        key: "addRow",
-        value: function addRow(cellCount, at) {
-            var row = new TableRow(this, cellCount);
-
-            var before = this.tableElement.children[at];
-
-            if (before) {
-                this.tableElement.insertBefore(row.element, before);
-                this.rows.splice(at, 0, row);
-            } else {
-                this.tableElement.appendChild(row.element);
-                this.rows.push(row);
-            }
-
-            this.updateDimensions();
-        }
-
-        /**
-         * Removes a given row
-         */
-
-    }, {
-        key: "removeRow",
-        value: function removeRow(index) {
-            if (this.rows.length <= 1) return;
-
-            if (index < 0 || index > this.rows.length - 1) return;
-
-            var row = this.rows[index];
-            this.rows.splice(index, 1);
-            row.remove();
-        }
-
-        /**
-         * A cell was deselected
-         * (called from the TableCell class)
-         */
-
-    }, {
-        key: "cellDeselected",
-        value: function cellDeselected() {
-            if (TableObject.activeTable === this) {
-                TableObject.lastFocusedTable = this;
-                TableObject.activeTable = null;
-            }
-        }
-
-        /**
-         * A new cell was selected
-         * (called from the TableCell class)
-         */
-
-    }, {
-        key: "cellSelected",
-        value: function cellSelected() {
-            TableObject.lastFocusedTable = this;
-            TableObject.activeTable = this;
-        }
-
-        /**
-         * Focus this table
-         */
-
-    }, {
-        key: "focus",
-        value: function focus() {
-            if (this.lastSelectedCell && !this.lastSelectedCell.removed) {
-                this.lastSelectedCell.quill.focus();
-            } else if (this.rows.length > 0 && this.rows[0].cells.length > 0) {
-                this.rows[0].cells[0].quill.focus();
-            }
-        }
-
-        /**
-         * Returns quill delta value
-         */
-
-    }, {
-        key: "getValue",
-        value: function getValue() {
-            var rows = this.rows.map(function (row) {
-                return row.cells.map(function (cell) {
-                    return cell.quill.getContents();
-                });
-            });
-
-            return {
-                "rows": rows
-            };
-        }
-
-        ////////////
-        // Events //
-        ////////////
-
-        /**
-         * Register all event handlers
-         * (called from the super class)
-         */
-
-    }, {
-        key: "bindEventListeners",
-        value: function bindEventListeners() {
-            this.bindToRichTextBus("insert-table-row-below", this.onInsertRowBelow);
-
-            this.bindToRichTextBus("insert-table-row-above", this.onInsertRowAbove);
-
-            this.bindToRichTextBus("remove-table-row", this.onRemoveRow);
-        }
-    }, {
-        key: "onInsertRowBelow",
-        value: function onInsertRowBelow() {
-            this.addRow(this.selectedCell.element.parentElement.children.length, this.selectedCell.getPosition().row + 1);
-        }
-    }, {
-        key: "onInsertRowAbove",
-        value: function onInsertRowAbove() {
-            this.addRow(this.selectedCell.element.parentElement.children.length, this.selectedCell.getPosition().row);
-        }
-    }, {
-        key: "onRemoveRow",
-        value: function onRemoveRow() {
-            var pos = this.selectedCell.getPosition();
-            this.removeRow(pos.row);
-
-            if (pos.row >= 0 && pos.row < this.rows.length) this.rows[pos.row].cells[pos.column].focus();
-        }
-
-        /**
-         * Register event handler
-         */
-
-    }, {
-        key: "bindToRichTextBus",
-        value: function bindToRichTextBus(event, callback) {
-            var handler = function () {
-                callback.apply(this, arguments);
-            }.bind(this);
-
-            var RichText = __webpack_require__(2);
-
-            RichText.bus.on(event, function () {
-
-                // only if active
-                if (TableObject.lastFocusedTable !== this) return;
-
-                // call the handler
-                handler.apply(this, arguments);
-            }.bind(this));
-
-            // add to handler list
-            this.eventHandlers[event] = handler;
-        }
-
-        /**
-         * Free event handlers
-         * (called from destructor)
-         */
-
-    }, {
-        key: "freeEventListeners",
-        value: function freeEventListeners() {
-            var RichText = __webpack_require__(2);
-
-            for (var i in this.eventHandlers) {
-                RichText.bus.off(i, this.eventHandlers);
-            }
-        }
-    }]);
-
-    return TableObject;
-}(IframeObject);
-
-/**
- * Stores the currently active table
- */
-
-
-TableObject.activeTable = null;
-
-/**
- * The table that has been the last one to be blurred (/focused)
- *
- * For regaining focus after UI interactions
- */
-TableObject.lastFocusedTable = null;
-
-module.exports = TableObject;
-
-/***/ }),
 /* 42 */
 /***/ (function(module, exports) {
 
@@ -3158,6 +3321,11 @@ var IframeObject = function () {
      * The blot element (the iframe itself)
      */
     this.node = node;
+
+    /**
+     * Initial embed value
+     */
+    this.initialValue = value;
 
     /**
      * The parent widget element
@@ -3226,7 +3394,7 @@ var IframeObject = function () {
   }, {
     key: "destructor",
     value: function destructor() {
-      console.log("destructor!");
+      this.freeEventListeners();
     }
 
     /**
@@ -3309,7 +3477,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var TableCell = __webpack_require__(44);
 
 var TableRow = function () {
-    function TableRow(tableObject, cellCount) {
+    function TableRow(tableObject, cells) {
         _classCallCheck(this, TableRow);
 
         /**
@@ -3329,9 +3497,19 @@ var TableRow = function () {
 
         this.createElement();
 
-        for (var i = 0; i < cellCount; i++) {
-            this.addCell(0);
+        // number of empty cells
+        if (typeof cells === "number") {
+            for (var i = 0; i < cells; i++) {
+                this.addCell();
+            }
         }
+
+        // cells with content
+        else if (cells instanceof Array) {
+                for (var _i = 0; _i < cells.length; _i++) {
+                    this.addCell(undefined, cells[_i]);
+                }
+            }
     }
 
     /**
@@ -3351,8 +3529,8 @@ var TableRow = function () {
 
     }, {
         key: "addCell",
-        value: function addCell(at) {
-            var cell = new TableCell(this.tableObject);
+        value: function addCell(at, content) {
+            var cell = new TableCell(this.tableObject, content);
 
             var before = this.element.children[at];
 
@@ -3363,6 +3541,20 @@ var TableRow = function () {
                 this.cells.push(cell);
                 this.element.appendChild(cell.element);
             }
+        }
+
+        /**
+         * Removes a cell at a given index
+         */
+
+    }, {
+        key: "removeCell",
+        value: function removeCell(index) {
+            if (index < 0 || index >= this.cells.length) return;
+
+            var cell = this.cells[index];
+            this.cells.splice(index, 1);
+            cell.remove();
         }
 
         /**
@@ -3396,7 +3588,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var TableCell = function () {
-    function TableCell(tableObject) {
+    function TableCell(tableObject, content) {
         _classCallCheck(this, TableCell);
 
         /**
@@ -3410,6 +3602,8 @@ var TableCell = function () {
         this.removed = false;
 
         this.createElement();
+
+        this.loadContent(content);
     }
 
     /**
@@ -3424,10 +3618,39 @@ var TableCell = function () {
 
             this.quill = new this.tableObject.contentWindow.Quill(this.element);
 
-            this.quill.setText("lorem");
-
+            // bind listener for selection change
             this.selectionChangeListener = this.onQuillSelectionChange.bind(this);
             this.quill.on("selection-change", this.selectionChangeListener);
+
+            // bind listener for text change
+            this.textChangeListener = this.onQuillTextChange.bind(this);
+            this.quill.on("text-change", this.textChangeListener);
+        }
+
+        /**
+         * Load cell content
+         */
+
+    }, {
+        key: "loadContent",
+        value: function loadContent(content) {
+            if (content === undefined || content === null) return;
+
+            // string argument
+            if (typeof content === "string") {
+                this.quill.setText(content, "silent");
+                return;
+            }
+
+            // delta argument
+            if (content instanceof Object && content.ops instanceof Array) {
+                this.quill.setContents(content, "silent");
+                return;
+            }
+
+            // when something strange happens, put the data as JSON
+            // into the editor body
+            this.quill.setText(JSON.stringify(content, null, 2), "silent");
         }
 
         /**
@@ -3449,6 +3672,20 @@ var TableCell = function () {
                 this.tableObject.lastSelectedCell = this;
                 this.tableObject.cellSelected();
             }
+        }
+
+        /**
+         * Called when the quill text changes
+         */
+
+    }, {
+        key: "onQuillTextChange",
+        value: function onQuillTextChange() {
+            // update iframe dimensions
+            this.tableObject.updateDimensions();
+
+            // change has happened
+            this.tableObject.triggerShroomUpdate();
         }
 
         /**
@@ -3624,11 +3861,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var Window = __webpack_require__(47);
 var getRefs = __webpack_require__(3);
-var cssClass = __webpack_require__(11);
+var cssClass = __webpack_require__(12);
 var Picker = __webpack_require__(50);
 var Menu = __webpack_require__(52);
 var RichTextWidget = __webpack_require__(2);
-var TableObject = __webpack_require__(41);
+var TableObject = __webpack_require__(11);
 
 var RichTextWidgetToolbar = function (_Window) {
     _inherits(RichTextWidgetToolbar, _Window);
@@ -3669,20 +3906,22 @@ var RichTextWidgetToolbar = function (_Window) {
             this.tableRemoveMenu.on("user-click", this.onTableRemoveMenuClick.bind(this));
             this.tableRemoveMenu.on("expand", this.onTableRemoveMenuExapnd.bind(this));
 
-            RichTextWidget.bus.on("selection-change", this.onSelectionChange.bind(this));
+            // we listen for widget selection changes to determine
+            // changes in the styling UI like bold, header etc.
+            RichTextWidget.bus.on("selection-change", this.onWidgetSelectionChange.bind(this));
         }
 
-        /////////////////////
-        // Event listeners //
-        /////////////////////
+        /////////////////
+        // UI altering //
+        /////////////////
 
         /**
          * When rich-text widget selection changes (any of them)
          */
 
     }, {
-        key: "onSelectionChange",
-        value: function onSelectionChange(selection, format) {
+        key: "onWidgetSelectionChange",
+        value: function onWidgetSelectionChange(selection, format) {
             // dont' do anything on deselect
             if (selection === null) return;
 
@@ -3695,6 +3934,11 @@ var RichTextWidgetToolbar = function (_Window) {
             // header
             if (format.header === undefined) this.headerPicker.pick("p");else this.headerPicker.pick("h" + format.header);
         }
+
+        /////////////////////
+        // Event listeners //
+        /////////////////////
+
     }, {
         key: "onBoldClick",
         value: function onBoldClick() {
@@ -3798,7 +4042,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var clamp = __webpack_require__(48);
-var cssClass = __webpack_require__(11);
+var cssClass = __webpack_require__(12);
 var getRefs = __webpack_require__(3);
 
 var Window = function () {
@@ -4088,7 +4332,7 @@ var Picker = function () {
     _createClass(Picker, [{
         key: "createDOM",
         value: function createDOM() {
-            this.element.className += "mc-picker";
+            this.element.className += " mc-picker";
             this.element.innerHTML = __webpack_require__(51);
 
             this.label = this.element.querySelector(".mc-picker__label");
@@ -4261,7 +4505,7 @@ var Menu = function () {
     _createClass(Menu, [{
         key: "createDOM",
         value: function createDOM(label) {
-            this.element.className += "mc-menu";
+            this.element.className += " mc-menu";
             this.element.innerHTML = __webpack_require__(53);
 
             this.label = this.element.querySelector(".mc-menu__label");

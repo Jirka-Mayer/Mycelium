@@ -63,17 +63,19 @@ class RichTextWidgetToolbar extends Window
         this.tableRemoveMenu.on("user-click", this.onTableRemoveMenuClick.bind(this))
         this.tableRemoveMenu.on("expand", this.onTableRemoveMenuExapnd.bind(this))
 
-        RichTextWidget.bus.on("selection-change", this.onSelectionChange.bind(this))
+        // we listen for widget selection changes to determine
+        // changes in the styling UI like bold, header etc.
+        RichTextWidget.bus.on("selection-change", this.onWidgetSelectionChange.bind(this))
     }
 
-    /////////////////////
-    // Event listeners //
-    /////////////////////
+    /////////////////
+    // UI altering //
+    /////////////////
 
     /**
      * When rich-text widget selection changes (any of them)
      */
-    onSelectionChange(selection, format)
+    onWidgetSelectionChange(selection, format)
     {
         // dont' do anything on deselect
         if (selection === null)
@@ -91,6 +93,10 @@ class RichTextWidgetToolbar extends Window
         else
             this.headerPicker.pick("h" + format.header)
     }
+
+    /////////////////////
+    // Event listeners //
+    /////////////////////
 
     onBoldClick()
     {

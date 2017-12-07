@@ -66,7 +66,7 @@ class Picker
      */
     createDOM()
     {
-        this.element.className += "mc-picker"
+        this.element.className += " mc-picker"
         this.element.innerHTML = require("./Picker.html")
         
         this.label = this.element.querySelector(".mc-picker__label")

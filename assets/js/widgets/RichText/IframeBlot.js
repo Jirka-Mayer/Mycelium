@@ -47,7 +47,7 @@ class IframeBlot extends BlockEmbed
     static createContentDocument(node, value, iframeObjectClass)
     {
         // create and register content div
-        node.contentDocument.body.innerHTML = "<div></div>"
+        node.contentDocument.body.innerHTML = `<div></div>`
         node.contentDiv = node.contentDocument.body.children[0]
 
         // remove margin and margin overflow
