@@ -236,7 +236,7 @@ class RichText
     {
         let range = this.quill.getSelection(true)
         this.quill.insertText(range.index, "\n")
-        this.quill.insertEmbed(range.index + 1, "table", {})
+        this.quill.insertEmbed(range.index + 1, "table", "{}")
         this.quill.setSelection(range.index + 2)
     }
 }

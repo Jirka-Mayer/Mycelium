@@ -80,6 +80,20 @@ class TableObject extends IframeObject
      */
     loadValue()
     {
+        // deserialize value
+        try
+        {
+            this.initialValue = JSON.parse(this.initialValue)
+        }
+
+        // hide any errors
+        catch (e)
+        {
+            console.error(e)
+            console.log(this.initialValue)
+            this.initialValue = {}
+        }
+
         if (!(this.initialValue.rows instanceof Array))
             this.initialValue.rows = []
 
@@ -236,9 +250,12 @@ class TableObject extends IframeObject
             })
         })
 
-        return {
+        let value = {
             "rows": rows
         }
+
+        // serialize value
+        return JSON.stringify(value)
     }
 
     ////////////

@@ -41,7 +41,7 @@
     >
         {{-- print rendered content before quill loads --}}
         {!!
-            $renderer->render(
+            $renderer->renderHtml(
                 $shroom->data("public")->get($key, $default)
             )
         !!}
@@ -49,7 +49,7 @@
 @else
     <div class="{{ $class }} {{ "css-scope__" . $cssScope }}">
         {!!
-            $renderer->render(
+            $renderer->renderHtml(
                 $shroom->data("public")->get($key, $default)
             )
         !!}

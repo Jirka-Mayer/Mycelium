@@ -396,7 +396,7 @@ __webpack_require__(37);
 __webpack_require__(38);
 __webpack_require__(39);
 __webpack_require__(40);
-var EventBus = __webpack_require__(5);
+var EventBus = __webpack_require__(4);
 
 // quill events are registered a little bit later,
 // because loading may trigger "text-change" which
@@ -599,7 +599,7 @@ var RichText = function () {
         value: function onInsertTable() {
             var range = this.quill.getSelection(true);
             this.quill.insertText(range.index, "\n");
-            this.quill.insertEmbed(range.index + 1, "table", {});
+            this.quill.insertEmbed(range.index + 1, "table", "{}");
             this.quill.setSelection(range.index + 2);
         }
     }]);
@@ -651,6 +651,78 @@ module.exports = getRefs;
 
 /***/ }),
 /* 4 */
+/***/ (function(module, exports) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var EventBus = function () {
+    function EventBus() {
+        _classCallCheck(this, EventBus);
+
+        this.listeners = {};
+        this.firing = false;
+    }
+
+    _createClass(EventBus, [{
+        key: "on",
+        value: function on(event, callback) {
+            if (this.listeners[event] === undefined) this.listeners[event] = [];
+
+            // hide some useful properties on a listener
+            // (we shouldn't write properties to the callback)
+            var listener = function listener() {
+                callback.apply(null, arguments);
+            };
+
+            listener.ignoreNext = this.firing === event;
+            listener.callback = callback;
+
+            this.listeners[event].push(listener);
+        }
+    }, {
+        key: "fire",
+        value: function fire(event, arg) {
+            this.firing = event;
+
+            var args = [];
+            for (var i = 1; i < arguments.length; i++) {
+                args.push(arguments[i]);
+            }if (this.listeners[event] === undefined) this.listeners[event] = [];
+
+            for (var _i = 0; _i < this.listeners[event].length; _i++) {
+                if (this.listeners[event][_i].ignoreNext) {
+                    this.listeners[event][_i].ignoreNext = false;
+                    continue;
+                }
+
+                this.listeners[event][_i].apply(null, args);
+            }
+
+            this.firing = false;
+        }
+    }, {
+        key: "off",
+        value: function off(event, callback) {
+            if (this.listeners[event] === undefined) return;
+
+            for (var i = 0; i < this.listeners[event].length; i++) {
+                if (this.listeners[event][i].callback === callback) {
+                    this.listeners[event].splice(i, 1);
+                    return;
+                }
+            }
+        }
+    }]);
+
+    return EventBus;
+}();
+
+module.exports = EventBus;
+
+/***/ }),
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -748,78 +820,6 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 module.exports = defaults;
 
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(20)))
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var EventBus = function () {
-    function EventBus() {
-        _classCallCheck(this, EventBus);
-
-        this.listeners = {};
-        this.firing = false;
-    }
-
-    _createClass(EventBus, [{
-        key: "on",
-        value: function on(event, callback) {
-            if (this.listeners[event] === undefined) this.listeners[event] = [];
-
-            // hide some useful properties on a listener
-            // (we shouldn't write properties to the callback)
-            var listener = function listener() {
-                callback.apply(null, arguments);
-            };
-
-            listener.ignoreNext = this.firing === event;
-            listener.callback = callback;
-
-            this.listeners[event].push(listener);
-        }
-    }, {
-        key: "fire",
-        value: function fire(event, arg) {
-            this.firing = event;
-
-            var args = [];
-            for (var i = 1; i < arguments.length; i++) {
-                args.push(arguments[i]);
-            }if (this.listeners[event] === undefined) this.listeners[event] = [];
-
-            for (var _i = 0; _i < this.listeners[event].length; _i++) {
-                if (this.listeners[event][_i].ignoreNext) {
-                    this.listeners[event][_i].ignoreNext = false;
-                    continue;
-                }
-
-                this.listeners[event][_i].apply(null, args);
-            }
-
-            this.firing = false;
-        }
-    }, {
-        key: "off",
-        value: function off(event, callback) {
-            if (this.listeners[event] === undefined) return;
-
-            for (var i = 0; i < this.listeners[event].length; i++) {
-                if (this.listeners[event][i].callback === callback) {
-                    this.listeners[event].splice(i, 1);
-                    return;
-                }
-            }
-        }
-    }]);
-
-    return EventBus;
-}();
-
-module.exports = EventBus;
 
 /***/ }),
 /* 6 */
@@ -1104,7 +1104,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var IframeObject = __webpack_require__(42);
 var getRefs = __webpack_require__(3);
 var TableRow = __webpack_require__(43);
-var EventBus = __webpack_require__(5);
+var EventBus = __webpack_require__(4);
 
 var TableObject = function (_IframeObject) {
     _inherits(TableObject, _IframeObject);
@@ -1187,6 +1187,18 @@ var TableObject = function (_IframeObject) {
     }, {
         key: "loadValue",
         value: function loadValue() {
+            // deserialize value
+            try {
+                this.initialValue = JSON.parse(this.initialValue);
+            }
+
+            // hide any errors
+            catch (e) {
+                console.error(e);
+                console.log(this.initialValue);
+                this.initialValue = {};
+            }
+
             if (!(this.initialValue.rows instanceof Array)) this.initialValue.rows = [];
 
             for (var i = 0; i < this.initialValue.rows.length; i++) {
@@ -1348,9 +1360,11 @@ var TableObject = function (_IframeObject) {
                 });
             });
 
-            return {
+            var value = {
                 "rows": rows
-            };
+
+                // serialize value
+            };return JSON.stringify(value);
         }
 
         ////////////
@@ -1804,7 +1818,7 @@ module.exports = __webpack_require__(17);
 var utils = __webpack_require__(0);
 var bind = __webpack_require__(6);
 var Axios = __webpack_require__(19);
-var defaults = __webpack_require__(4);
+var defaults = __webpack_require__(5);
 
 /**
  * Create an instance of Axios
@@ -1887,7 +1901,7 @@ function isSlowBuffer (obj) {
 "use strict";
 
 
-var defaults = __webpack_require__(4);
+var defaults = __webpack_require__(5);
 var utils = __webpack_require__(0);
 var InterceptorManager = __webpack_require__(29);
 var dispatchRequest = __webpack_require__(30);
@@ -2609,7 +2623,7 @@ module.exports = InterceptorManager;
 var utils = __webpack_require__(0);
 var transformData = __webpack_require__(31);
 var isCancel = __webpack_require__(9);
-var defaults = __webpack_require__(4);
+var defaults = __webpack_require__(5);
 
 /**
  * Throws a `Cancel` if cancellation has been requested.
@@ -4267,7 +4281,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventBus = __webpack_require__(5);
+var EventBus = __webpack_require__(4);
 
 /*
     Events:
@@ -4445,7 +4459,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventBus = __webpack_require__(5);
+var EventBus = __webpack_require__(4);
 
 /*
     Events:
