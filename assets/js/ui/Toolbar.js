@@ -6,20 +6,20 @@ class Toolbar
     constructor(window, document, mycelium)
     {
         // reference to the mycelium namespace
-        this.$mycelium = mycelium
+        this.mycelium = mycelium
 
         /**
          * References to elements
          */
-        this.$refs = {}
+        this.refs = {}
 
-        this.$createDOM(document)
+        this.createDOM(document)
 
         // create rich-text widget toolbar window
-        if (this.$mycelium.state.editing)
+        if (this.mycelium.state.editing)
         {
             this.richTextToolbar = new RichTextWidgetToolbar(window, document, {})
-            this.$mycelium.windowManager.registerWindow(
+            this.mycelium.windowManager.registerWindow(
                 this.richTextToolbar
             )
         }
@@ -28,7 +28,7 @@ class Toolbar
     /**
      * Creates all elements and appends them to the document
      */
-    $createDOM(document)
+    createDOM(document)
     {
         // create toolbar element
         let element = document.createElement("div")
@@ -43,21 +43,21 @@ class Toolbar
         document.body.appendChild(element)
         document.body.appendChild(spacer)
 
-        this.$element = element
-        this.$spacer = spacer
-        this.$refs = getRefs(this.$element)
+        this.element = element
+        this.spacer = spacer
+        this.refs = getRefs(this.element)
 
         // register event listeners
-        this.$refs.logout.addEventListener(
-            "click", this.$onLogoutClick.bind(this)
+        this.refs.logout.addEventListener(
+            "click", this.onLogoutClick.bind(this)
         )
-        this.$refs.toggleEdit.addEventListener(
-            "click", this.$onToggleEditClick.bind(this)
+        this.refs.toggleEdit.addEventListener(
+            "click", this.onToggleEditClick.bind(this)
         )
 
-        if (this.$mycelium.state.editing)
+        if (this.mycelium.state.editing)
         {
-            this.$refs.richTextToolbar.addEventListener(
+            this.refs.richTextToolbar.addEventListener(
                 "click", () => {
                     this.richTextToolbar.maximize()
                 }
@@ -65,44 +65,55 @@ class Toolbar
         }
         else
         {
-            this.$refs.richTextToolbar.remove()
+            this.refs.richTextToolbar.remove()
         }
 
-        this.$initializeElements()
+        this.initializeElements()
     }
 
     /**
      * Initializes individual elements based on the mycelium state
      */
-    $initializeElements()
+    initializeElements()
     {
-        this.$initializeLogoutButton()
+        this.initializeLogoutButton()
     }
 
     /**
      * Initializes logout button
      */
-    $initializeLogoutButton()
+    initializeLogoutButton()
     {
-        if (!this.$mycelium.config.auth.enabled)
-            this.$refs.logout.remove()
+        if (!this.mycelium.config.auth.enabled)
+            this.refs.logout.remove()
     }
 
     /////////////////////
     // Event listeners //
     /////////////////////
 
-    $onLogoutClick()
+    onLogoutClick()
     {
-        window.location.href = this.$mycelium.config.auth.routes.logout
+        window.location.href = this.mycelium.config.auth.routes.logout
     }
 
-    $onToggleEditClick()
+    onToggleEditClick()
     {
-        if (this.$mycelium.state.editing)
-            window.location.href += "/.."
+        var path = window.location.pathname
+
+        if (path[path.length - 1] !== "/")
+            path += "/"
+
+        if (this.mycelium.state.editing)
+        {
+            // exit edit mode
+            window.location.href = path + ".."
+        }
         else
-            window.location.href += "edit"
+        {
+            // enter edit mode
+            window.location.href = path + "edit"
+        }
     }
 }
 

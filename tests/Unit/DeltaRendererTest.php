@@ -122,8 +122,40 @@ class DeltaRendererTest extends TestCase
             ["text" => [["Before", []]]],
             [
                 "embed" => ["image" => "kitten.jpg"],
-                "attributes" => ["width" => 420]],
+                "attributes" => ["width" => 420]
+            ],
             ["text" => [["After", []]]]
+        ], $blocks);
+    }
+
+    /**
+     * @test
+     */
+    public function it_removes_newlines_before_and_after_embeds()
+    {
+        /*
+            When you have an embed as the very first thing
+            in the delta, quill will insert a newline before it.
+            But we don't want that to render. It doesn't
+            make for a pretty spacing.
+
+            Same with trailing newlines after embed.
+         */
+        
+        list($blocks, $html) = $this->renderToBlocks([
+            "ops" => [
+                ["insert" => "\n"],
+                [
+                    "insert" => ["some-embed" => 42]
+                ],
+                ["insert" => "\n"]
+            ]
+        ]);
+
+        $this->assertEquals([
+            [
+                "embed" => ["some-embed" => 42]
+            ]
         ], $blocks);
     }
 

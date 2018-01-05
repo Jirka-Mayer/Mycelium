@@ -121,8 +121,9 @@ class TableObject extends IframeObject
      */
     createInitialTable()
     {
-        this.addRow(3)
-        this.addRow(3)
+        // create a 2x5 table
+        for (let i = 0; i < 5; i++)
+            this.addRow(2)
     }
 
     /**

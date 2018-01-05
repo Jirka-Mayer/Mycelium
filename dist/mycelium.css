@@ -128,6 +128,8 @@
   background: rgba(0,0,0,0.2);
 }
 [mycelium-widget="rich-text"] .ql-editor {
+  min-height: 0.8em;
+  min-width: 20px;
   outline: 0px solid rgba(0,0,0,0.2);
   outline-offset: 0.2em;
 }
@@ -172,6 +174,7 @@ body.mc-ql-table-blot__content .mc-ql-table-blot__table > table td {
 body.mc-ql-table-blot__content .ql-editor {
   outline: 0px solid rgba(0,0,0,0.2);
   outline-offset: 0.2em;
+  min-height: 0.8em;
   min-width: 20px;
 }
 body.mc-ql-table-blot__content .ql-editor:focus,

@@ -95,7 +95,47 @@ class DeltaRenderer
             }
         }
 
+        $this->trimEmbedNewlines($blocks);
+
         return $blocks;
+    }
+
+    /**
+     * Removes newlines on beginning and end if before/after an embed
+     */
+    protected function trimEmbedNewlines(&$blocks)
+    {
+        // leading newline before embed
+        if (count($blocks) < 2)
+            return;
+
+        if ($blocks[0] instanceof Line && $blocks[1] instanceof Embed)
+        {
+            if (count($blocks[0]->segments) == 1
+                && $blocks[0]->segments[0]->text == ""
+                && $blocks[0]->segments[0]->attributes == []
+            )
+            {
+                array_splice($blocks, 0, 1);
+            }
+        }
+
+        // trailing newline after embed
+        $len = count($blocks);
+        if ($len < 2)
+            return;
+
+        if ($blocks[$len - 1] instanceof Line && $blocks[$len - 2] instanceof Embed)
+        {
+            if (count($blocks[$len - 1]->segments) == 1
+                && $blocks[$len - 1]->segments[0]->text == ""
+                && $blocks[$len - 1]->segments[0]->attributes == []
+            )
+            {
+                array_splice($blocks, $len - 1, 1);
+                $len -= 1;
+            }
+        }
     }
 
     /**

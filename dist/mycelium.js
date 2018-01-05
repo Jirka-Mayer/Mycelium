@@ -1227,8 +1227,10 @@ var TableObject = function (_IframeObject) {
     }, {
         key: "createInitialTable",
         value: function createInitialTable() {
-            this.addRow(3);
-            this.addRow(3);
+            // create a 2x5 table
+            for (var i = 0; i < 5; i++) {
+                this.addRow(2);
+            }
         }
 
         /**
@@ -3762,19 +3764,19 @@ var Toolbar = function () {
         _classCallCheck(this, Toolbar);
 
         // reference to the mycelium namespace
-        this.$mycelium = mycelium;
+        this.mycelium = mycelium;
 
         /**
          * References to elements
          */
-        this.$refs = {};
+        this.refs = {};
 
-        this.$createDOM(document);
+        this.createDOM(document);
 
         // create rich-text widget toolbar window
-        if (this.$mycelium.state.editing) {
+        if (this.mycelium.state.editing) {
             this.richTextToolbar = new RichTextWidgetToolbar(window, document, {});
-            this.$mycelium.windowManager.registerWindow(this.richTextToolbar);
+            this.mycelium.windowManager.registerWindow(this.richTextToolbar);
         }
     }
 
@@ -3784,8 +3786,8 @@ var Toolbar = function () {
 
 
     _createClass(Toolbar, [{
-        key: "$createDOM",
-        value: function $createDOM(document) {
+        key: "createDOM",
+        value: function createDOM(document) {
             var _this = this;
 
             // create toolbar element
@@ -3801,23 +3803,23 @@ var Toolbar = function () {
             document.body.appendChild(element);
             document.body.appendChild(spacer);
 
-            this.$element = element;
-            this.$spacer = spacer;
-            this.$refs = getRefs(this.$element);
+            this.element = element;
+            this.spacer = spacer;
+            this.refs = getRefs(this.element);
 
             // register event listeners
-            this.$refs.logout.addEventListener("click", this.$onLogoutClick.bind(this));
-            this.$refs.toggleEdit.addEventListener("click", this.$onToggleEditClick.bind(this));
+            this.refs.logout.addEventListener("click", this.onLogoutClick.bind(this));
+            this.refs.toggleEdit.addEventListener("click", this.onToggleEditClick.bind(this));
 
-            if (this.$mycelium.state.editing) {
-                this.$refs.richTextToolbar.addEventListener("click", function () {
+            if (this.mycelium.state.editing) {
+                this.refs.richTextToolbar.addEventListener("click", function () {
                     _this.richTextToolbar.maximize();
                 });
             } else {
-                this.$refs.richTextToolbar.remove();
+                this.refs.richTextToolbar.remove();
             }
 
-            this.$initializeElements();
+            this.initializeElements();
         }
 
         /**
@@ -3825,9 +3827,9 @@ var Toolbar = function () {
          */
 
     }, {
-        key: "$initializeElements",
-        value: function $initializeElements() {
-            this.$initializeLogoutButton();
+        key: "initializeElements",
+        value: function initializeElements() {
+            this.initializeLogoutButton();
         }
 
         /**
@@ -3835,9 +3837,9 @@ var Toolbar = function () {
          */
 
     }, {
-        key: "$initializeLogoutButton",
-        value: function $initializeLogoutButton() {
-            if (!this.$mycelium.config.auth.enabled) this.$refs.logout.remove();
+        key: "initializeLogoutButton",
+        value: function initializeLogoutButton() {
+            if (!this.mycelium.config.auth.enabled) this.refs.logout.remove();
         }
 
         /////////////////////
@@ -3845,14 +3847,24 @@ var Toolbar = function () {
         /////////////////////
 
     }, {
-        key: "$onLogoutClick",
-        value: function $onLogoutClick() {
-            window.location.href = this.$mycelium.config.auth.routes.logout;
+        key: "onLogoutClick",
+        value: function onLogoutClick() {
+            window.location.href = this.mycelium.config.auth.routes.logout;
         }
     }, {
-        key: "$onToggleEditClick",
-        value: function $onToggleEditClick() {
-            if (this.$mycelium.state.editing) window.location.href += "/..";else window.location.href += "edit";
+        key: "onToggleEditClick",
+        value: function onToggleEditClick() {
+            var path = window.location.pathname;
+
+            if (path[path.length - 1] !== "/") path += "/";
+
+            if (this.mycelium.state.editing) {
+                // exit edit mode
+                window.location.href = path + "..";
+            } else {
+                // enter edit mode
+                window.location.href = path + "edit";
+            }
         }
     }]);
 

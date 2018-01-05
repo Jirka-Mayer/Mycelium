@@ -1,6 +1,10 @@
 [mycelium-widget="rich-text"]
 
     .ql-editor
+        // prevent total collapse in case of an error
+        min-height: 0.8em
+        min-width: 20px
+        
         outline: 0px solid rgba(black, 0.2)
         outline-offset: 0.2em
         
@@ -48,6 +52,7 @@ body.mc-ql-table-blot__content
         outline-offset: 0.2em
         
         // prevent total collapse
+        min-height: 0.8em
         min-width: 20px
         
         &:focus, &:hover
