@@ -42,6 +42,15 @@ class MyceliumServiceProvider extends ServiceProvider
             __DIR__ . "/../assets/config/config.php" =>
                 config_path("mycelium.php")
         ], "config");
+
+        if ($this->app->runningInConsole())
+        {
+            $this->commands([
+                \Mycelium\Console\Auth\CreateUser::class,
+                \Mycelium\Console\Auth\ListUsers::class,
+                \Mycelium\Console\Auth\RemoveUsers::class,
+            ]);
+        }
     }
 
     public function register()
