@@ -3,3 +3,4 @@
 
 # Don't show diffs for compiled files
 dist/* -diff
+lib/* -diff

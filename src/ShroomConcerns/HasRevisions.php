@@ -143,7 +143,7 @@ trait HasRevisions
         }
         $this->revisions = $revisions;
 
-        // save to failes
+        // save to files
         foreach ($this->revisionBag as $index => $revision)
         {
             static::$filesystem->put(

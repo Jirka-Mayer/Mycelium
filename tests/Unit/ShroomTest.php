@@ -80,6 +80,19 @@ class ShroomTest extends TestCase
     /**
      * @test
      */
+    public function you_can_create_clustered_shroom_with_title()
+    {
+        $shroom = Shroom::create([
+            "cluster" => "my-cluster",
+            "title" => "My shroom"
+        ]);
+
+        $this->assertEquals("my-cluster::my-shroom", $shroom->id);
+    }
+
+    /**
+     * @test
+     */
     public function it_saves_data_for_master_revision()
     {
         $shroom = new Shroom([

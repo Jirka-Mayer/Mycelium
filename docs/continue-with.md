@@ -1,4 +1,0 @@
-Continue development with
-=========================
-
-- javascript
