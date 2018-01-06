@@ -20,6 +20,8 @@ class MyceliumServiceProvider extends ServiceProvider
         
         $this->loadViewsFrom(__DIR__ . "/../assets/views", "mycelium");
 
+        $this->loadTranslationsFrom(__DIR__ . "/../assets/lang", "mycelium");
+
         if (config("mycelium.auth.enabled", false))
         {
             $this->loadRoutesFrom(
