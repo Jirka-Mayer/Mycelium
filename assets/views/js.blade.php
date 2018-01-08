@@ -53,6 +53,7 @@
     <!-- create UI -->
     <script type="text/javascript">
         window.mycelium.windowManager = new window.mycelium.class.ui.WindowManager(
+            window,
             window.document
         )
 

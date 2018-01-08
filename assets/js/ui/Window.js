@@ -1,13 +1,25 @@
 const clamp = require("../utils/clamp.js")
 const cssClass = require("../utils/cssClass.js")
 const getRefs = require("../utils/getRefs.js")
+const defaultOptions = require("../utils/defaultOptions.js")
+
+/**
+ * How long it takes for a window to minimize
+ */
+const MINIMIZATION_DELAY = 500
 
 class Window
 {
-    constructor(window, document, options)
+    constructor(window, document, mycelium)
     {
         this.window = window
         this.document = document
+        this.mycelium = mycelium
+
+        /**
+         * Reference to the window manager set on registration
+         */
+        this.windowManager = null
 
         /**
          * Window position
@@ -20,9 +32,19 @@ class Window
         this.minimized = false
 
         /**
-         * Transparent window
+         * Minimize only flag
          */
-        this.transparent = false
+        this.minimizeOnly = false
+
+        /**
+         * Persistency flag
+         */
+        this.persistent = false
+
+        /**
+         * Window name
+         */
+        this.name = null
 
         /**
          * Is the window being dragged
@@ -33,8 +55,13 @@ class Window
         this.dragStartMousePosition = null
         this.dragStartWindowPosition = null
 
+        /**
+         * Private refs, user may want to use such name for himself
+         */
+        this._refs = {}
+
         // create html stuff
-        this.createDOM()
+        this._createDOM()
 
         this.updateDisplay()
 
@@ -51,19 +78,22 @@ class Window
         )
 
         this.window.addEventListener(
-            "resize", this.onWindowResize.bind(this)
+            "resize", this.onBrowserWindowResize.bind(this)
         )
 
-        this.refs.transparency.addEventListener(
-            "click", this.onTransparencyToggleClick.bind(this)
-        )
-
-        this.refs.minimize.addEventListener(
+        this._refs.minimize.addEventListener(
             "click", this.minimize.bind(this)
+        )
+
+        this._refs.close.addEventListener(
+            "click", this.close.bind(this)
         )
     }
 
-    createDOM()
+    /**
+     * Private dom creation (this method name may be used by the user)
+     */
+    _createDOM()
     {
         let element = this.document.createElement("div")
         element.className = "mc-window"
@@ -73,7 +103,34 @@ class Window
         this.handle = element.querySelector(".mc-window__handle")
         this.content = element.querySelector(".mc-window__content")
 
-        this.refs = getRefs(this.element)
+        this._refs = getRefs(this.element)
+    }
+
+    /**
+     * Called by the window manager, when the window is being registered
+     */
+    onRegistration(windowManager, options)
+    {
+        this.windowManager = windowManager
+
+        options = defaultOptions(options, {
+            minimizeOnly: false,
+            persistent: false,
+            name: null
+        })
+
+        this.minimizeOnly = options.minimizeOnly
+        this.persistent = options.persistent
+        this.name = options.name
+
+        // persistent windows are automatically minimizeOnly
+        if (this.persistent)
+            this.minimizeOnly = true
+
+        // hide minimization button if minimize only set
+        // (closing button takes the action)
+        if (this.minimizeOnly)
+            this._refs.minimize.style.display = "none"
     }
 
     /**
@@ -111,7 +168,7 @@ class Window
             this.element.style.display = "none"
             
             this.minimized = true
-        }, 500)
+        }, MINIMIZATION_DELAY)
     }
 
     /**
@@ -124,35 +181,91 @@ class Window
 
         this.element.style.display = "block"
 
-        cssClass(this.element, "mc-window--minimized", false)
+        setTimeout(() => {
+            cssClass(this.element, "mc-window--minimized", false)
+        }, 0)
 
         this.minimized = false
     }
 
     /**
-     * Enables window transparency
+     * Closes the window
      */
-    enableTransparency()
+    close()
     {
-        if (this.transparent)
+        // if minimize only, don't close
+        if (this.minimizeOnly)
+        {
+            this.minimize()
             return
+        }
 
-        this.transparent = true
+        // minimize first
+        this.minimize()
 
-        cssClass(this.element, "mc-window--transparent", true)
+        // forget
+        setTimeout(() => {
+            this.windowManager.forgetWindow(this)
+            
+            // signal, that it has been forgotten
+            this.windowManager = null
+        }, MINIMIZATION_DELAY)
     }
 
     /**
-     * Disables window transparency
+     * Private sleep implementation
+     * Handles the basics
      */
-    disableTransparency()
+    _sleep()
     {
-        if (!this.transparent)
+        return {
+            position: this.position,
+            minimized: this.minimized,
+
+            userData: this.sleep()
+        }
+    }
+
+    /**
+     * Save state to a dream
+     */
+    sleep()
+    {
+        return null
+    }
+
+    /**
+     * Private sleep implementation
+     * Handles the basics
+     */
+    _wakeup(dream)
+    {
+        if (!(dream instanceof Object))
             return
 
-        this.transparent = false
+        if ("position" in dream)
+            this.position = dream.position
 
-        cssClass(this.element, "mc-window--transparent", false)
+        if ("minimized" in dream)
+        {
+            if (dream.minimized)
+                this.minimize()
+            else
+                this.maximize()
+        }
+
+        this.updateDisplay()
+
+        // call user-defined wakeup
+        this.wakeup(dream.userData)
+    }
+
+    /**
+     * Recover state from a dream
+     */
+    wakeup(dream)
+    {
+        // nothing
     }
 
     /////////////////////
@@ -193,17 +306,9 @@ class Window
         this.dragged = false
     }
 
-    onWindowResize()
+    onBrowserWindowResize()
     {
         this.updateDisplay()
-    }
-
-    onTransparencyToggleClick()
-    {
-        if (this.transparent)
-            this.disableTransparency()
-        else
-            this.enableTransparency()
     }
 }
 

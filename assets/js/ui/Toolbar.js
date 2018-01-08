@@ -18,9 +18,16 @@ class Toolbar
         // create rich-text widget toolbar window
         if (this.mycelium.state.editing)
         {
-            this.richTextToolbar = new RichTextWidgetToolbar(window, document, {})
+            this.richTextToolbar = new RichTextWidgetToolbar(
+                window, document, this.mycelium
+            )
+
             this.mycelium.windowManager.registerWindow(
-                this.richTextToolbar
+                this.richTextToolbar,
+                {
+                    persistent: true,
+                    name: "RichTextWidgetToolbar"
+                }
             )
         }
     }

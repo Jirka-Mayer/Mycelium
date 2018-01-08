@@ -8,9 +8,9 @@ const TableObject = require("../../widgets/RichText/TableBlot/TableObject.js")
 
 class RichTextWidgetToolbar extends Window
 {
-    constructor(window, document, options)
+    constructor(window, document, mycelium)
     {
-        super(window, document, options)
+        super(window, document, mycelium)
 
         this.content.innerHTML = require("./RichTextWidgetToolbar.html")
 

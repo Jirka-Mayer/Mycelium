@@ -227,12 +227,6 @@ body.mc-ql-table-blot__content .ql-clipboard p {
           transform: translateY(20px);
   opacity: 0;
 }
-.mc-window--transparent {
-  opacity: 0.3;
-}
-.mc-window--transparent:hover {
-  opacity: 1;
-}
 .mc-window__bar {
   display: -webkit-box;
   display: -ms-flexbox;

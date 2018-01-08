@@ -1539,7 +1539,7 @@ module.exports = cssClass;
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(14);
-module.exports = __webpack_require__(57);
+module.exports = __webpack_require__(58);
 
 
 /***/ }),
@@ -1574,7 +1574,7 @@ window.mycelium.class.widgets.RichText = __webpack_require__(2);
 if (!window.mycelium.class.ui) window.mycelium.class.ui = {};
 
 window.mycelium.class.ui.Toolbar = __webpack_require__(45);
-window.mycelium.class.ui.WindowManager = __webpack_require__(56);
+window.mycelium.class.ui.WindowManager = __webpack_require__(57);
 
 /***/ }),
 /* 15 */
@@ -3775,8 +3775,12 @@ var Toolbar = function () {
 
         // create rich-text widget toolbar window
         if (this.mycelium.state.editing) {
-            this.richTextToolbar = new RichTextWidgetToolbar(window, document, {});
-            this.mycelium.windowManager.registerWindow(this.richTextToolbar);
+            this.richTextToolbar = new RichTextWidgetToolbar(window, document, this.mycelium);
+
+            this.mycelium.windowManager.registerWindow(this.richTextToolbar, {
+                persistent: true,
+                name: "RichTextWidgetToolbar"
+            });
         }
     }
 
@@ -3792,7 +3796,7 @@ var Toolbar = function () {
 
             // create toolbar element
             var element = document.createElement("div");
-            element.innerHTML = __webpack_require__(55);
+            element.innerHTML = __webpack_require__(56);
             element.className = "mc-toolbar";
 
             // create spacer
@@ -3888,20 +3892,20 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 var Window = __webpack_require__(47);
 var getRefs = __webpack_require__(3);
 var cssClass = __webpack_require__(12);
-var Picker = __webpack_require__(50);
-var Menu = __webpack_require__(52);
+var Picker = __webpack_require__(51);
+var Menu = __webpack_require__(53);
 var RichTextWidget = __webpack_require__(2);
 var TableObject = __webpack_require__(11);
 
 var RichTextWidgetToolbar = function (_Window) {
     _inherits(RichTextWidgetToolbar, _Window);
 
-    function RichTextWidgetToolbar(window, document, options) {
+    function RichTextWidgetToolbar(window, document, mycelium) {
         _classCallCheck(this, RichTextWidgetToolbar);
 
-        var _this = _possibleConstructorReturn(this, (RichTextWidgetToolbar.__proto__ || Object.getPrototypeOf(RichTextWidgetToolbar)).call(this, window, document, options));
+        var _this = _possibleConstructorReturn(this, (RichTextWidgetToolbar.__proto__ || Object.getPrototypeOf(RichTextWidgetToolbar)).call(this, window, document, mycelium));
 
-        _this.content.innerHTML = __webpack_require__(54);
+        _this.content.innerHTML = __webpack_require__(55);
 
         _this.refs = getRefs(_this.content);
 
@@ -4070,13 +4074,25 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var clamp = __webpack_require__(48);
 var cssClass = __webpack_require__(12);
 var getRefs = __webpack_require__(3);
+var defaultOptions = __webpack_require__(49);
+
+/**
+ * How long it takes for a window to minimize
+ */
+var MINIMIZATION_DELAY = 500;
 
 var Window = function () {
-    function Window(window, document, options) {
+    function Window(window, document, mycelium) {
         _classCallCheck(this, Window);
 
         this.window = window;
         this.document = document;
+        this.mycelium = mycelium;
+
+        /**
+         * Reference to the window manager set on registration
+         */
+        this.windowManager = null;
 
         /**
          * Window position
@@ -4089,9 +4105,19 @@ var Window = function () {
         };this.minimized = false;
 
         /**
-         * Transparent window
+         * Minimize only flag
          */
-        this.transparent = false;
+        this.minimizeOnly = false;
+
+        /**
+         * Persistency flag
+         */
+        this.persistent = false;
+
+        /**
+         * Window name
+         */
+        this.name = null;
 
         /**
          * Is the window being dragged
@@ -4102,8 +4128,13 @@ var Window = function () {
         this.dragStartMousePosition = null;
         this.dragStartWindowPosition = null;
 
+        /**
+         * Private refs, user may want to use such name for himself
+         */
+        this._refs = {};
+
         // create html stuff
-        this.createDOM();
+        this._createDOM();
 
         this.updateDisplay();
 
@@ -4113,25 +4144,57 @@ var Window = function () {
 
         this.window.addEventListener("mouseup", this.onWindowMouseUp.bind(this));
 
-        this.window.addEventListener("resize", this.onWindowResize.bind(this));
+        this.window.addEventListener("resize", this.onBrowserWindowResize.bind(this));
 
-        this.refs.transparency.addEventListener("click", this.onTransparencyToggleClick.bind(this));
+        this._refs.minimize.addEventListener("click", this.minimize.bind(this));
 
-        this.refs.minimize.addEventListener("click", this.minimize.bind(this));
+        this._refs.close.addEventListener("click", this.close.bind(this));
     }
 
+    /**
+     * Private dom creation (this method name may be used by the user)
+     */
+
+
     _createClass(Window, [{
-        key: "createDOM",
-        value: function createDOM() {
+        key: "_createDOM",
+        value: function _createDOM() {
             var element = this.document.createElement("div");
             element.className = "mc-window";
-            element.innerHTML = __webpack_require__(49);
+            element.innerHTML = __webpack_require__(50);
 
             this.element = element;
             this.handle = element.querySelector(".mc-window__handle");
             this.content = element.querySelector(".mc-window__content");
 
-            this.refs = getRefs(this.element);
+            this._refs = getRefs(this.element);
+        }
+
+        /**
+         * Called by the window manager, when the window is being registered
+         */
+
+    }, {
+        key: "onRegistration",
+        value: function onRegistration(windowManager, options) {
+            this.windowManager = windowManager;
+
+            options = defaultOptions(options, {
+                minimizeOnly: false,
+                persistent: false,
+                name: null
+            });
+
+            this.minimizeOnly = options.minimizeOnly;
+            this.persistent = options.persistent;
+            this.name = options.name;
+
+            // persistent windows are automatically minimizeOnly
+            if (this.persistent) this.minimizeOnly = true;
+
+            // hide minimization button if minimize only set
+            // (closing button takes the action)
+            if (this.minimizeOnly) this._refs.minimize.style.display = "none";
         }
 
         /**
@@ -4168,7 +4231,7 @@ var Window = function () {
                 _this.element.style.display = "none";
 
                 _this.minimized = true;
-            }, 500);
+            }, MINIMIZATION_DELAY);
         }
 
         /**
@@ -4178,42 +4241,103 @@ var Window = function () {
     }, {
         key: "maximize",
         value: function maximize() {
+            var _this2 = this;
+
             if (!this.minimized) return;
 
             this.element.style.display = "block";
 
-            cssClass(this.element, "mc-window--minimized", false);
+            setTimeout(function () {
+                cssClass(_this2.element, "mc-window--minimized", false);
+            }, 0);
 
             this.minimized = false;
         }
 
         /**
-         * Enables window transparency
+         * Closes the window
          */
 
     }, {
-        key: "enableTransparency",
-        value: function enableTransparency() {
-            if (this.transparent) return;
+        key: "close",
+        value: function close() {
+            var _this3 = this;
 
-            this.transparent = true;
+            // if minimize only, don't close
+            if (this.minimizeOnly) {
+                this.minimize();
+                return;
+            }
 
-            cssClass(this.element, "mc-window--transparent", true);
+            // minimize first
+            this.minimize();
+
+            // forget
+            setTimeout(function () {
+                _this3.windowManager.forgetWindow(_this3);
+
+                // signal, that it has been forgotten
+                _this3.windowManager = null;
+            }, MINIMIZATION_DELAY);
         }
 
         /**
-         * Disables window transparency
+         * Private sleep implementation
+         * Handles the basics
          */
 
     }, {
-        key: "disableTransparency",
-        value: function disableTransparency() {
-            if (!this.transparent) return;
+        key: "_sleep",
+        value: function _sleep() {
+            return {
+                position: this.position,
+                minimized: this.minimized,
 
-            this.transparent = false;
-
-            cssClass(this.element, "mc-window--transparent", false);
+                userData: this.sleep()
+            };
         }
+
+        /**
+         * Save state to a dream
+         */
+
+    }, {
+        key: "sleep",
+        value: function sleep() {
+            return null;
+        }
+
+        /**
+         * Private sleep implementation
+         * Handles the basics
+         */
+
+    }, {
+        key: "_wakeup",
+        value: function _wakeup(dream) {
+            if (!(dream instanceof Object)) return;
+
+            if ("position" in dream) this.position = dream.position;
+
+            if ("minimized" in dream) {
+                if (dream.minimized) this.minimize();else this.maximize();
+            }
+
+            this.updateDisplay();
+
+            // call user-defined wakeup
+            this.wakeup(dream.userData);
+        }
+
+        /**
+         * Recover state from a dream
+         */
+
+    }, {
+        key: "wakeup",
+        value: function wakeup(dream) {}
+        // nothing
+
 
         /////////////////////
         // Event listeners //
@@ -4250,14 +4374,9 @@ var Window = function () {
             this.dragged = false;
         }
     }, {
-        key: "onWindowResize",
-        value: function onWindowResize() {
+        key: "onBrowserWindowResize",
+        value: function onBrowserWindowResize() {
             this.updateDisplay();
-        }
-    }, {
-        key: "onTransparencyToggleClick",
-        value: function onTransparencyToggleClick() {
-            if (this.transparent) this.disableTransparency();else this.enableTransparency();
         }
     }]);
 
@@ -4283,10 +4402,30 @@ module.exports = clamp;
 /* 49 */
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"mc-window__bar\">\n    <div class=\"mc-window__handle\"></div>\n\n    <div class=\"mc-window__button\" ref=\"transparency\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M10,4.4C3.439,4.4,0,9.232,0,10c0,0.766,3.439,5.6,10,5.6c6.56,0,10-4.834,10-5.6C20,9.232,16.56,4.4,10,4.4\n            z M10,14.307c-2.455,0-4.445-1.928-4.445-4.307S7.545,5.691,10,5.691s4.444,1.93,4.444,4.309S12.455,14.307,10,14.307z M10,10\n            c-0.407-0.447,0.663-2.154,0-2.154c-1.228,0-2.223,0.965-2.223,2.154S8.772,12.154,10,12.154c1.227,0,2.223-0.965,2.223-2.154\n            C12.223,9.453,10.346,10.379,10,10z\"/>\n        </svg>\n    </div>\n\n    <div class=\"mc-window__button\" ref=\"minimize\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M4.516,7.548c0.436-0.446,1.043-0.481,1.576,0L10,11.295l3.908-3.747c0.533-0.481,1.141-0.446,1.574,0\n            c0.436,0.445,0.408,1.197,0,1.615c-0.406,0.418-4.695,4.502-4.695,4.502C10.57,13.888,10.285,14,10,14s-0.57-0.112-0.789-0.335\n            c0,0-4.287-4.084-4.695-4.502C4.107,8.745,4.08,7.993,4.516,7.548z\"/>\n        </svg>\n    </div>\n\n    <div class=\"mc-window__button\" ref=\"close\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M14.348,14.849c-0.469,0.469-1.229,0.469-1.697,0L10,11.819l-2.651,3.029c-0.469,0.469-1.229,0.469-1.697,0\n            c-0.469-0.469-0.469-1.229,0-1.697l2.758-3.15L5.651,6.849c-0.469-0.469-0.469-1.228,0-1.697s1.228-0.469,1.697,0L10,8.183\n            l2.651-3.031c0.469-0.469,1.228-0.469,1.697,0s0.469,1.229,0,1.697l-2.758,3.152l2.758,3.15\n            C14.817,13.62,14.817,14.38,14.348,14.849z\"/>\n        </svg>\n    </div>\n</div>\n<div class=\"mc-window__content\">\n    <!--window content-->\n</div>";
+
+/**
+ * Adds default option values to a provided options object
+ */
+function defaultOptions(options, defOptions) {
+    if (options === undefined) options = {};
+
+    for (o in defOptions) {
+        if (options[o] === undefined) options[o] = defOptions[o];
+    }
+
+    return options;
+}
+
+module.exports = defaultOptions;
 
 /***/ }),
 /* 50 */
+/***/ (function(module, exports) {
+
+module.exports = "<div class=\"mc-window__bar\">\n    <div class=\"mc-window__handle\"></div>\n\n    <div class=\"mc-window__button\" ref=\"minimize\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M4.516,7.548c0.436-0.446,1.043-0.481,1.576,0L10,11.295l3.908-3.747c0.533-0.481,1.141-0.446,1.574,0\n            c0.436,0.445,0.408,1.197,0,1.615c-0.406,0.418-4.695,4.502-4.695,4.502C10.57,13.888,10.285,14,10,14s-0.57-0.112-0.789-0.335\n            c0,0-4.287-4.084-4.695-4.502C4.107,8.745,4.08,7.993,4.516,7.548z\"/>\n        </svg>\n    </div>\n\n    <div class=\"mc-window__button\" ref=\"close\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M14.348,14.849c-0.469,0.469-1.229,0.469-1.697,0L10,11.819l-2.651,3.029c-0.469,0.469-1.229,0.469-1.697,0\n            c-0.469-0.469-0.469-1.229,0-1.697l2.758-3.15L5.651,6.849c-0.469-0.469-0.469-1.228,0-1.697s1.228-0.469,1.697,0L10,8.183\n            l2.651-3.031c0.469-0.469,1.228-0.469,1.697,0s0.469,1.229,0,1.697l-2.758,3.152l2.758,3.15\n            C14.817,13.62,14.817,14.38,14.348,14.849z\"/>\n        </svg>\n    </div>\n</div>\n<div class=\"mc-window__content\">\n    <!--window content-->\n</div>";
+
+/***/ }),
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4359,7 +4498,7 @@ var Picker = function () {
         key: "createDOM",
         value: function createDOM() {
             this.element.className += " mc-picker";
-            this.element.innerHTML = __webpack_require__(51);
+            this.element.innerHTML = __webpack_require__(52);
 
             this.label = this.element.querySelector(".mc-picker__label");
             this.optionsElement = this.element.querySelector(".mc-picker__options");
@@ -4458,13 +4597,13 @@ var Picker = function () {
 module.exports = Picker;
 
 /***/ }),
-/* 51 */
+/* 52 */
 /***/ (function(module, exports) {
 
 module.exports = "<span class=\"mc-picker\">\n    <span class=\"mc-picker__label\" data-label=\"\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-picker__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-picker__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-picker__options\" style=\"display: none\">\n    </span>\n</span>";
 
 /***/ }),
-/* 52 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4532,7 +4671,7 @@ var Menu = function () {
         key: "createDOM",
         value: function createDOM(label) {
             this.element.className += " mc-menu";
-            this.element.innerHTML = __webpack_require__(53);
+            this.element.innerHTML = __webpack_require__(54);
 
             this.label = this.element.querySelector(".mc-menu__label");
             this.itemsElement = this.element.querySelector(".mc-menu__items");
@@ -4628,38 +4767,58 @@ var Menu = function () {
 module.exports = Menu;
 
 /***/ }),
-/* 53 */
+/* 54 */
 /***/ (function(module, exports) {
 
 module.exports = "<span class=\"mc-menu\">\n    <span class=\"mc-menu__label\" data-label=\"\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-menu__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-menu__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-menu__items\" style=\"display: none\">\n    </span>\n</span>";
 
 /***/ }),
-/* 54 */
+/* 55 */
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"mc-rtwt\">\n\n    <!-- set bold style -->\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <!-- set italic style -->\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- pick header type -->\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- add a table -->\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        <svg viewBox=\"0 0 26 28\">\n            <g fill=\"#444\" transform=\"scale(0.02734375 0.02734375)\">\n                <path d=\"M292.571 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM950.857 164.571v621.714c0 50.286-41.143 91.429-91.429 91.429h-768c-50.286 0-91.429-41.143-91.429-91.429v-621.714c0-50.286 41.143-91.429 91.429-91.429h768c50.286 0 91.429 41.143 91.429 91.429z\" />\n            </g>\n        </svg>\n    </button>\n\n    <!-- insert something to a table -->\n    <span ref=\"tableInsert\"></span>\n\n    <!-- remove something from a table -->\n    <span ref=\"tableRemove\"></span>\n</div>";
+module.exports = "<div class=\"mc-rtwt\">\n\n    <!-- set bold style -->\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <!-- set italic style -->\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <!-- em -->\n    <button class=\"mc-rtwt__button\" ref=\"emphasis\">\n        E\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- pick header type -->\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- link -->\n    <button class=\"mc-rtwt__button\" ref=\"link\">\n        L\n    </button>\n\n    <!-- email -->\n    <button class=\"mc-rtwt__button\" ref=\"email\">\n        @\n    </button>\n\n    <!-- telephone -->\n    <button class=\"mc-rtwt__button\" ref=\"telephone\">\n        T\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- add a table -->\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        <svg viewBox=\"0 0 26 28\">\n            <g fill=\"#444\" transform=\"scale(0.02734375 0.02734375)\">\n                <path d=\"M292.571 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM950.857 164.571v621.714c0 50.286-41.143 91.429-91.429 91.429h-768c-50.286 0-91.429-41.143-91.429-91.429v-621.714c0-50.286 41.143-91.429 91.429-91.429h768c50.286 0 91.429 41.143 91.429 91.429z\" />\n            </g>\n        </svg>\n    </button>\n\n    <!-- insert something to a table -->\n    <span ref=\"tableInsert\"></span>\n\n    <!-- remove something from a table -->\n    <span ref=\"tableRemove\"></span>\n</div>";
 
 /***/ }),
-/* 55 */
+/* 56 */
 /***/ (function(module, exports) {
 
 module.exports = "<!--\n    Icons used:\n    http://www.entypo.com/\n-->\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"toggleEdit\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M17.561,2.439c-1.442-1.443-2.525-1.227-2.525-1.227L8.984,7.264L2.21,14.037L1.2,18.799l4.763-1.01\n            l6.774-6.771l6.052-6.052C18.788,4.966,19.005,3.883,17.561,2.439z M5.68,17.217l-1.624,0.35c-0.156-0.293-0.345-0.586-0.69-0.932\n            c-0.346-0.346-0.639-0.533-0.932-0.691l0.35-1.623l0.47-0.469c0,0,0.883,0.018,1.881,1.016c0.997,0.996,1.016,1.881,1.016,1.881\n            L5.68,17.217z\"/>\n        </svg>\n    </button>\n\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"richTextToolbar\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M3.135,6.89c0.933-0.725,1.707-0.225,2.74,0.971c0.116,0.135,0.272-0.023,0.361-0.1\n            C6.324,7.683,7.687,6.456,7.754,6.4C7.82,6.341,7.9,6.231,7.795,6.108C7.688,5.985,7.301,5.483,7.052,5.157\n            c-1.808-2.365,4.946-3.969,3.909-3.994c-0.528-0.014-2.646-0.039-2.963-0.004C6.715,1.294,5.104,2.493,4.293,3.052\n            C3.232,3.778,2.836,4.204,2.771,4.263c-0.3,0.262-0.048,0.867-0.592,1.344C1.604,6.11,1.245,5.729,0.912,6.021\n            C0.747,6.167,0.285,6.513,0.153,6.628C0.02,6.745-0.004,6.942,0.132,7.099c0,0,1.264,1.396,1.37,1.52\n            C1.607,8.741,1.893,8.847,2.069,8.69c0.177-0.156,0.632-0.553,0.708-0.623C2.855,8.001,2.727,7.206,3.135,6.89z M8.843,7.407\n            c-0.12-0.139-0.269-0.143-0.397-0.029L7.012,8.63c-0.113,0.1-0.129,0.283-0.027,0.4l8.294,9.439c0.194,0.223,0.53,0.246,0.751,0.053\n            L17,17.709c0.222-0.195,0.245-0.533,0.052-0.758L8.843,7.407z M19.902,3.39c-0.074-0.494-0.33-0.391-0.463-0.182\n            c-0.133,0.211-0.721,1.102-0.963,1.506c-0.24,0.4-0.832,1.191-1.934,0.41c-1.148-0.811-0.749-1.377-0.549-1.758\n            c0.201-0.383,0.818-1.457,0.907-1.59c0.089-0.135-0.015-0.527-0.371-0.363c-0.357,0.164-2.523,1.025-2.823,2.26\n            c-0.307,1.256,0.257,2.379-0.85,3.494l-1.343,1.4l1.349,1.566l1.654-1.57c0.394-0.396,1.236-0.781,1.998-0.607\n            c1.633,0.369,2.524-0.244,3.061-1.258C20.057,5.792,19.977,3.884,19.902,3.39z M2.739,17.053c-0.208,0.209-0.208,0.549,0,0.758\n            l0.951,0.93c0.208,0.209,0.538,0.121,0.746-0.088l4.907-4.824L7.84,12.115L2.739,17.053z\"/>\n        </svg>\n    </button>\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__text\">\n    Saving...\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div style=\"flex: 1\"></div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-logout\" ref=\"logout\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M19,10l-6-5v3H6v4h7v3L19,10z M3,3h8V1H3C1.9,1,1,1.9,1,3v14c0,1.1,0.9,2,2,2h8v-2H3V3z\"/>\n        </svg>\n    </button>\n</div>";
 
 /***/ }),
-/* 56 */
+/* 57 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
+/**
+ * Prefix in the local storage key name for a window dream
+ */
+var DREAM_PREFIX = "mycelium-window-dream:";
+
 var WindowManager = function () {
-    function WindowManager(document) {
+    function WindowManager(window, document) {
         _classCallCheck(this, WindowManager);
 
+        // browser window reference
+        this.window = window;
+
+        /**
+         * List of all instantiated windows
+         * @type {Array}
+         */
         this.windows = [];
 
+        /**
+         * Container for all windows
+         * Set on DOM creation
+         */
+        this.element = null;
+
         this.createDOM(document);
+
+        this.window.addEventListener("beforeunload", this.onBrowserWindowUnload.bind(this));
     }
 
     _createClass(WindowManager, [{
@@ -4679,9 +4838,105 @@ var WindowManager = function () {
 
     }, {
         key: "registerWindow",
-        value: function registerWindow(win) {
+        value: function registerWindow(win, options) {
             this.windows.push(win);
             this.element.appendChild(win.element);
+
+            win.onRegistration(this, options);
+
+            // wakeup if needed
+            if (win.persistent) win._wakeup(this.getWindowDream(win)); // call private wakeup
+        }
+
+        /**
+         * Forget a window
+         */
+
+    }, {
+        key: "forgetWindow",
+        value: function forgetWindow(win) {
+            this.element.removeChild(win.element);
+
+            var i = this.windows.indexOf(win);
+            if (i >= 0) this.windows.splice(i, 1);
+        }
+
+        /**
+         * When the browser is unloading
+         */
+
+    }, {
+        key: "onBrowserWindowUnload",
+        value: function onBrowserWindowUnload() {
+            // save all persistent windows
+            for (var i = 0; i < this.windows.length; i++) {
+                if (this.windows[i].persistent) {
+                    this.setWindowDream(this.windows[i], this.windows[i]._sleep() // call private sleep
+                    );
+                }
+            }
+        }
+
+        /**
+         * Returns dream for a given window
+         */
+
+    }, {
+        key: "getWindowDream",
+        value: function getWindowDream(win) {
+            // check name
+            if (!win.name) {
+                console.error("Window is persistent, but has no name.");
+                return null;
+            }
+
+            // check storage access
+            if (!(this.window.localStorage instanceof Storage)) return null;
+
+            // dream key
+            var key = DREAM_PREFIX + win.name;
+
+            // check window existence
+            if (!(key in this.window.localStorage)) return null;
+
+            // try to parse the string
+            var dream = void 0;
+            try {
+                dream = JSON.parse(this.window.localStorage[key]);
+            } catch (e) {
+                console.error("Error while parsing dream: " + key, e);
+                return null;
+            }
+
+            return dream;
+        }
+
+        /**
+         * Sets a dream for a given window
+         */
+
+    }, {
+        key: "setWindowDream",
+        value: function setWindowDream(win, dream) {
+            // check name
+            if (!win.name) return; // error already printed on load
+
+            // check storage access
+            if (!(this.window.localStorage instanceof Storage)) return;
+
+            // dream key
+            var key = DREAM_PREFIX + win.name;
+
+            // default
+            if (dream === undefined) dream = null;
+
+            // try to parse the string
+            try {
+                var text = JSON.stringify(dream);
+                this.window.localStorage[key] = text;
+            } catch (e) {
+                console.error("Error while saving dream: " + key, e);
+            }
         }
     }]);
 
@@ -4691,7 +4946,7 @@ var WindowManager = function () {
 module.exports = WindowManager;
 
 /***/ }),
-/* 57 */
+/* 58 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
