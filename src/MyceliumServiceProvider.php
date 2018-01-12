@@ -51,6 +51,7 @@ class MyceliumServiceProvider extends ServiceProvider
                 \Mycelium\Console\Auth\CreateUser::class,
                 \Mycelium\Console\Auth\ListUsers::class,
                 \Mycelium\Console\Auth\RemoveUsers::class,
+                \Mycelium\Console\Auth\ChangeUserPassword::class,
             ]);
         }
     }

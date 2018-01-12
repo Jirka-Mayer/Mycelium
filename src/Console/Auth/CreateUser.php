@@ -33,7 +33,7 @@ class CreateUser extends Command
         User::create([
             "name" => $this->name,
             "email" => $this->email,
-            "password" => $this->password
+            "password" => bcrypt($this->password)
         ]);
 
         $this->info("User has been created.");
