@@ -1,6 +1,7 @@
 const axios = require("axios")
 const TextWidget = require("./widgets/Text.js")
 const RichTextWidget = require("./widgets/RichText.js")
+const EventBus = require("./EventBus.js")
 
 // delay between a change and save call
 const AUTOSAVE_TIMEOUT = 2000
@@ -28,6 +29,12 @@ class Shroom
          */
         this.window = window
         this.document = document
+
+        /**
+         * Setup event bus
+         */
+        this.bus = new EventBus()
+        this.on = this.bus.on.bind(this.bus)
 
         // load shroom from serialized JSON data
         this.loadSerializedData(serializedData)
@@ -150,6 +157,8 @@ class Shroom
         this.saving = true
         this.saved = true
 
+        this.bus.fire("saving")
+
         if (this.savingTimerId !== null)
         {
             clearTimeout(this.savingTimerId)
@@ -197,6 +206,8 @@ class Shroom
     {
         this.saved = false
 
+        this.bus.fire("unsaved")
+
         if (this.autosaveEnabled)
             this.scheduleAutosave()
     }
@@ -206,6 +217,8 @@ class Shroom
      */
     afterSave()
     {
+        this.bus.fire("saved")
+
         // changes were made during saving
         if (!this.saved)
             this.scheduleAutosave()

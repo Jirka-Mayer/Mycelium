@@ -114,7 +114,7 @@
                 <label for="name">
                     @lang("mycelium::login.name-field")
                 </label>
-                <input type="text" id="name" name="name">
+                <input type="text" id="name" name="name" autofocus>
             </div>
             <div class="input-block">
                 <label for="password">

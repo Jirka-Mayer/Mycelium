@@ -251,8 +251,18 @@ class LinkBlotProperties extends Window
         // OR if the selection is not zero-length
         if (!format.link || selection.length > 0)
         {
+            // switch mode
+            this.editing = false
+            this.updateDisplayedBlock()
+
+            // hide
             this.minimize()
+
+            // set properties
             this.refs.textbox.value = ""
+            this.refs.url.innerText = ""
+            this.refs.url.setAttribute("href", "#")
+
             return
         }
 

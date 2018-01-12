@@ -46,6 +46,14 @@ class Toolbar
                 }
             )
         }
+
+        // register shroom events
+        if (this.mycelium.state.editing)
+        {
+            this.mycelium.shroom.on("unsaved", this.onUnsaved.bind(this))
+            this.mycelium.shroom.on("saving", this.onSavingBegin.bind(this))
+            this.mycelium.shroom.on("saved", this.onSaved.bind(this))
+        }
     }
 
     /**
@@ -100,6 +108,10 @@ class Toolbar
     initializeElements()
     {
         this.initializeLogoutButton()
+
+        // initialize saving info
+        if (!this.mycelium.state.editing)
+            this.refs.savingInfo.style.display = "none"
     }
 
     /**
@@ -137,6 +149,21 @@ class Toolbar
             // enter edit mode
             window.location.href = path + "edit"
         }
+    }
+
+    onUnsaved()
+    {
+        this.refs.savingInfo.innerText = "Unsaved changes."
+    }
+
+    onSavingBegin()
+    {
+        this.refs.savingInfo.innerText = "Saving..."
+    }
+
+    onSaved()
+    {
+        this.refs.savingInfo.innerText = "Saved."
     }
 }
 
