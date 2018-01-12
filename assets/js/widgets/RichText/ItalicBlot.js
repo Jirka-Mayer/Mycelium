@@ -7,6 +7,6 @@ class ItalicBlot extends Inline
 }
 
 ItalicBlot.blotName = "italic"
-ItalicBlot.tagName = "em"
+ItalicBlot.tagName = "i"
 
 Quill.register(ItalicBlot)

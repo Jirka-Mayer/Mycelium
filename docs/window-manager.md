@@ -32,6 +32,27 @@ The window class creates the window element, `registerWindow` only appends this 
 </div>
 ```
 
+A window has the following HTML structure:
+
+```html
+<div class="mc-window">
+    <div class="mc-window__bar">
+        <!-- window bar -->
+    </div>
+    <div class="mc-window__content">
+        <!--window content-->
+    </div>
+</div>
+```
+
+The content element can be accessed and used to create the window's content:
+
+```js
+// inside the window class
+
+this.content.innerHTML = "<p>Hello world!</p>"
+```
+
 
 ## Minimize only
 
@@ -40,6 +61,17 @@ Some windows can be *minimize only*, so you cannot actually close them. This fla
 ```js
 windowManager.registerWindow(win, {
     minimizeOnly: true
+})
+```
+
+
+## Barless window
+
+If you want the window handle bar to be hidden, you can do so, by setting an option during registration:
+
+```js
+windowManager.registerWindow(win, {
+    barless: true
 })
 ```
 

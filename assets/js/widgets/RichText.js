@@ -2,6 +2,7 @@ const Quill = require("./RichText/quill.js")
 require("./RichText/BoldBlot.js")
 require("./RichText/ItalicBlot.js")
 require("./RichText/HeaderBlot.js")
+require("./RichText/LinkBlot.js")
 require("./RichText/TableBlot.js")
 const EventBus = require("../EventBus.js")
 
@@ -178,6 +179,7 @@ class RichText
         this.bindListener("apply-bold", this.onApplyBold)
         this.bindListener("apply-italic", this.onApplyItalic)
         this.bindListener("apply-header", this.onApplyHeader)
+        this.bindListener("apply-link", this.onApplyLink)
         this.bindListener("insert-table", this.onInsertTable)
     }
 
@@ -232,6 +234,16 @@ class RichText
         )
     }
 
+    onApplyLink(href)
+    {
+        console.log(href)
+
+        this.quill.format(
+            "link",
+            href
+        )
+    }
+
     onInsertTable()
     {
         let range = this.quill.getSelection(true)
@@ -257,6 +269,38 @@ RichText.activeWidget = null
  * For regaining focus after UI interactions
  */
 RichText.lastFocusedWidget = null
+
+/**
+ * Returns selection of the active widget
+ * null if no active widget
+ */
+RichText.getSelection = function()
+{
+    if (RichText.activeWidget)
+        return RichText.activeWidget.quill.getSelection()
+
+    return null
+}
+
+/**
+ * Returns focus to the last focused widget
+ */
+RichText.refocus = function()
+{
+    if (RichText.lastFocusedWidget)
+        RichText.lastFocusedWidget.quill.focus()
+}
+
+/**
+ * Returns format of selected text, {} if no selection
+ */
+RichText.getFormat = function(index, length)
+{
+    if (RichText.activeWidget)
+        return RichText.activeWidget.quill.getFormat(index, length)
+
+    return {}
+}
 
 // export
 module.exports = RichText

@@ -395,6 +395,7 @@ var Quill = __webpack_require__(1);
 __webpack_require__(37);
 __webpack_require__(38);
 __webpack_require__(39);
+__webpack_require__(65);
 __webpack_require__(40);
 var EventBus = __webpack_require__(4);
 
@@ -553,6 +554,7 @@ var RichText = function () {
             this.bindListener("apply-bold", this.onApplyBold);
             this.bindListener("apply-italic", this.onApplyItalic);
             this.bindListener("apply-header", this.onApplyHeader);
+            this.bindListener("apply-link", this.onApplyLink);
             this.bindListener("insert-table", this.onInsertTable);
         }
 
@@ -595,6 +597,13 @@ var RichText = function () {
             this.quill.format("header", level);
         }
     }, {
+        key: "onApplyLink",
+        value: function onApplyLink(href) {
+            console.log(href);
+
+            this.quill.format("link", href);
+        }
+    }, {
         key: "onInsertTable",
         value: function onInsertTable() {
             var range = this.quill.getSelection(true);
@@ -625,6 +634,32 @@ RichText.activeWidget = null;
  * For regaining focus after UI interactions
  */
 RichText.lastFocusedWidget = null;
+
+/**
+ * Returns selection of the active widget
+ * null if no active widget
+ */
+RichText.getSelection = function () {
+    if (RichText.activeWidget) return RichText.activeWidget.quill.getSelection();
+
+    return null;
+};
+
+/**
+ * Returns focus to the last focused widget
+ */
+RichText.refocus = function () {
+    if (RichText.lastFocusedWidget) RichText.lastFocusedWidget.quill.focus();
+};
+
+/**
+ * Returns format of selected text, {} if no selection
+ */
+RichText.getFormat = function (index, length) {
+    if (RichText.activeWidget) return RichText.activeWidget.quill.getFormat(index, length);
+
+    return {};
+};
 
 // export
 module.exports = RichText;
@@ -1171,6 +1206,13 @@ var TableObject = function (_IframeObject) {
     }, {
         key: "onQuillLoaded",
         value: function onQuillLoaded() {
+            // register custom Quill blots
+            /*const Inline = this.contentWindow.Quill.import("blots/inline")
+            class BoldBlot extends Inline {}
+            BoldBlot.blotName = "bold"
+            BoldBlot.tagName = "b"
+            this.contentWindow.Quill.register(BoldBlot)*/
+
             // load table data
             this.loadValue();
 
@@ -2986,7 +3028,7 @@ var BoldBlot = function (_Inline) {
 }(Inline);
 
 BoldBlot.blotName = "bold";
-BoldBlot.tagName = "strong";
+BoldBlot.tagName = "b";
 
 Quill.register(BoldBlot);
 
@@ -3016,7 +3058,7 @@ var ItalicBlot = function (_Inline) {
 }(Inline);
 
 ItalicBlot.blotName = "italic";
-ItalicBlot.tagName = "em";
+ItalicBlot.tagName = "i";
 
 Quill.register(ItalicBlot);
 
@@ -3757,6 +3799,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var RichTextWidgetToolbar = __webpack_require__(46);
+var LinkBlotProperties = __webpack_require__(63);
 var getRefs = __webpack_require__(3);
 
 var Toolbar = function () {
@@ -3775,7 +3818,16 @@ var Toolbar = function () {
 
         // create rich-text widget toolbar window
         if (this.mycelium.state.editing) {
-            this.richTextToolbar = new RichTextWidgetToolbar(window, document, this.mycelium);
+            // Link blot properties
+            this.linkBlotProperties = new LinkBlotProperties(window, document, this.mycelium);
+
+            this.mycelium.windowManager.registerWindow(this.linkBlotProperties, {
+                barless: true,
+                minimized: true
+            });
+
+            // Toolbar
+            this.richTextToolbar = new RichTextWidgetToolbar(window, document, this.mycelium, this.linkBlotProperties);
 
             this.mycelium.windowManager.registerWindow(this.richTextToolbar, {
                 persistent: true,
@@ -3900,26 +3952,35 @@ var TableObject = __webpack_require__(11);
 var RichTextWidgetToolbar = function (_Window) {
     _inherits(RichTextWidgetToolbar, _Window);
 
-    function RichTextWidgetToolbar(window, document, mycelium) {
+    function RichTextWidgetToolbar(window, document, mycelium, linkBlotProperties) {
         _classCallCheck(this, RichTextWidgetToolbar);
 
+        /**
+         * Reference to the linkBlotProperties window
+         */
         var _this = _possibleConstructorReturn(this, (RichTextWidgetToolbar.__proto__ || Object.getPrototypeOf(RichTextWidgetToolbar)).call(this, window, document, mycelium));
 
-        _this.content.innerHTML = __webpack_require__(55);
+        _this.linkBlotProperties = linkBlotProperties;
 
-        _this.refs = getRefs(_this.content);
-
-        _this.headerPicker = new Picker(document, _this.refs.header, [{ key: "p", label: "Normal" }, { key: "h1", label: "Heading 1" }, { key: "h2", label: "Heading 2" }]);
-
-        _this.tableInsertMenu = new Menu(document, _this.refs.tableInsert, "Insert", [{ key: "row-below", label: "Row below" }, { key: "row-above", label: "Row above" }, { key: "column-left", label: "Column left" }, { key: "column-right", label: "Column right" }]);
-
-        _this.tableRemoveMenu = new Menu(document, _this.refs.tableRemove, "Remove", [{ key: "row", label: "Row" }, { key: "column", label: "Column" }]);
+        _this.buildDOM();
 
         _this.registerEventListeners();
         return _this;
     }
 
     _createClass(RichTextWidgetToolbar, [{
+        key: "buildDOM",
+        value: function buildDOM() {
+            this.content.innerHTML = __webpack_require__(55);
+            this.refs = getRefs(this.content);
+
+            this.headerPicker = new Picker(document, this.refs.header, [{ key: "p", label: "Normal" }, { key: "h1", label: "Heading 1" }, { key: "h2", label: "Heading 2" }]);
+
+            this.tableInsertMenu = new Menu(document, this.refs.tableInsert, "Insert", [{ key: "row-below", label: "Row below" }, { key: "row-above", label: "Row above" }, { key: "column-left", label: "Column left" }, { key: "column-right", label: "Column right" }]);
+
+            this.tableRemoveMenu = new Menu(document, this.refs.tableRemove, "Remove", [{ key: "row", label: "Row" }, { key: "column", label: "Column" }]);
+        }
+    }, {
         key: "registerEventListeners",
         value: function registerEventListeners() {
             this.refs.bold.addEventListener("click", this.onBoldClick.bind(this));
@@ -3927,6 +3988,8 @@ var RichTextWidgetToolbar = function (_Window) {
 
             this.headerPicker.on("user-pick", this.onHeaderPick.bind(this));
             this.headerPicker.on("expand", this.onHeaderPickerExpand.bind(this));
+
+            this.refs.link.addEventListener("click", this.onLinkClick.bind(this));
 
             this.refs.table.addEventListener("click", this.onTableClick.bind(this));
 
@@ -3986,7 +4049,7 @@ var RichTextWidgetToolbar = function (_Window) {
 
             // refocus the widget
             // (focus has been lost by clicking the picker label)
-            if (RichTextWidget.lastFocusedWidget) RichTextWidget.lastFocusedWidget.quill.focus();
+            RichTextWidget.refocus();
 
             RichTextWidget.bus.fire("apply-header", key);
         }
@@ -3994,7 +4057,12 @@ var RichTextWidgetToolbar = function (_Window) {
         key: "onHeaderPickerExpand",
         value: function onHeaderPickerExpand() {
             // keep the widget focused
-            if (RichTextWidget.lastFocusedWidget) RichTextWidget.lastFocusedWidget.quill.focus();
+            RichTextWidget.refocus();
+        }
+    }, {
+        key: "onLinkClick",
+        value: function onLinkClick() {
+            this.linkBlotProperties.createLink();
         }
 
         ////////////
@@ -4105,6 +4173,14 @@ var Window = function () {
         };this.minimized = false;
 
         /**
+         * Minimizing/maximizing properties
+         */
+        this.minimizing = false;
+        this.minimizingTimeout = null;
+        this.maximizing = false;
+        this.maximizingTimeout = null;
+
+        /**
          * Minimize only flag
          */
         this.minimizeOnly = false;
@@ -4120,13 +4196,31 @@ var Window = function () {
         this.name = null;
 
         /**
+         * DOM element references
+         */
+        this.element = null;
+        this.bar = null;
+        this.handle = null;
+        this.content = null;
+
+        /**
          * Is the window being dragged
          */
         this.dragged = false;
 
-        // dragging properties
+        /**
+         * Dragging properties
+         */
         this.dragStartMousePosition = null;
         this.dragStartWindowPosition = null;
+
+        /**
+         * Dimensions, updated on updateDisplay
+         */
+        this.outerWidth = 0;
+        this.outerHeight = 0;
+        this.innerWidth = 0;
+        this.innerHeight = 0;
 
         /**
          * Private refs, user may want to use such name for himself
@@ -4137,6 +4231,8 @@ var Window = function () {
         this._createDOM();
 
         this.updateDisplay();
+
+        this.element.addEventListener("mousedown", this.onWindowClick.bind(this));
 
         this.handle.addEventListener("mousedown", this.onHandleMouseDown.bind(this));
 
@@ -4164,6 +4260,7 @@ var Window = function () {
             element.innerHTML = __webpack_require__(50);
 
             this.element = element;
+            this.bar = element.querySelector(".mc-window__bar");
             this.handle = element.querySelector(".mc-window__handle");
             this.content = element.querySelector(".mc-window__content");
 
@@ -4180,9 +4277,22 @@ var Window = function () {
             this.windowManager = windowManager;
 
             options = defaultOptions(options, {
+
+                // cannot be closed - minimized only
                 minimizeOnly: false,
+
+                // persistency
                 persistent: false,
-                name: null
+
+                // name for serialization purpouses
+                name: null,
+
+                // lacks the window bar (handle)
+                barless: false,
+
+                // when created, already minimized
+                minimized: false
+
             });
 
             this.minimizeOnly = options.minimizeOnly;
@@ -4195,6 +4305,16 @@ var Window = function () {
             // hide minimization button if minimize only set
             // (closing button takes the action)
             if (this.minimizeOnly) this._refs.minimize.style.display = "none";
+
+            // barless window
+            if (options.barless) this.bar.style.display = "none";
+
+            // created minimized
+            if (options.minimized) {
+                cssClass(this.element, "mc-window--minimized", true);
+                this.element.style.display = "none";
+                this.minimized = true;
+            }
         }
 
         /**
@@ -4212,6 +4332,12 @@ var Window = function () {
             // update rendered position
             this.element.style.left = this.position.x + "px";
             this.element.style.top = this.position.y + "px";
+
+            // get dimensions
+            this.outerWidth = this.element.clientWidth;
+            this.outerHeight = this.element.clientHeight;
+            this.innerWidth = this.content.clientWidth;
+            this.innerHeight = this.content.clientHeight;
         }
 
         /**
@@ -4223,14 +4349,23 @@ var Window = function () {
         value: function minimize() {
             var _this = this;
 
-            if (this.minimized) return;
+            if (this.minimizing || this.minimized) return;
+
+            // if maximizing, remove the timeout and override
+            if (this.maximizing) {
+                this.maximizing = false;
+                clearTimeout(this.maximizingTimeout);
+            }
+
+            this.minimizing = true;
 
             cssClass(this.element, "mc-window--minimized", true);
 
-            setTimeout(function () {
+            this.minimizingTimeout = setTimeout(function () {
                 _this.element.style.display = "none";
 
                 _this.minimized = true;
+                _this.minimizing = false;
             }, MINIMIZATION_DELAY);
         }
 
@@ -4243,15 +4378,24 @@ var Window = function () {
         value: function maximize() {
             var _this2 = this;
 
-            if (!this.minimized) return;
+            if (this.maximizing || !this.minimized && !this.minimizing) return;
+
+            // if minimizing, remove the timeout and override
+            if (this.minimizing) {
+                this.minimizing = false;
+                clearTimeout(this.minimizingTimeout);
+            }
+
+            this.maximizing = true;
 
             this.element.style.display = "block";
 
-            setTimeout(function () {
+            this.maximizingTimeout = setTimeout(function () {
                 cssClass(_this2.element, "mc-window--minimized", false);
-            }, 0);
 
-            this.minimized = false;
+                _this2.minimized = false;
+                _this2.maximizing = false;
+            }, 0);
         }
 
         /**
@@ -4279,6 +4423,18 @@ var Window = function () {
                 // signal, that it has been forgotten
                 _this3.windowManager = null;
             }, MINIMIZATION_DELAY);
+        }
+
+        /**
+         * Moves the window to a new position
+         */
+
+    }, {
+        key: "moveTo",
+        value: function moveTo(x, y) {
+            this.position.x = x;
+            this.position.y = y;
+            this.updateDisplay();
         }
 
         /**
@@ -4339,10 +4495,25 @@ var Window = function () {
         // nothing
 
 
+        /**
+         * Focus the widnow
+         */
+
+    }, {
+        key: "focus",
+        value: function focus() {
+            this.windowManager.focus(this);
+        }
+
         /////////////////////
         // Event listeners //
         /////////////////////
 
+    }, {
+        key: "onWindowClick",
+        value: function onWindowClick() {
+            this.focus();
+        }
     }, {
         key: "onHandleMouseDown",
         value: function onHandleMouseDown(e) {
@@ -4776,7 +4947,7 @@ module.exports = "<span class=\"mc-menu\">\n    <span class=\"mc-menu__label\" d
 /* 55 */
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"mc-rtwt\">\n\n    <!-- set bold style -->\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <!-- set italic style -->\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <!-- em -->\n    <button class=\"mc-rtwt__button\" ref=\"emphasis\">\n        E\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- pick header type -->\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- link -->\n    <button class=\"mc-rtwt__button\" ref=\"link\">\n        L\n    </button>\n\n    <!-- email -->\n    <button class=\"mc-rtwt__button\" ref=\"email\">\n        @\n    </button>\n\n    <!-- telephone -->\n    <button class=\"mc-rtwt__button\" ref=\"telephone\">\n        T\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- add a table -->\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        <svg viewBox=\"0 0 26 28\">\n            <g fill=\"#444\" transform=\"scale(0.02734375 0.02734375)\">\n                <path d=\"M292.571 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM950.857 164.571v621.714c0 50.286-41.143 91.429-91.429 91.429h-768c-50.286 0-91.429-41.143-91.429-91.429v-621.714c0-50.286 41.143-91.429 91.429-91.429h768c50.286 0 91.429 41.143 91.429 91.429z\" />\n            </g>\n        </svg>\n    </button>\n\n    <!-- insert something to a table -->\n    <span ref=\"tableInsert\"></span>\n\n    <!-- remove something from a table -->\n    <span ref=\"tableRemove\"></span>\n</div>";
+module.exports = "<div class=\"mc-rtwt\">\n\n    <!-- set bold style -->\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <!-- set italic style -->\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <!-- em -->\n    <!-- not yet, implemented later -->\n    <!--<button class=\"mc-rtwt__button\" ref=\"emphasis\">\n        E\n    </button>-->\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- pick header type -->\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- link -->\n    <button class=\"mc-rtwt__button\" ref=\"link\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"11\" y1=\"7\" y2=\"11\"></line>\n            <path class=\"mc-rtwt-stroke\" d=\"M8.9,4.577a3.476,3.476,0,0,1,.36,4.679A3.476,3.476,0,0,1,4.577,8.9C3.185,7.5,2.035,6.4,4.217,4.217S7.5,3.185,8.9,4.577Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M13.423,9.1a3.476,3.476,0,0,0-4.679-.36,3.476,3.476,0,0,0,.36,4.679c1.392,1.392,2.5,2.542,4.679.36S14.815,10.5,13.423,9.1Z\"></path>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- add a table -->\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        <svg viewBox=\"0 0 26 28\">\n            <g fill=\"#444\" transform=\"scale(0.02734375 0.02734375)\">\n                <path d=\"M292.571 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM950.857 164.571v621.714c0 50.286-41.143 91.429-91.429 91.429h-768c-50.286 0-91.429-41.143-91.429-91.429v-621.714c0-50.286 41.143-91.429 91.429-91.429h768c50.286 0 91.429 41.143 91.429 91.429z\" />\n            </g>\n        </svg>\n    </button>\n\n    <!-- insert something to a table -->\n    <span ref=\"tableInsert\"></span>\n\n    <!-- remove something from a table -->\n    <span ref=\"tableRemove\"></span>\n</div>";
 
 /***/ }),
 /* 56 */
@@ -4796,6 +4967,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
  * Prefix in the local storage key name for a window dream
  */
 var DREAM_PREFIX = "mycelium-window-dream:";
+var Z_INDEX_OFFSET = 1000;
 
 var WindowManager = function () {
     function WindowManager(window, document) {
@@ -4878,6 +5050,37 @@ var WindowManager = function () {
         }
 
         /**
+         * Focus a window
+         */
+
+    }, {
+        key: "focus",
+        value: function focus(win) {
+            var i = this.windows.indexOf(win);
+
+            if (i == -1) return;
+
+            if (i == this.windows.length - 1) return;
+
+            this.windows.splice(i, 1);
+            this.windows.push(win);
+
+            this.updateZIndices();
+        }
+
+        /**
+         * Updates Z-indices of all windows
+         */
+
+    }, {
+        key: "updateZIndices",
+        value: function updateZIndices() {
+            for (var i = 0; i < this.windows.length; i++) {
+                this.windows[i].element.style.zIndex = Z_INDEX_OFFSET + i;
+            }
+        }
+
+        /**
          * Returns dream for a given window
          */
 
@@ -4950,6 +5153,414 @@ module.exports = WindowManager;
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 59 */,
+/* 60 */,
+/* 61 */,
+/* 62 */,
+/* 63 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Window = __webpack_require__(47);
+var RichTextWidget = __webpack_require__(2);
+var getRefs = __webpack_require__(3);
+var cssClass = __webpack_require__(12);
+
+var LinkBlotProperties = function (_Window) {
+    _inherits(LinkBlotProperties, _Window);
+
+    function LinkBlotProperties(window, document, mycelium) {
+        _classCallCheck(this, LinkBlotProperties);
+
+        /**
+         * Is the selected link in editing mode or just viewing?
+         */
+        var _this = _possibleConstructorReturn(this, (LinkBlotProperties.__proto__ || Object.getPrototypeOf(LinkBlotProperties)).call(this, window, document, mycelium));
+
+        _this.editing = false;
+
+        /**
+         * Range where the link is located
+         */
+        _this.linkRange = null;
+
+        /**
+         * The widget, where the link is located
+         */
+        _this.linkWidget = null;
+
+        /**
+         * Quill, where the link is located
+         * 
+         * TODO
+         */
+        //this.linkQuill = null
+
+        _this.content.innerHTML = __webpack_require__(64);
+        cssClass(_this.content, "mc-lbp", true);
+
+        _this.refs = getRefs(_this.content);
+
+        _this.refs.edit.addEventListener("click", _this.onEditClick.bind(_this));
+        _this.refs.save.addEventListener("click", _this.onSaveClick.bind(_this));
+        _this.refs.remove.addEventListener("click", _this.onRemoveClick.bind(_this));
+
+        _this.refs.editingBlock.addEventListener("submit", _this.onSaveClick.bind(_this));
+
+        _this.updateDisplayedBlock();
+
+        window.addEventListener("mousedown", _this.onBrowserWindowClick.bind(_this));
+
+        RichTextWidget.bus.on("selection-change", _this.onWidgetSelectionChange.bind(_this));
+        return _this;
+    }
+
+    /**
+     * Called when new link should be added
+     * (from the RichTextWidgetToolbar)
+     */
+
+
+    _createClass(LinkBlotProperties, [{
+        key: "createLink",
+        value: function createLink() {
+            // get new link range
+            this.linkRange = RichTextWidget.getSelection();
+            this.linkWidget = RichTextWidget.activeWidget;
+
+            if (this.linkRange === null) return;
+
+            if (this.linkRange.length === 0) return;
+
+            // switch mode
+            this.editing = true;
+            this.updateDisplayedBlock();
+
+            // show
+            this.show();
+
+            // focus
+            this.refs.textbox.select();
+        }
+
+        /**
+         * Returns range of the selected link, null if no link selected
+         */
+
+    }, {
+        key: "getSelectedLinkRange",
+        value: function getSelectedLinkRange() {
+            /*
+                A link may only be selected if you have a cursor oper it
+                (I mean no selection -> length = 0)
+                If any selection - even if over a link, no link is selected
+             */
+
+            var selection = RichTextWidget.getSelection();
+
+            if (selection === null) return null;
+
+            if (selection.length > 0) return null;
+
+            // find start
+            var start = selection.index;
+            while (start >= 0) {
+                if (!RichTextWidget.getFormat(start, 0).link) break;
+
+                start -= 1;
+            }
+
+            var len = RichTextWidget.activeWidget.quill.getLength();
+
+            // find end
+            var end = selection.index;
+            while (end < len) {
+                if (!RichTextWidget.getFormat(end, 0).link) break;
+
+                end += 1;
+            }
+
+            // it overcounts
+            end -= 1;
+
+            // calculate link range
+            var range = {
+                index: start,
+                length: end - start
+            };
+
+            return range;
+        }
+
+        /**
+         * Updates DOM based on mode
+         */
+
+    }, {
+        key: "updateDisplayedBlock",
+        value: function updateDisplayedBlock() {
+            if (this.editing) {
+                this.refs.editingBlock.style.display = "block";
+                this.refs.viewingBlock.style.display = "none";
+            } else {
+                this.refs.editingBlock.style.display = "none";
+                this.refs.viewingBlock.style.display = "block";
+            }
+
+            this.updatePosition();
+        }
+
+        ////////////////////////
+        // Visibility control //        (Visibility of the entire window)
+        ////////////////////////        (and position)
+
+        /**
+         * Shows the window at the correct position
+         */
+
+    }, {
+        key: "show",
+        value: function show() {
+            var _this2 = this;
+
+            // display window
+            this.maximize();
+
+            // let the window be displayed
+            setTimeout(function () {
+
+                // then update position
+                _this2.updatePosition();
+            }, 0);
+        }
+
+        /**
+         * Updates window position
+         */
+
+    }, {
+        key: "updatePosition",
+        value: function updatePosition() {
+            // no link selected, this window should not even be displayed
+            if (this.linkRange === null) return;
+
+            // get widnow display coordinates
+            var quillBounds = this.linkWidget.element.getBoundingClientRect();
+
+            var selectionBounds = this.linkWidget.quill.getBounds(this.linkRange.index, this.linkRange.length);
+
+            // update width, height properties
+            this.updateDisplay();
+
+            // calculate window position
+            var x = quillBounds.x + selectionBounds.left + selectionBounds.width / 2 - this.outerWidth / 2;
+
+            var y = quillBounds.y + selectionBounds.top + selectionBounds.height + 10;
+
+            // move the window
+            this.moveTo(x, y);
+        }
+
+        /**
+         * Listen for browser window clicks
+         */
+
+    }, {
+        key: "onBrowserWindowClick",
+        value: function onBrowserWindowClick(e) {
+            var _this3 = this;
+
+            // clicking inside the window doesn'thide it
+            if (e.path.indexOf(this.element) >= 0) return;
+
+            // delay the handling slightly so that quill can take
+            // action on selection change
+            setTimeout(function () {
+
+                // if user clicks into a richtext widget
+                var rtw = false;
+                for (var i = 0; i < e.path.length; i++) {
+                    if (!e.path[i].getAttribute) // window object
+                        continue;
+
+                    if (e.path[i].getAttribute("mycelium-widget") === "rich-text") {
+                        rtw = true;
+                        break;
+                    }
+                }
+
+                // do not hide, if a link format was selected by the click
+                if (rtw && RichTextWidget.getFormat().link) return;
+
+                _this3.minimize();
+            }, 0);
+        }
+
+        /**
+         * When rich-text widget selection changes (any of them)
+         */
+
+    }, {
+        key: "onWidgetSelectionChange",
+        value: function onWidgetSelectionChange(selection, format) {
+            // dont' do anything on deselect
+            if (selection === null) return;
+
+            // if no link selected, again dont do anything
+            // (hide the window actually)
+            // 
+            // OR if the selection is not zero-length
+            if (!format.link || selection.length > 0) {
+                this.minimize();
+                this.refs.textbox.value = "";
+                return;
+            }
+
+            // load link into the form
+            this.refs.textbox.value = format.link;
+            this.refs.url.innerText = format.link;
+            this.refs.url.setAttribute("href", format.link);
+
+            // save the interesting range
+            this.linkRange = this.getSelectedLinkRange();
+            this.linkWidget = RichTextWidget.activeWidget;
+
+            this.show();
+        }
+
+        ////////////
+        // Events //
+        ////////////
+
+    }, {
+        key: "onEditClick",
+        value: function onEditClick() {
+            this.editing = true;
+            this.updateDisplayedBlock();
+
+            this.refs.textbox.select();
+        }
+
+        /**
+         * Save click or textbox submit
+         */
+
+    }, {
+        key: "onSaveClick",
+        value: function onSaveClick(e) {
+            // check mode
+            if (!this.editing) return;
+
+            // on submit prevent page reload
+            if (e.type === "submit") e.preventDefault();
+
+            var href = this.refs.textbox.value;
+
+            // select desired range
+            RichTextWidget.refocus();
+            this.linkWidget.quill.setSelection(this.linkRange.index, this.linkRange.length);
+
+            // update format
+            this.linkWidget.quill.format("link", href);
+
+            //RichTextWidget.bus.fire("apply-link", href)
+            /*
+                TODO:
+                Nope, go around the bus, rework the bus in the future for iframes
+             */
+
+            // change mode
+            this.editing = false;
+            this.updateDisplayedBlock();
+
+            // forget the range
+            this.linkRange = null;
+            this.linkWidget = null;
+        }
+    }, {
+        key: "onRemoveClick",
+        value: function onRemoveClick() {
+            // select desired range
+            RichTextWidget.refocus();
+            this.linkWidget.quill.setSelection(this.linkRange.index, this.linkRange.length);
+
+            // update format
+            this.linkWidget.quill.format("link", false);
+
+            // forget the range
+            this.linkRange = null;
+            this.linkWidget = null;
+        }
+    }]);
+
+    return LinkBlotProperties;
+}(Window);
+
+module.exports = LinkBlotProperties;
+
+/***/ }),
+/* 64 */
+/***/ (function(module, exports) {
+
+module.exports = "<div ref=\"viewingBlock\" class=\"mc-lbp__block\">\n    Visit URL: <a ref=\"url\" href=\"#\" target=\"_blank\">url here</a>\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"edit\">Edit</a>\n    <span class=\"mc-lbp__bar\"></span>\n    <a ref=\"remove\">Remove</a>\n</div>\n<form ref=\"editingBlock\" class=\"mc-lbp__block\">\n    <input type=\"text\" ref=\"textbox\" placeholder=\"URL\">\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"save\">Save</a>\n</form>";
+
+/***/ }),
+/* 65 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Quill = __webpack_require__(1);
+var Inline = Quill.import("blots/inline");
+
+var LinkBlot = function (_Inline) {
+    _inherits(LinkBlot, _Inline);
+
+    function LinkBlot() {
+        _classCallCheck(this, LinkBlot);
+
+        return _possibleConstructorReturn(this, (LinkBlot.__proto__ || Object.getPrototypeOf(LinkBlot)).apply(this, arguments));
+    }
+
+    _createClass(LinkBlot, null, [{
+        key: "create",
+        value: function create(value) {
+            var node = _get(LinkBlot.__proto__ || Object.getPrototypeOf(LinkBlot), "create", this).call(this);
+            node.setAttribute("href", value);
+            node.setAttribute("target", "_blank");
+            return node;
+        }
+    }, {
+        key: "formats",
+        value: function formats(node) {
+            return node.getAttribute("href");
+        }
+    }]);
+
+    return LinkBlot;
+}(Inline);
+
+LinkBlot.blotName = "link";
+LinkBlot.tagName = "a";
+
+Quill.register(LinkBlot);
 
 /***/ })
 /******/ ]);

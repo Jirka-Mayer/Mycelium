@@ -2,6 +2,7 @@
  * Prefix in the local storage key name for a window dream
  */
 const DREAM_PREFIX = "mycelium-window-dream:"
+const Z_INDEX_OFFSET = 1000
 
 class WindowManager
 {
@@ -81,6 +82,36 @@ class WindowManager
                     this.windows[i]._sleep() // call private sleep
                 )
             }
+        }
+    }
+
+    /**
+     * Focus a window
+     */
+    focus(win)
+    {
+        let i = this.windows.indexOf(win)
+
+        if (i == -1)
+            return
+
+        if (i == this.windows.length - 1)
+            return
+
+        this.windows.splice(i, 1)
+        this.windows.push(win)
+
+        this.updateZIndices()
+    }
+
+    /**
+     * Updates Z-indices of all windows
+     */
+    updateZIndices()
+    {
+        for (let i = 0; i < this.windows.length; i++)
+        {
+            this.windows[i].element.style.zIndex = Z_INDEX_OFFSET + i
         }
     }
 

@@ -65,6 +65,13 @@ class TableObject extends IframeObject
      */
     onQuillLoaded()
     {
+        // register custom Quill blots
+        /*const Inline = this.contentWindow.Quill.import("blots/inline")
+        class BoldBlot extends Inline {}
+        BoldBlot.blotName = "bold"
+        BoldBlot.tagName = "b"
+        this.contentWindow.Quill.register(BoldBlot)*/
+
         // load table data
         this.loadValue()
 

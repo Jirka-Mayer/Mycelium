@@ -32,6 +32,14 @@ class Window
         this.minimized = false
 
         /**
+         * Minimizing/maximizing properties
+         */
+        this.minimizing = false
+        this.minimizingTimeout = null
+        this.maximizing = false
+        this.maximizingTimeout = null
+
+        /**
          * Minimize only flag
          */
         this.minimizeOnly = false
@@ -47,13 +55,31 @@ class Window
         this.name = null
 
         /**
+         * DOM element references
+         */
+        this.element = null
+        this.bar = null
+        this.handle = null
+        this.content = null
+
+        /**
          * Is the window being dragged
          */
         this.dragged = false
 
-        // dragging properties
+        /**
+         * Dragging properties
+         */
         this.dragStartMousePosition = null
         this.dragStartWindowPosition = null
+
+        /**
+         * Dimensions, updated on updateDisplay
+         */
+        this.outerWidth = 0
+        this.outerHeight = 0
+        this.innerWidth = 0
+        this.innerHeight = 0
 
         /**
          * Private refs, user may want to use such name for himself
@@ -64,6 +90,10 @@ class Window
         this._createDOM()
 
         this.updateDisplay()
+
+        this.element.addEventListener(
+            "mousedown", this.onWindowClick.bind(this)
+        )
 
         this.handle.addEventListener(
             "mousedown", this.onHandleMouseDown.bind(this)
@@ -100,6 +130,7 @@ class Window
         element.innerHTML = require("./Window.html")
 
         this.element = element
+        this.bar = element.querySelector(".mc-window__bar")
         this.handle = element.querySelector(".mc-window__handle")
         this.content = element.querySelector(".mc-window__content")
 
@@ -114,9 +145,22 @@ class Window
         this.windowManager = windowManager
 
         options = defaultOptions(options, {
+            
+            // cannot be closed - minimized only
             minimizeOnly: false,
+
+            // persistency
             persistent: false,
-            name: null
+
+            // name for serialization purpouses
+            name: null,
+
+            // lacks the window bar (handle)
+            barless: false,
+
+            // when created, already minimized
+            minimized: false
+
         })
 
         this.minimizeOnly = options.minimizeOnly
@@ -131,6 +175,18 @@ class Window
         // (closing button takes the action)
         if (this.minimizeOnly)
             this._refs.minimize.style.display = "none"
+
+        // barless window
+        if (options.barless)
+            this.bar.style.display = "none"
+
+        // created minimized
+        if (options.minimized)
+        {
+            cssClass(this.element, "mc-window--minimized", true)
+            this.element.style.display = "none"
+            this.minimized = true
+        }
     }
 
     /**
@@ -152,6 +208,12 @@ class Window
         // update rendered position
         this.element.style.left = this.position.x + "px"
         this.element.style.top = this.position.y + "px"
+
+        // get dimensions
+        this.outerWidth = this.element.clientWidth
+        this.outerHeight = this.element.clientHeight
+        this.innerWidth = this.content.clientWidth
+        this.innerHeight = this.content.clientHeight
     }
 
     /**
@@ -159,15 +221,25 @@ class Window
      */
     minimize()
     {
-        if (this.minimized)
+        if (this.minimizing || this.minimized)
             return
+
+        // if maximizing, remove the timeout and override
+        if (this.maximizing)
+        {
+            this.maximizing = false
+            clearTimeout(this.maximizingTimeout)
+        }
+
+        this.minimizing = true
 
         cssClass(this.element, "mc-window--minimized", true)
 
-        setTimeout(() => {
+        this.minimizingTimeout = setTimeout(() => {
             this.element.style.display = "none"
             
             this.minimized = true
+            this.minimizing = false
         }, MINIMIZATION_DELAY)
     }
 
@@ -176,16 +248,26 @@ class Window
      */
     maximize()
     {
-        if (!this.minimized)
+        if (this.maximizing || (!this.minimized && !this.minimizing))
             return
+
+        // if minimizing, remove the timeout and override
+        if (this.minimizing)
+        {
+            this.minimizing = false
+            clearTimeout(this.minimizingTimeout)
+        }
+
+        this.maximizing = true
 
         this.element.style.display = "block"
 
-        setTimeout(() => {
+        this.maximizingTimeout = setTimeout(() => {
             cssClass(this.element, "mc-window--minimized", false)
+            
+            this.minimized = false
+            this.maximizing = false
         }, 0)
-
-        this.minimized = false
     }
 
     /**
@@ -210,6 +292,16 @@ class Window
             // signal, that it has been forgotten
             this.windowManager = null
         }, MINIMIZATION_DELAY)
+    }
+
+    /**
+     * Moves the window to a new position
+     */
+    moveTo(x, y)
+    {
+        this.position.x = x
+        this.position.y = y
+        this.updateDisplay()
     }
 
     /**
@@ -268,9 +360,22 @@ class Window
         // nothing
     }
 
+    /**
+     * Focus the widnow
+     */
+    focus()
+    {
+        this.windowManager.focus(this)
+    }
+
     /////////////////////
     // Event listeners //
     /////////////////////
+
+    onWindowClick()
+    {
+        this.focus()
+    }
 
     onHandleMouseDown(e)
     {

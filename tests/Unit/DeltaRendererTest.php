@@ -76,7 +76,7 @@ class DeltaRendererTest extends TestCase
         ], $blocks);
 
         $this->assertEquals(
-            "<p><strong>Hello</strong> world</p>"
+            "<p><b>Hello</b> world</p>"
         , $html);
     }
 
@@ -99,6 +99,31 @@ class DeltaRendererTest extends TestCase
 
         $this->assertEquals(
             "<p>Hello world</p><h1>Lorem ipsum</h1>"
+        , $html);
+    }
+
+    /**
+     * @test
+     */
+    public function it_converts_links()
+    {
+        list($blocks, $html) = $this->renderToBlocks([
+            "ops" => [
+                ["insert" => "Hello "],
+                ["insert" => "world", "attributes" => ["link" => "http://url"]],
+                ["insert" => "\n"],
+            ]
+        ]);
+
+        $this->assertEquals([
+            ["text" => [
+                ["Hello ", []],
+                ["world", ["link" => "http://url"]]
+            ]],
+        ], $blocks);
+
+        $this->assertEquals(
+            "<p>Hello <a href=\"http://url\" target=\"_blank\">world</a></p>"
         , $html);
     }
 

@@ -7,6 +7,6 @@ class BoldBlot extends Inline
 }
 
 BoldBlot.blotName = "bold"
-BoldBlot.tagName = "strong"
+BoldBlot.tagName = "b"
 
 Quill.register(BoldBlot)

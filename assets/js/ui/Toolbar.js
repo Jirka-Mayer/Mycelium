@@ -1,4 +1,5 @@
 const RichTextWidgetToolbar = require("./windows/RichTextWidgetToolbar.js")
+const LinkBlotProperties = require("./windows/LinkBlotProperties.js")
 const getRefs = require("../utils/getRefs.js")
 
 class Toolbar
@@ -18,8 +19,23 @@ class Toolbar
         // create rich-text widget toolbar window
         if (this.mycelium.state.editing)
         {
-            this.richTextToolbar = new RichTextWidgetToolbar(
+            // Link blot properties
+            this.linkBlotProperties = new LinkBlotProperties(
                 window, document, this.mycelium
+            )
+
+            this.mycelium.windowManager.registerWindow(
+                this.linkBlotProperties,
+                {
+                    barless: true,
+                    minimized: true
+                }
+            )
+
+            // Toolbar
+            this.richTextToolbar = new RichTextWidgetToolbar(
+                window, document, this.mycelium,
+                this.linkBlotProperties
             )
 
             this.mycelium.windowManager.registerWindow(

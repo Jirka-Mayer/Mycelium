@@ -8,12 +8,23 @@ const TableObject = require("../../widgets/RichText/TableBlot/TableObject.js")
 
 class RichTextWidgetToolbar extends Window
 {
-    constructor(window, document, mycelium)
+    constructor(window, document, mycelium, linkBlotProperties)
     {
         super(window, document, mycelium)
 
-        this.content.innerHTML = require("./RichTextWidgetToolbar.html")
+        /**
+         * Reference to the linkBlotProperties window
+         */
+        this.linkBlotProperties = linkBlotProperties
 
+        this.buildDOM()
+
+        this.registerEventListeners()
+    }
+
+    buildDOM()
+    {
+        this.content.innerHTML = require("./RichTextWidgetToolbar.html")
         this.refs = getRefs(this.content)
 
         this.headerPicker = new Picker(document, this.refs.header, [
@@ -43,8 +54,6 @@ class RichTextWidgetToolbar extends Window
                 { key: "column", label: "Column" }
             ]
         )
-
-        this.registerEventListeners()
     }
 
     registerEventListeners()
@@ -54,6 +63,8 @@ class RichTextWidgetToolbar extends Window
 
         this.headerPicker.on("user-pick", this.onHeaderPick.bind(this))
         this.headerPicker.on("expand", this.onHeaderPickerExpand.bind(this))
+
+        this.refs.link.addEventListener("click", this.onLinkClick.bind(this))
         
         this.refs.table.addEventListener("click", this.onTableClick.bind(this))
 
@@ -117,8 +128,7 @@ class RichTextWidgetToolbar extends Window
 
         // refocus the widget
         // (focus has been lost by clicking the picker label)
-        if (RichTextWidget.lastFocusedWidget)
-            RichTextWidget.lastFocusedWidget.quill.focus()
+        RichTextWidget.refocus()
 
         RichTextWidget.bus.fire("apply-header", key)
     }
@@ -126,8 +136,12 @@ class RichTextWidgetToolbar extends Window
     onHeaderPickerExpand()
     {
         // keep the widget focused
-        if (RichTextWidget.lastFocusedWidget)
-            RichTextWidget.lastFocusedWidget.quill.focus()
+        RichTextWidget.refocus()
+    }
+
+    onLinkClick()
+    {
+        this.linkBlotProperties.createLink()
     }
 
     ////////////
