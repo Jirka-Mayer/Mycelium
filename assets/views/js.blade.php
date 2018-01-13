@@ -13,18 +13,18 @@
     <script
         mycelium-quill-script="here"
         type="text/javascript"
-        src="{{ asset("js/vendor/mycelium/quill.js") }}"
+        src="{{ asset("vendor/mycelium/quill.core.1.3.4.js") }}"
     ></script>
 
     {{-- load mycelium --}}
     <script
         type="text/javascript"
-        src="{{ asset("js/vendor/mycelium/mycelium.js") }}"
+        src="{{ asset("vendor/mycelium/mycelium.js") }}"
     ></script>
     <link
         rel="stylesheet"
         type="text/css"
-        href="{{ asset("css/vendor/mycelium/mycelium.css") }}"
+        href="{{ asset("vendor/mycelium/mycelium.css") }}"
     >
 
     {{-- mycelium state and config --}}
