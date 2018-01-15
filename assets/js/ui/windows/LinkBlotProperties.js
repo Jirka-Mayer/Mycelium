@@ -1,7 +1,7 @@
 const Window = require("../Window.js")
-const RichTextWidget = require("../../widgets/RichText.js")
 const getRefs = require("../../utils/getRefs.js")
 const cssClass = require("../../utils/cssClass.js")
+const TextPad = require("../../TextPad.js")
 
 class LinkBlotProperties extends Window
 {
@@ -20,16 +20,9 @@ class LinkBlotProperties extends Window
         this.linkRange = null
 
         /**
-         * The widget, where the link is located
+         * The text pad, where the link is located
          */
-        this.linkWidget = null
-
-        /**
-         * Quill, where the link is located
-         * 
-         * TODO
-         */
-        //this.linkQuill = null
+        this.linkPad = null
 
         this.content.innerHTML = require("./LinkBlotProperties.html")
         cssClass(this.content, "mc-lbp", true)
@@ -48,7 +41,7 @@ class LinkBlotProperties extends Window
             "mousedown", this.onBrowserWindowClick.bind(this)
         )
 
-        RichTextWidget.bus.on("selection-change", this.onWidgetSelectionChange.bind(this))
+        TextPad.on("selection-change", this.onTextPadSelectionChange.bind(this))
     }
 
     /**
@@ -58,8 +51,8 @@ class LinkBlotProperties extends Window
     createLink()
     {
         // get new link range
-        this.linkRange = RichTextWidget.getSelection()
-        this.linkWidget = RichTextWidget.activeWidget
+        this.linkRange = TextPad.getSelection()
+        this.linkPad = TextPad.activePad
 
         if (this.linkRange === null)
             return
@@ -79,9 +72,9 @@ class LinkBlotProperties extends Window
     }
 
     /**
-     * Returns range of the selected link, null if no link selected
+     * Updates this.linkRange to the currently selected one
      */
-    getSelectedLinkRange()
+    updateLinkRangeToSelected()
     {
         /*
             A link may only be selected if you have a cursor oper it
@@ -89,31 +82,41 @@ class LinkBlotProperties extends Window
             If any selection - even if over a link, no link is selected
          */
 
-        let selection = RichTextWidget.getSelection()
+        this.linkPad = TextPad.activePad
 
-        if (selection === null)
-            return null
+        // no pad active
+        if (this.linkPad === null)
+        {
+            this.linkRange = null
+            return
+        }
 
-        if (selection.length > 0)
-            return null
+        let selection = this.linkPad.getSelection()
+
+        // exclude weird selections
+        if (selection === null || selection.length > 0)
+        {
+            this.linkRange = null
+            return
+        }
 
         // find start
         let start = selection.index
         while (start >= 0)
         {
-            if (!RichTextWidget.getFormat(start, 0).link)
+            if (!this.linkPad.getFormat(start, 0).link)
                 break
 
             start -= 1
         }
 
-        let len = RichTextWidget.activeWidget.quill.getLength()
+        let len = this.linkPad.getLength()
 
         // find end
         let end = selection.index
         while (end < len)
         {
-            if (!RichTextWidget.getFormat(end, 0).link)
+            if (!this.linkPad.getFormat(end, 0).link)
                 break
 
             end += 1
@@ -123,12 +126,10 @@ class LinkBlotProperties extends Window
         end -= 1
 
         // calculate link range
-        let range = {
+        this.linkRange = {
             index: start,
             length: end - start
         }
-
-        return range
     }
 
     /**
@@ -180,9 +181,9 @@ class LinkBlotProperties extends Window
             return
 
         // get widnow display coordinates
-        let quillBounds = this.linkWidget.element.getBoundingClientRect()
+        let quillBounds = this.linkPad.element.getBoundingClientRect()
 
-        let selectionBounds = this.linkWidget.quill.getBounds(
+        let selectionBounds = this.linkPad.quill.getBounds(
             this.linkRange.index, this.linkRange.length
         )
 
@@ -205,6 +206,9 @@ class LinkBlotProperties extends Window
      */
     onBrowserWindowClick(e)
     {
+        // DEBUG
+        return
+
         // clicking inside the window doesn'thide it
         if (e.path.indexOf(this.element) >= 0)
             return
@@ -237,9 +241,9 @@ class LinkBlotProperties extends Window
     }
 
     /**
-     * When rich-text widget selection changes (any of them)
+     * When text pad selection changes
      */
-    onWidgetSelectionChange(selection, format)
+    onTextPadSelectionChange(selection, format)
     {
         // dont' do anything on deselect
         if (selection === null)
@@ -272,8 +276,7 @@ class LinkBlotProperties extends Window
         this.refs.url.setAttribute("href", format.link)
 
         // save the interesting range
-        this.linkRange = this.getSelectedLinkRange()
-        this.linkWidget = RichTextWidget.activeWidget
+        this.updateLinkRangeToSelected()
 
         this.show()
     }
@@ -306,19 +309,13 @@ class LinkBlotProperties extends Window
         let href = this.refs.textbox.value
 
         // select desired range
-        RichTextWidget.refocus()
-        this.linkWidget.quill.setSelection(
+        TextPad.focus()
+        this.linkPad.quill.setSelection(
             this.linkRange.index, this.linkRange.length
         )
         
         // update format
-        this.linkWidget.quill.format("link", href)
-
-        //RichTextWidget.bus.fire("apply-link", href)
-        /*
-            TODO:
-            Nope, go around the bus, rework the bus in the future for iframes
-         */
+        this.linkPad.format("link", href)
 
         // change mode
         this.editing = false
@@ -326,23 +323,23 @@ class LinkBlotProperties extends Window
 
         // forget the range
         this.linkRange = null
-        this.linkWidget = null
+        this.linkPad = null
     }
 
     onRemoveClick()
     {
         // select desired range
-        RichTextWidget.refocus()
-        this.linkWidget.quill.setSelection(
+        TextPad.focus()
+        this.linkPad.quill.setSelection(
             this.linkRange.index, this.linkRange.length
         )
         
         // update format
-        this.linkWidget.quill.format("link", false)
+        this.linkPad.format("link", false)
 
         // forget the range
         this.linkRange = null
-        this.linkWidget = null
+        this.linkPad = null
     }
 }
 

@@ -1,4 +1,5 @@
-const Quill = require("./quill.js")
+module.exports = function(Quill) {
+
 const Inline = Quill.import("blots/inline")
 
 class LinkBlot extends Inline
@@ -21,3 +22,5 @@ LinkBlot.blotName = "link"
 LinkBlot.tagName = "a"
 
 Quill.register(LinkBlot)
+
+}

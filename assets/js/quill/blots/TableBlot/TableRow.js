@@ -2,12 +2,12 @@ const TableCell = require("./TableCell.js")
 
 class TableRow
 {
-    constructor(tableObject, cells)
+    constructor(tableBlot, contents)
     {
         /**
          * Table object reference
          */
-        this.tableObject = tableObject
+        this.tableBlot = tableBlot
 
         /**
          * Cells in the row
@@ -15,41 +15,31 @@ class TableRow
         this.cells = []
 
         /**
-         * Indicates if the row has been removed from the table
+         * Table row html element
          */
-        this.removed = false
+        this.element = this.tableBlot.contentDocument.createElement("tr")
 
-        this.createElement()
-
-        // number of empty cells
-        if (typeof(cells) === "number")
+        // Content specified as a number of empty cell
+        if (typeof(contents) === "number")
         {
-            for (let i = 0; i < cells; i++)
+            for (let i = 0; i < contents; i++)
                 this.addCell()
         }
 
-        // cells with content
-        else if (cells instanceof Array)
+        // content specified as an array of deltas, each for a single cell
+        else if (contents instanceof Array)
         {
-            for (let i = 0; i < cells.length; i++)
-                this.addCell(undefined, cells[i])
+            for (let i = 0; i < contents.length; i++)
+                this.addCell(undefined, contents[i])
         }
-    }
-
-    /**
-     * Creates the html element
-     */
-    createElement()
-    {
-        this.element = this.tableObject.contentDocument.createElement("tr")
     }
 
     /**
      * Add new cell at a given index (or the end if undefined)
      */
-    addCell(at, content)
+    addCell(at, deltaContents)
     {
-        let cell = new TableCell(this.tableObject, content)
+        let cell = new TableCell(this.tableBlot, deltaContents)
         
         let before = this.element.children[at]
 
@@ -84,8 +74,6 @@ class TableRow
     remove()
     {
         this.element.remove()
-
-        this.removed = true
 
         for (let i = 0; i < this.cells.length; i++)
             this.cells[i].remove()

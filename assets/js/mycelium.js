@@ -17,19 +17,8 @@ if (!window.mycelium.config)
 if (!window.mycelium.class)
     window.mycelium.class = {}
 
-//////////////////////
-// Register classes //
-//////////////////////
+/////////////////////////////
+// Register initialization //
+/////////////////////////////
 
-window.mycelium.class.Shroom = require("./Shroom.js")
-
-if (!window.mycelium.class.widgets)
-    window.mycelium.class.widgets = {}
-
-window.mycelium.class.widgets.RichText = require("./widgets/RichText.js")
-
-if (!window.mycelium.class.ui)
-    window.mycelium.class.ui = {}
-
-window.mycelium.class.ui.Toolbar = require("./ui/Toolbar.js")
-window.mycelium.class.ui.WindowManager = require("./ui/WindowManager.js")
+window.mycelium.initialization = require("./initialization.js")

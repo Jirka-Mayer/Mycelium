@@ -1,4 +1,5 @@
-const Quill = require("./quill.js")
+module.exports = function (Quill) {
+
 const Block = Quill.import("blots/block")
 
 class HeaderBlot extends Block
@@ -13,3 +14,5 @@ HeaderBlot.blotName = "header"
 HeaderBlot.tagName = ["H1", "H2"]
 
 Quill.register(HeaderBlot)
+
+}

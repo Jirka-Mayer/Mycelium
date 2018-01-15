@@ -11,8 +11,6 @@ class TableEmbed
      */
     public static function toHtml($value, $attributes, DeltaRenderer $renderer)
     {
-        // deserialize
-        $value = json_decode($value, true);
         if (!is_array($value))
             $value = [];
 

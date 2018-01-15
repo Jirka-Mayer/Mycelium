@@ -27,10 +27,18 @@
         href="{{ asset("vendor/mycelium/mycelium.css") }}"
     >
 
-    {{-- mycelium state and config --}}
     <script type="text/javascript">
+
+        // setup config
         window.mycelium.state = {!! json_encode($mycelium->exportState()) !!}
         window.mycelium.config = {!! json_encode(config("mycelium")) !!}
+
+        // setup Quill
+        window.mycelium.initialization.setupQuill(window)
+
+        // register public classes
+        window.mycelium.initialization.registerClasses(window)
+
     </script>
 
     {{-- if the user is in editing mode --}}
@@ -38,30 +46,18 @@
 
         {{-- create shroom instance --}}
         <script type="text/javascript">
-            window.mycelium.shroom = new window.mycelium.class.Shroom(
+            window.mycelium.initialization.createShroom(
                 window,
-                window.document,
-                window.mycelium,
                 {!! $shroom->toJson(JSON_PRETTY_PRINT) !!}
             )
-
-            window.mycelium.shroom.initializeAutosave()
         </script>
 
     @endif
 
-    <!-- create UI -->
     <script type="text/javascript">
-        window.mycelium.windowManager = new window.mycelium.class.ui.WindowManager(
-            window,
-            window.document
-        )
 
-        window.mycelium.toolbar = new window.mycelium.class.ui.Toolbar(
-            window,
-            window.document,
-            window.mycelium
-        )
+        window.mycelium.initialization.initializeUI(window)
+
     </script>
 
 @endif

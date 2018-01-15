@@ -192,7 +192,7 @@ class DeltaRendererTest extends TestCase
         list($blocks, $html) = $this->renderToBlocks([
             "ops" => [
                 [
-                    "insert" => ["table" => json_encode([
+                    "insert" => ["table" => [
                         "rows" => [
                             [
                                 ["ops" => [
@@ -203,7 +203,7 @@ class DeltaRendererTest extends TestCase
                                 ]]
                             ]
                         ]
-                    ])]
+                    ]]
                 ]
             ]
         ]);

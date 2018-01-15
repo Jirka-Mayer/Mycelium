@@ -143,6 +143,9 @@
 [mycelium-widget="rich-text"] .ql-editor *::selection {
   background: rgba(0,0,0,0.2);
 }
+[mycelium-widget="rich-text"] .ql-editor a {
+  cursor: inherit !important;
+}
 [mycelium-widget="rich-text"] .ql-clipboard {
   left: -100000px;
   height: 1px;

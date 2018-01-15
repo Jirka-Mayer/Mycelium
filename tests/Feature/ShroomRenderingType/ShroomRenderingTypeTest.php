@@ -38,7 +38,7 @@ class ShroomRenderingTypeTest extends FeatureTestCase
         $this->asVisitor();
 
         $response = $this->get("/");
-        $response->assertDontSee("js/vendor/mycelium/mycelium.js");
+        $response->assertDontSee("vendor/mycelium/mycelium.js");
     }
 
     ////////////
@@ -53,7 +53,7 @@ class ShroomRenderingTypeTest extends FeatureTestCase
         $this->asEditor();
 
         $response = $this->get("/");
-        $response->assertSee("js/vendor/mycelium/mycelium.js");
+        $response->assertSee("vendor/mycelium/mycelium.js");
     }
 
     /**
@@ -65,7 +65,7 @@ class ShroomRenderingTypeTest extends FeatureTestCase
 
         $response = $this->get("/");
         $response->assertDontSee(
-            "window.mycelium.shroom = new window.mycelium.class.Shroom"
+            "window.mycelium.initialization.createShroom("
         );
     }
 
@@ -81,7 +81,7 @@ class ShroomRenderingTypeTest extends FeatureTestCase
         $this->asEditor();
 
         $response = $this->get("/edit");
-        $response->assertSee("js/vendor/mycelium/mycelium.js");
+        $response->assertSee("vendor/mycelium/mycelium.js");
     }
 
     /**
@@ -93,7 +93,7 @@ class ShroomRenderingTypeTest extends FeatureTestCase
 
         $response = $this->get("/edit");
         $response->assertSee(
-            "window.mycelium.shroom = new window.mycelium.class.Shroom"
+            "window.mycelium.initialization.createShroom("
         );
     }
 }

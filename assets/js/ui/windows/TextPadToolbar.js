@@ -3,10 +3,9 @@ const getRefs = require("../../utils/getRefs.js")
 const cssClass = require("../../utils/cssClass.js")
 const Picker = require("../components/Picker.js")
 const Menu = require("../components/Menu.js")
-const RichTextWidget = require("../../widgets/RichText.js")
-const TableObject = require("../../widgets/RichText/TableBlot/TableObject.js")
+const TextPad = require("../../TextPad.js")
 
-class RichTextWidgetToolbar extends Window
+class TextPadToolbar extends Window
 {
     constructor(window, document, mycelium, linkBlotProperties)
     {
@@ -24,7 +23,7 @@ class RichTextWidgetToolbar extends Window
 
     buildDOM()
     {
-        this.content.innerHTML = require("./RichTextWidgetToolbar.html")
+        this.content.innerHTML = require("./TextPadToolbar.html")
         this.refs = getRefs(this.content)
 
         this.headerPicker = new Picker(document, this.refs.header, [
@@ -76,7 +75,7 @@ class RichTextWidgetToolbar extends Window
 
         // we listen for widget selection changes to determine
         // changes in the styling UI like bold, header etc.
-        RichTextWidget.bus.on("selection-change", this.onWidgetSelectionChange.bind(this))
+        TextPad.on("selection-change", this.onTextPadSelectionChange.bind(this))
     }
 
     /////////////////
@@ -86,7 +85,7 @@ class RichTextWidgetToolbar extends Window
     /**
      * When rich-text widget selection changes (any of them)
      */
-    onWidgetSelectionChange(selection, format)
+    onTextPadSelectionChange(selection, format)
     {
         // dont' do anything on deselect
         if (selection === null)
@@ -111,32 +110,39 @@ class RichTextWidgetToolbar extends Window
 
     onBoldClick()
     {
-        RichTextWidget.bus.fire("apply-bold")
+        TextPad.format(
+            "bold",
+            !TextPad.getFormat().bold
+        )
     }
 
     onItalicClick()
     {
-        RichTextWidget.bus.fire("apply-italic")
+        TextPad.format(
+            "italic",
+            !TextPad.getFormat().italic
+        )
     }
 
     onHeaderPick(key)
     {
+        let level
+
         if (key == "p")
-            key = false
+            level = false
         else
-            key = parseInt(key[1])
+            level = parseInt(key[1])
 
-        // refocus the widget
-        // (focus has been lost by clicking the picker label)
-        RichTextWidget.refocus()
+        if (level == TextPad.getFormat().header)
+            level = false
 
-        RichTextWidget.bus.fire("apply-header", key)
+        TextPad.format("header", level)
     }
 
     onHeaderPickerExpand()
     {
-        // keep the widget focused
-        RichTextWidget.refocus()
+        // keep the pad focused
+        TextPad.focus()
     }
 
     onLinkClick()
@@ -150,64 +156,44 @@ class RichTextWidgetToolbar extends Window
 
     onTableClick()
     {
-        RichTextWidget.bus.fire("insert-table")
+        TextPad.insertTable()
     }
 
     onTableInsertMenuClick(key)
     {
         switch (key)
         {
-            case "row-below":
-                RichTextWidget.bus.fire("insert-table-row-below")
-                break
-
-            case "row-above":
-                RichTextWidget.bus.fire("insert-table-row-above")
-                break
-
-            case "column-left":
-                RichTextWidget.bus.fire("insert-table-column-left")
-                break
-
-            case "column-right":
-                RichTextWidget.bus.fire("insert-table-column-right")
-                break
+            case "row-below":    TextPad.insertTableRowBelow();    break
+            case "row-above":    TextPad.insertTableRowAbove();    break
+            case "column-left":  TextPad.insertTableColumnLeft();  break
+            case "column-right": TextPad.insertTableColumnRight(); break
         }
 
-        if (TableObject.lastFocusedTable)
-            TableObject.lastFocusedTable.focus()
+        TextPad.focus()
     }
 
     onTableInsertMenuExapnd()
     {
-        // keep table focused
-        if (TableObject.lastFocusedTable)
-            TableObject.lastFocusedTable.focus()
+        // keep the pad focused
+        TextPad.focus()
     }
 
     onTableRemoveMenuClick(key)
     {
         switch (key)
         {
-            case "row":
-                RichTextWidget.bus.fire("remove-table-row")
-                break
-
-            case "column":
-                RichTextWidget.bus.fire("remove-table-column")
-                break
+            case "row":    TextPad.removeTableRow();    break
+            case "column": TextPad.removeTableColumn(); break
         }
 
-        if (TableObject.lastFocusedTable)
-            TableObject.lastFocusedTable.focus()
+        TextPad.focus()
     }
 
     onTableRemoveMenuExapnd()
     {
-        // keep table focused
-        if (TableObject.lastFocusedTable)
-            TableObject.lastFocusedTable.focus()
+        // keep the pad focused
+        TextPad.focus()
     }
 }
 
-module.exports = RichTextWidgetToolbar
+module.exports = TextPadToolbar

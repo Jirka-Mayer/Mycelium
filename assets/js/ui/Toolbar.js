@@ -1,4 +1,4 @@
-const RichTextWidgetToolbar = require("./windows/RichTextWidgetToolbar.js")
+const TextPadToolbar = require("./windows/TextPadToolbar.js")
 const LinkBlotProperties = require("./windows/LinkBlotProperties.js")
 const getRefs = require("../utils/getRefs.js")
 
@@ -33,7 +33,7 @@ class Toolbar
             )
 
             // Toolbar
-            this.richTextToolbar = new RichTextWidgetToolbar(
+            this.richTextToolbar = new TextPadToolbar(
                 window, document, this.mycelium,
                 this.linkBlotProperties
             )
@@ -42,7 +42,7 @@ class Toolbar
                 this.richTextToolbar,
                 {
                     persistent: true,
-                    name: "RichTextWidgetToolbar"
+                    name: "TextPadToolbar"
                 }
             )
         }
