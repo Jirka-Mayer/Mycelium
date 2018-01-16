@@ -233,7 +233,18 @@ class IframeBlot extends Embed
         quillLink = this.contentDocument.createElement("script")
         
         quillLink.onload = () => {
+            // register blots
             require("../../initialization.js").setupQuill(this.contentWindow)
+
+            // redirect undo and redo commands
+            let history = this.contentWindow.Quill.import("modules/history")
+            history.prototype.undo = () => {
+                this.textPad.quill.history.undo()
+            }
+            history.prototype.redo = () => {
+                this.textPad.quill.history.redo()
+            }
+            
             callback()
         }
 

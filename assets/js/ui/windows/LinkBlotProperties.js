@@ -1,9 +1,9 @@
-const Window = require("../Window.js")
+const TextPopupWindow = require("./TextPopupWindow.js")
 const getRefs = require("../../utils/getRefs.js")
 const cssClass = require("../../utils/cssClass.js")
 const TextPad = require("../../TextPad.js")
 
-class LinkBlotProperties extends Window
+class LinkBlotProperties extends TextPopupWindow
 {
     constructor(window, document, mycelium)
     {
@@ -13,16 +13,6 @@ class LinkBlotProperties extends Window
          * Is the selected link in editing mode or just viewing?
          */
         this.editing = false
-
-        /**
-         * Range where the link is located
-         */
-        this.linkRange = null
-
-        /**
-         * The text pad, where the link is located
-         */
-        this.linkPad = null
 
         this.content.innerHTML = require("./LinkBlotProperties.html")
         cssClass(this.content, "mc-lbp", true)
@@ -35,101 +25,44 @@ class LinkBlotProperties extends Window
 
         this.refs.editingBlock.addEventListener("submit", this.onSaveClick.bind(this))
 
+        this.refs.textbox.addEventListener("keydown", (e) => {
+            if (e.key === "Escape")
+                this.onEscapeHit()
+        })
+
         this.updateDisplayedBlock()
-
-        window.addEventListener(
-            "mousedown", this.onBrowserWindowClick.bind(this)
-        )
-
-        TextPad.on("selection-change", this.onTextPadSelectionChange.bind(this))
     }
 
     /**
      * Called when new link should be added
-     * (from the RichTextWidgetToolbar)
+     * (from the toolbar)
      */
     createLink()
     {
         // get new link range
-        this.linkRange = TextPad.getSelection()
-        this.linkPad = TextPad.activePad
+        this.interestingRange = TextPad.getSelection()
+        this.interestingPad = TextPad.activePad
 
-        if (this.linkRange === null)
+        if (this.interestingRange === null)
             return
 
-        if (this.linkRange.length === 0)
+        if (this.interestingRange.length === 0)
             return
 
         // switch mode
         this.editing = true
         this.updateDisplayedBlock()
 
+        // clear content
+        this.refs.textbox.value = ""
+        this.refs.url.innerText = ""
+        this.refs.url.setAttribute("href", "#")
+
         // show
-        this.show()
+        this.showThePopup()
 
         // focus
         this.refs.textbox.select()
-    }
-
-    /**
-     * Updates this.linkRange to the currently selected one
-     */
-    updateLinkRangeToSelected()
-    {
-        /*
-            A link may only be selected if you have a cursor oper it
-            (I mean no selection -> length = 0)
-            If any selection - even if over a link, no link is selected
-         */
-
-        this.linkPad = TextPad.activePad
-
-        // no pad active
-        if (this.linkPad === null)
-        {
-            this.linkRange = null
-            return
-        }
-
-        let selection = this.linkPad.getSelection()
-
-        // exclude weird selections
-        if (selection === null || selection.length > 0)
-        {
-            this.linkRange = null
-            return
-        }
-
-        // find start
-        let start = selection.index
-        while (start >= 0)
-        {
-            if (!this.linkPad.getFormat(start, 0).link)
-                break
-
-            start -= 1
-        }
-
-        let len = this.linkPad.getLength()
-
-        // find end
-        let end = selection.index
-        while (end < len)
-        {
-            if (!this.linkPad.getFormat(end, 0).link)
-                break
-
-            end += 1
-        }
-
-        // it overcounts
-        end -= 1
-
-        // calculate link range
-        this.linkRange = {
-            index: start,
-            length: end - start
-        }
     }
 
     /**
@@ -148,137 +81,34 @@ class LinkBlotProperties extends Window
             this.refs.viewingBlock.style.display = "block"
         }
 
-        this.updatePosition()
+        this.updatePopupPosition()
     }
 
-    ////////////////////////
-    // Visibility control //        (Visibility of the entire window)
-    ////////////////////////        (and position)
+    ///////////
+    // Hooks //
+    ///////////
 
     /**
-     * Shows the window at the correct position
+     * Returns true, if the format is interesting
      */
-    show()
+    isFormatInteresting(format)
     {
-        // display window
-        this.maximize()
-
-        // let the window be displayed
-        setTimeout(() => {
-
-            // then update position
-            this.updatePosition()
-        }, 0)
+        return !!format.link
     }
 
-    /**
-     * Updates window position
-     */
-    updatePosition()
+    onPopupHide()
     {
-        // no link selected, this window should not even be displayed
-        if (this.linkRange === null)
-            return
-
-        // get widnow display coordinates
-        let textPadBound = this.linkPad.getPadBounds()
-
-        let selectionBounds = this.linkPad.getSelectionBounds(
-            this.linkRange.index, this.linkRange.length
-        )
-
-        // update width, height properties
-        this.updateDisplay()
-
-        // calculate window position
-        let x = textPadBound.left + selectionBounds.left
-            + selectionBounds.width / 2 - this.outerWidth / 2
-
-        let y = textPadBound.top + selectionBounds.top
-            + selectionBounds.height + 10
-
-        // move the window
-        this.moveTo(x, y)
+        // switch mode
+        this.editing = false
+        this.updateDisplayedBlock()
     }
 
-    /**
-     * Listen for browser window clicks
-     */
-    onBrowserWindowClick(e)
+    onPopupShowBySelection(format)
     {
-        // DEBUG
-        //return
-
-        // clicking inside the window doesn'thide it
-        if (e.path.indexOf(this.element) >= 0)
-            return
-
-        // delay the handling slightly so that quill can take
-        // action on selection change
-        setTimeout(() => {
-        
-            // if user clicks into a text pad
-            let clickInAPad = false
-            for (let i = 0; i < e.path.length; i++)
-            {
-                if (!e.path[i].getAttribute) // window object
-                    continue
-
-                if (e.path[i].getAttribute("mycelium-text-pad") === "here")
-                {
-                    clickInAPad = true
-                    break
-                }
-            }
-
-            // do not hide, if a link format was selected by the click
-            if (clickInAPad && TextPad.getFormat().link)
-                return
-
-            this.minimize()
-
-        }, 0)
-    }
-
-    /**
-     * When text pad selection changes
-     */
-    onTextPadSelectionChange(selection, format)
-    {
-        // dont' do anything on deselect
-        if (selection === null)
-            return
-
-        // if no link selected, again dont do anything
-        // (hide the window actually)
-        // 
-        // OR if the selection is not zero-length
-        if (!format.link || selection.length > 0)
-        {
-            // switch mode
-            this.editing = false
-            this.updateDisplayedBlock()
-
-            // hide
-            this.minimize()
-
-            // set properties
-            this.refs.textbox.value = ""
-            this.refs.url.innerText = ""
-            this.refs.url.setAttribute("href", "#")
-
-            return
-        }
-
         // load link into the form
         this.refs.textbox.value = format.link
         this.refs.url.innerText = format.link
         this.refs.url.setAttribute("href", format.link)
-
-        // save the interesting range
-        this.updateLinkRangeToSelected()
-
-        this.show()
     }
 
     ////////////
@@ -310,36 +140,58 @@ class LinkBlotProperties extends Window
 
         // select desired range
         TextPad.focus()
-        this.linkPad.quill.setSelection(
-            this.linkRange.index, this.linkRange.length
+        this.interestingPad.quill.setSelection(
+            this.interestingRange.index, this.interestingRange.length
         )
         
         // update format
-        this.linkPad.format("link", href)
+        this.interestingPad.format("link", href)
 
         // change mode
         this.editing = false
         this.updateDisplayedBlock()
 
         // forget the range
-        this.linkRange = null
-        this.linkPad = null
+        this.interestingRange = null
+        this.interestingPad = null
     }
 
     onRemoveClick()
     {
         // select desired range
         TextPad.focus()
-        this.linkPad.quill.setSelection(
-            this.linkRange.index, this.linkRange.length
+        this.interestingPad.quill.setSelection(
+            this.interestingRange.index, this.interestingRange.length
         )
         
         // update format
-        this.linkPad.format("link", false)
+        this.interestingPad.format("link", false)
 
         // forget the range
-        this.linkRange = null
-        this.linkPad = null
+        this.interestingRange = null
+        this.interestingPad = null
+    }
+
+    /**
+     * Called when esc hit during link editing
+     */
+    onEscapeHit()
+    {
+        /*
+            if editing link, cancel editing
+            if creating link, cancel and hide
+         */
+
+        // switch mode
+        this.editing = false
+        this.updateDisplayedBlock()
+
+        // hide window if no link under selection
+        if (!this.isFormatInteresting(TextPad.getFormat()))
+        {
+            this.onPopupHide()
+            this.minimize()
+        }
     }
 }
 

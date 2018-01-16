@@ -2946,7 +2946,18 @@ module.exports = function (Quill) {
                 quillLink = this.contentDocument.createElement("script");
 
                 quillLink.onload = function () {
+                    // register blots
                     __webpack_require__(7).setupQuill(_this3.contentWindow);
+
+                    // redirect undo and redo commands
+                    var history = _this3.contentWindow.Quill.import("modules/history");
+                    history.prototype.undo = function () {
+                        _this3.textPad.quill.history.undo();
+                    };
+                    history.prototype.redo = function () {
+                        _this3.textPad.quill.history.redo();
+                    };
+
                     callback();
                 };
 
@@ -5111,13 +5122,13 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var Window = __webpack_require__(15);
+var TextPopupWindow = __webpack_require__(69);
 var getRefs = __webpack_require__(1);
 var cssClass = __webpack_require__(6);
 var TextPad = __webpack_require__(2);
 
-var LinkBlotProperties = function (_Window) {
-    _inherits(LinkBlotProperties, _Window);
+var LinkBlotProperties = function (_TextPopupWindow) {
+    _inherits(LinkBlotProperties, _TextPopupWindow);
 
     function LinkBlotProperties(window, document, mycelium) {
         _classCallCheck(this, LinkBlotProperties);
@@ -5128,16 +5139,6 @@ var LinkBlotProperties = function (_Window) {
         var _this = _possibleConstructorReturn(this, (LinkBlotProperties.__proto__ || Object.getPrototypeOf(LinkBlotProperties)).call(this, window, document, mycelium));
 
         _this.editing = false;
-
-        /**
-         * Range where the link is located
-         */
-        _this.linkRange = null;
-
-        /**
-         * The text pad, where the link is located
-         */
-        _this.linkPad = null;
 
         _this.content.innerHTML = __webpack_require__(61);
         cssClass(_this.content, "mc-lbp", true);
@@ -5150,17 +5151,17 @@ var LinkBlotProperties = function (_Window) {
 
         _this.refs.editingBlock.addEventListener("submit", _this.onSaveClick.bind(_this));
 
+        _this.refs.textbox.addEventListener("keydown", function (e) {
+            if (e.key === "Escape") _this.onEscapeHit();
+        });
+
         _this.updateDisplayedBlock();
-
-        window.addEventListener("mousedown", _this.onBrowserWindowClick.bind(_this));
-
-        TextPad.on("selection-change", _this.onTextPadSelectionChange.bind(_this));
         return _this;
     }
 
     /**
      * Called when new link should be added
-     * (from the RichTextWidgetToolbar)
+     * (from the toolbar)
      */
 
 
@@ -5168,79 +5169,27 @@ var LinkBlotProperties = function (_Window) {
         key: "createLink",
         value: function createLink() {
             // get new link range
-            this.linkRange = TextPad.getSelection();
-            this.linkPad = TextPad.activePad;
+            this.interestingRange = TextPad.getSelection();
+            this.interestingPad = TextPad.activePad;
 
-            if (this.linkRange === null) return;
+            if (this.interestingRange === null) return;
 
-            if (this.linkRange.length === 0) return;
+            if (this.interestingRange.length === 0) return;
 
             // switch mode
             this.editing = true;
             this.updateDisplayedBlock();
 
+            // clear content
+            this.refs.textbox.value = "";
+            this.refs.url.innerText = "";
+            this.refs.url.setAttribute("href", "#");
+
             // show
-            this.show();
+            this.showThePopup();
 
             // focus
             this.refs.textbox.select();
-        }
-
-        /**
-         * Updates this.linkRange to the currently selected one
-         */
-
-    }, {
-        key: "updateLinkRangeToSelected",
-        value: function updateLinkRangeToSelected() {
-            /*
-                A link may only be selected if you have a cursor oper it
-                (I mean no selection -> length = 0)
-                If any selection - even if over a link, no link is selected
-             */
-
-            this.linkPad = TextPad.activePad;
-
-            // no pad active
-            if (this.linkPad === null) {
-                this.linkRange = null;
-                return;
-            }
-
-            var selection = this.linkPad.getSelection();
-
-            // exclude weird selections
-            if (selection === null || selection.length > 0) {
-                this.linkRange = null;
-                return;
-            }
-
-            // find start
-            var start = selection.index;
-            while (start >= 0) {
-                if (!this.linkPad.getFormat(start, 0).link) break;
-
-                start -= 1;
-            }
-
-            var len = this.linkPad.getLength();
-
-            // find end
-            var end = selection.index;
-            while (end < len) {
-                if (!this.linkPad.getFormat(end, 0).link) break;
-
-                end += 1;
-            }
-
-            // it overcounts
-            end -= 1;
-
-            // calculate link range
-            this.linkRange = {
-                index: start,
-                length: end - start
-            };
         }
 
         /**
@@ -5258,137 +5207,36 @@ var LinkBlotProperties = function (_Window) {
                 this.refs.viewingBlock.style.display = "block";
             }
 
-            this.updatePosition();
+            this.updatePopupPosition();
         }
 
-        ////////////////////////
-        // Visibility control //        (Visibility of the entire window)
-        ////////////////////////        (and position)
+        ///////////
+        // Hooks //
+        ///////////
 
         /**
-         * Shows the window at the correct position
+         * Returns true, if the format is interesting
          */
 
     }, {
-        key: "show",
-        value: function show() {
-            var _this2 = this;
-
-            // display window
-            this.maximize();
-
-            // let the window be displayed
-            setTimeout(function () {
-
-                // then update position
-                _this2.updatePosition();
-            }, 0);
+        key: "isFormatInteresting",
+        value: function isFormatInteresting(format) {
+            return !!format.link;
         }
-
-        /**
-         * Updates window position
-         */
-
     }, {
-        key: "updatePosition",
-        value: function updatePosition() {
-            // no link selected, this window should not even be displayed
-            if (this.linkRange === null) return;
-
-            // get widnow display coordinates
-            var textPadBound = this.linkPad.getPadBounds();
-
-            var selectionBounds = this.linkPad.getSelectionBounds(this.linkRange.index, this.linkRange.length);
-
-            // update width, height properties
-            this.updateDisplay();
-
-            // calculate window position
-            var x = textPadBound.left + selectionBounds.left + selectionBounds.width / 2 - this.outerWidth / 2;
-
-            var y = textPadBound.top + selectionBounds.top + selectionBounds.height + 10;
-
-            // move the window
-            this.moveTo(x, y);
+        key: "onPopupHide",
+        value: function onPopupHide() {
+            // switch mode
+            this.editing = false;
+            this.updateDisplayedBlock();
         }
-
-        /**
-         * Listen for browser window clicks
-         */
-
     }, {
-        key: "onBrowserWindowClick",
-        value: function onBrowserWindowClick(e) {
-            var _this3 = this;
-
-            // DEBUG
-            //return
-
-            // clicking inside the window doesn'thide it
-            if (e.path.indexOf(this.element) >= 0) return;
-
-            // delay the handling slightly so that quill can take
-            // action on selection change
-            setTimeout(function () {
-
-                // if user clicks into a text pad
-                var clickInAPad = false;
-                for (var i = 0; i < e.path.length; i++) {
-                    if (!e.path[i].getAttribute) // window object
-                        continue;
-
-                    if (e.path[i].getAttribute("mycelium-text-pad") === "here") {
-                        clickInAPad = true;
-                        break;
-                    }
-                }
-
-                // do not hide, if a link format was selected by the click
-                if (clickInAPad && TextPad.getFormat().link) return;
-
-                _this3.minimize();
-            }, 0);
-        }
-
-        /**
-         * When text pad selection changes
-         */
-
-    }, {
-        key: "onTextPadSelectionChange",
-        value: function onTextPadSelectionChange(selection, format) {
-            // dont' do anything on deselect
-            if (selection === null) return;
-
-            // if no link selected, again dont do anything
-            // (hide the window actually)
-            // 
-            // OR if the selection is not zero-length
-            if (!format.link || selection.length > 0) {
-                // switch mode
-                this.editing = false;
-                this.updateDisplayedBlock();
-
-                // hide
-                this.minimize();
-
-                // set properties
-                this.refs.textbox.value = "";
-                this.refs.url.innerText = "";
-                this.refs.url.setAttribute("href", "#");
-
-                return;
-            }
-
+        key: "onPopupShowBySelection",
+        value: function onPopupShowBySelection(format) {
             // load link into the form
             this.refs.textbox.value = format.link;
             this.refs.url.innerText = format.link;
             this.refs.url.setAttribute("href", format.link);
-
-            // save the interesting range
-            this.updateLinkRangeToSelected();
-
-            this.show();
         }
 
         ////////////
@@ -5421,37 +5269,60 @@ var LinkBlotProperties = function (_Window) {
 
             // select desired range
             TextPad.focus();
-            this.linkPad.quill.setSelection(this.linkRange.index, this.linkRange.length);
+            this.interestingPad.quill.setSelection(this.interestingRange.index, this.interestingRange.length);
 
             // update format
-            this.linkPad.format("link", href);
+            this.interestingPad.format("link", href);
 
             // change mode
             this.editing = false;
             this.updateDisplayedBlock();
 
             // forget the range
-            this.linkRange = null;
-            this.linkPad = null;
+            this.interestingRange = null;
+            this.interestingPad = null;
         }
     }, {
         key: "onRemoveClick",
         value: function onRemoveClick() {
             // select desired range
             TextPad.focus();
-            this.linkPad.quill.setSelection(this.linkRange.index, this.linkRange.length);
+            this.interestingPad.quill.setSelection(this.interestingRange.index, this.interestingRange.length);
 
             // update format
-            this.linkPad.format("link", false);
+            this.interestingPad.format("link", false);
 
             // forget the range
-            this.linkRange = null;
-            this.linkPad = null;
+            this.interestingRange = null;
+            this.interestingPad = null;
+        }
+
+        /**
+         * Called when esc hit during link editing
+         */
+
+    }, {
+        key: "onEscapeHit",
+        value: function onEscapeHit() {
+            /*
+                if editing link, cancel editing
+                if creating link, cancel and hide
+             */
+
+            // switch mode
+            this.editing = false;
+            this.updateDisplayedBlock();
+
+            // hide window if no link under selection
+            if (!this.isFormatInteresting(TextPad.getFormat())) {
+                this.onPopupHide();
+                this.minimize();
+            }
         }
     }]);
 
     return LinkBlotProperties;
-}(Window);
+}(TextPopupWindow);
 
 module.exports = LinkBlotProperties;
 
@@ -5665,6 +5536,257 @@ module.exports = WindowManager;
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 65 */,
+/* 66 */,
+/* 67 */,
+/* 68 */,
+/* 69 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Window = __webpack_require__(15);
+var TextPad = __webpack_require__(2);
+
+var TextPopupWindow = function (_Window) {
+    _inherits(TextPopupWindow, _Window);
+
+    function TextPopupWindow(window, document, mycelium) {
+        _classCallCheck(this, TextPopupWindow);
+
+        /**
+         * Range where interesting text is located
+         */
+        var _this = _possibleConstructorReturn(this, (TextPopupWindow.__proto__ || Object.getPrototypeOf(TextPopupWindow)).call(this, window, document, mycelium));
+
+        _this.interestingRange = null;
+
+        /**
+         * The text pad, where the interesting text is located
+         */
+        _this.interestingPad = null;
+
+        window.addEventListener("mousedown", _this.onBrowserWindowClick_popupHandler.bind(_this));
+
+        TextPad.on("selection-change", _this.onTextPadSelectionChange_popupHandler.bind(_this));
+        return _this;
+    }
+
+    /**
+     * Updates this.interestingRange to the currently selected one
+     */
+
+
+    _createClass(TextPopupWindow, [{
+        key: "updateInterestingRangeToSelected",
+        value: function updateInterestingRangeToSelected() {
+            /*
+                A format may only be selected if you have a cursor oper it
+                (I mean no selection -> length = 0)
+                If any selection - even if over a format, no format is selected
+             */
+
+            this.interestingPad = TextPad.activePad;
+
+            // no pad active
+            if (this.interestingPad === null) {
+                this.interestingRange = null;
+                return;
+            }
+
+            var selection = this.interestingPad.getSelection();
+
+            // exclude weird selections
+            if (selection === null || selection.length > 0) {
+                this.interestingRange = null;
+                return;
+            }
+
+            // find start
+            var start = selection.index;
+            while (start >= 0) {
+                if (!this.isFormatInteresting(this.interestingPad.getFormat(start, 0))) break;
+
+                start -= 1;
+            }
+
+            // document start
+            if (start < 0) start = 0;
+
+            var len = this.interestingPad.getLength();
+
+            // find end
+            var end = selection.index;
+            while (end < len) {
+                if (!this.isFormatInteresting(this.interestingPad.getFormat(end, 0))) break;
+
+                end += 1;
+            }
+
+            // it overcounts
+            end -= 1;
+
+            // calculate interesting range
+            this.interestingRange = {
+                index: start,
+                length: end - start
+            };
+        }
+
+        /**
+         * Shows the window at the correct position
+         */
+
+    }, {
+        key: "showThePopup",
+        value: function showThePopup() {
+            var _this2 = this;
+
+            // display window
+            this.maximize();
+
+            // let the window be displayed
+            setTimeout(function () {
+
+                // then update position
+                _this2.updatePopupPosition();
+            }, 0);
+        }
+
+        /**
+         * Updates window position
+         */
+
+    }, {
+        key: "updatePopupPosition",
+        value: function updatePopupPosition() {
+            // no text selected, this window should not even be displayed
+            if (this.interestingRange === null) return;
+
+            // get widnow display coordinates
+            var textPadBound = this.interestingPad.getPadBounds();
+
+            var selectionBounds = this.interestingPad.getSelectionBounds(this.interestingRange.index, this.interestingRange.length);
+
+            // update width, height properties
+            // (so we can access them now)
+            this.updateDisplay();
+
+            // calculate window position
+            var x = textPadBound.left + selectionBounds.left + selectionBounds.width / 2 - this.outerWidth / 2;
+
+            var y = textPadBound.top + selectionBounds.top + selectionBounds.height + 10;
+
+            // move the window
+            this.moveTo(x, y);
+        }
+
+        /**
+         * Listen for browser window clicks
+         * (strange name to avoid subclass name collisions)
+         */
+
+    }, {
+        key: "onBrowserWindowClick_popupHandler",
+        value: function onBrowserWindowClick_popupHandler(e) {
+            var _this3 = this;
+
+            // clicking inside the window doesn'thide it
+            if (e.path.indexOf(this.element) >= 0) return;
+
+            // delay the handling slightly so that quill can take
+            // action on selection change
+            setTimeout(function () {
+
+                // if user clicks into a text pad
+                var clickInAPad = false;
+                for (var i = 0; i < e.path.length; i++) {
+                    if (!e.path[i].getAttribute) // window object
+                        continue;
+
+                    if (e.path[i].getAttribute("mycelium-text-pad") === "here") {
+                        clickInAPad = true;
+                        break;
+                    }
+                }
+
+                // do not hide, if a the format was selected by the click
+                if (clickInAPad && _this3.isFormatInteresting(TextPad.getFormat())) return;
+
+                _this3.onPopupHide();
+
+                _this3.minimize();
+            }, 0);
+        }
+
+        /**
+         * When text pad selection changes
+         */
+
+    }, {
+        key: "onTextPadSelectionChange_popupHandler",
+        value: function onTextPadSelectionChange_popupHandler(selection, format) {
+            // dont' do anything on deselect
+            if (selection === null) return;
+
+            // if no interesting format selected, again dont do anything
+            // (hide the window actually)
+            // 
+            // OR if the selection is not zero-length
+            if (!this.isFormatInteresting(format) || selection.length > 0) {
+                this.onPopupHide();
+
+                // hide
+                this.minimize();
+
+                return;
+            }
+
+            // save the interesting range
+            this.updateInterestingRangeToSelected();
+
+            this.onPopupShowBySelection(format);
+            this.showThePopup();
+        }
+
+        ///////////
+        // Hooks //
+        ///////////
+
+        /*
+            Override these to hook into events
+            or make the shing work
+         */
+
+        /**
+         * Returns true, if the format is interesting
+         */
+
+    }, {
+        key: "isFormatInteresting",
+        value: function isFormatInteresting(format) {
+            return false;
+        }
+    }, {
+        key: "onPopupHide",
+        value: function onPopupHide() {}
+    }, {
+        key: "onPopupShowBySelection",
+        value: function onPopupShowBySelection(format) {}
+    }]);
+
+    return TextPopupWindow;
+}(Window);
+
+module.exports = TextPopupWindow;
 
 /***/ })
 /******/ ]);
