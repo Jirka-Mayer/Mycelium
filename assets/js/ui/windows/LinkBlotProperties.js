@@ -181,9 +181,9 @@ class LinkBlotProperties extends Window
             return
 
         // get widnow display coordinates
-        let quillBounds = this.linkPad.element.getBoundingClientRect()
+        let textPadBound = this.linkPad.getPadBounds()
 
-        let selectionBounds = this.linkPad.quill.getBounds(
+        let selectionBounds = this.linkPad.getSelectionBounds(
             this.linkRange.index, this.linkRange.length
         )
 
@@ -191,10 +191,10 @@ class LinkBlotProperties extends Window
         this.updateDisplay()
 
         // calculate window position
-        let x = quillBounds.x + selectionBounds.left
+        let x = textPadBound.left + selectionBounds.left
             + selectionBounds.width / 2 - this.outerWidth / 2
 
-        let y = quillBounds.y + selectionBounds.top
+        let y = textPadBound.top + selectionBounds.top
             + selectionBounds.height + 10
 
         // move the window
@@ -207,7 +207,7 @@ class LinkBlotProperties extends Window
     onBrowserWindowClick(e)
     {
         // DEBUG
-        return
+        //return
 
         // clicking inside the window doesn'thide it
         if (e.path.indexOf(this.element) >= 0)
@@ -217,22 +217,22 @@ class LinkBlotProperties extends Window
         // action on selection change
         setTimeout(() => {
         
-            // if user clicks into a richtext widget
-            let rtw = false
+            // if user clicks into a text pad
+            let clickInAPad = false
             for (let i = 0; i < e.path.length; i++)
             {
                 if (!e.path[i].getAttribute) // window object
                     continue
 
-                if (e.path[i].getAttribute("mycelium-widget") === "rich-text")
+                if (e.path[i].getAttribute("mycelium-text-pad") === "here")
                 {
-                    rtw = true
+                    clickInAPad = true
                     break
                 }
             }
 
             // do not hide, if a link format was selected by the click
-            if (rtw && RichTextWidget.getFormat().link)
+            if (clickInAPad && TextPad.getFormat().link)
                 return
 
             this.minimize()

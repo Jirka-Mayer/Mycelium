@@ -3,6 +3,8 @@ Mycelium
 
 A Laravel package for rendering and editing web pages.
 
+[TODO list](docs/TODO.md)
+
 
 Documentation
 -------------

@@ -78,6 +78,41 @@ class TextPad
         this.quill.on("selection-change", this.onSelectionChange.bind(this))
     }
 
+    /**
+     * Returns bounds of the pad on the screen
+     */
+    getPadBounds()
+    {
+        let rect = this.element.getBoundingClientRect()
+
+        let bounds = {
+            left: rect.left,
+            top: rect.top
+        }
+
+        // inside a table
+        if (this.options.isTableCell)
+        {
+            let iframe = this.options.tableBlot.element
+            let parentPadElement = this.options.tableBlot.textPad.element
+
+            // get iframe position relative to the pad
+            // (hope there's no relatively positioned element between iframe and pad)
+            let iframeOffset = {
+                left: iframe.offsetLeft - parentPadElement.offsetLeft,
+                top: iframe.offsetTop - parentPadElement.offsetTop
+            }
+
+            // bounds relative to the iframe
+            let parentBounds = this.options.tableBlot.textPad.getPadBounds()
+
+            bounds.left += parentBounds.left + iframeOffset.left
+            bounds.top += parentBounds.top + iframeOffset.top
+        }
+
+        return bounds
+    }
+
     ///////////////////
     // Table editing //
     ///////////////////
@@ -87,6 +122,10 @@ class TextPad
      */
     insertTable()
     {
+        // disable inside a table
+        if (this.options.isTableCell)
+            return
+
         let range = this.quill.getSelection(true)
         this.quill.insertText(range.index, "\n")
         this.quill.insertEmbed(range.index + 1, "table", {})
@@ -159,6 +198,11 @@ class TextPad
     getSelection()
     {
         return this.quill.getSelection()
+    }
+
+    getSelectionBounds(index, length)
+    {
+        return this.quill.getBounds(index, length)
     }
 
     getLength()

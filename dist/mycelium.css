@@ -112,52 +112,37 @@
 .mc-menu .mc-menu__items div:hover {
   background: #ddd;
 }
-[mycelium-widget="text"] {
-  min-width: 3em;
-  outline: 0px solid rgba(0,0,0,0.2);
-  outline-offset: 0.2em;
-}
-[mycelium-widget="text"]:focus,
-[mycelium-widget="text"]:hover {
-  outline-width: 2px;
-}
-[mycelium-widget="text"]::-moz-selection {
-  background: rgba(0,0,0,0.2);
-}
-[mycelium-widget="text"]::selection {
-  background: rgba(0,0,0,0.2);
-}
-[mycelium-widget="rich-text"] .ql-editor {
+[mycelium-text-pad="here"] .ql-editor {
   min-height: 0.8em;
   min-width: 20px;
   outline: 0px solid rgba(0,0,0,0.2);
   outline-offset: 0.2em;
 }
-[mycelium-widget="rich-text"] .ql-editor:focus,
-[mycelium-widget="rich-text"] .ql-editor:hover {
+[mycelium-text-pad="here"] .ql-editor:focus,
+[mycelium-text-pad="here"] .ql-editor:hover {
   outline-width: 2px;
 }
-[mycelium-widget="rich-text"] .ql-editor *::-moz-selection {
+[mycelium-text-pad="here"] .ql-editor *::-moz-selection {
   background: rgba(0,0,0,0.2);
 }
-[mycelium-widget="rich-text"] .ql-editor *::selection {
+[mycelium-text-pad="here"] .ql-editor *::selection {
   background: rgba(0,0,0,0.2);
 }
-[mycelium-widget="rich-text"] .ql-editor a {
+[mycelium-text-pad="here"] .ql-editor a {
   cursor: inherit !important;
 }
-[mycelium-widget="rich-text"] .ql-clipboard {
+[mycelium-text-pad="here"] .ql-clipboard {
   left: -100000px;
   height: 1px;
   overflow-y: hidden;
   position: absolute;
   top: 50%;
 }
-[mycelium-widget="rich-text"] .ql-clipboard p {
+[mycelium-text-pad="here"] .ql-clipboard p {
   margin: 0;
   padding: 0;
 }
-[mycelium-widget="rich-text"] .mc-ql-table-blot {
+[mycelium-text-pad="here"] .mc-ql-table-blot {
   border: none;
   background: none;
   width: 100%;
@@ -200,6 +185,21 @@ body.mc-ql-table-blot__content .ql-clipboard {
 body.mc-ql-table-blot__content .ql-clipboard p {
   margin: 0;
   padding: 0;
+}
+[mycelium-widget="text"] {
+  min-width: 3em;
+  outline: 0px solid rgba(0,0,0,0.2);
+  outline-offset: 0.2em;
+}
+[mycelium-widget="text"]:focus,
+[mycelium-widget="text"]:hover {
+  outline-width: 2px;
+}
+[mycelium-widget="text"]::-moz-selection {
+  background: rgba(0,0,0,0.2);
+}
+[mycelium-widget="text"]::selection {
+  background: rgba(0,0,0,0.2);
 }
 .mc-window-manager {
   display: block;
