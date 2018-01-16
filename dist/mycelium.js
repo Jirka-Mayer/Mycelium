@@ -606,6 +606,11 @@ var TextPad = function () {
             return this.quill.getContents();
         }
     }, {
+        key: "getText",
+        value: function getText(index, length) {
+            return this.quill.getText(index, length);
+        }
+    }, {
         key: "getSelection",
         value: function getSelection() {
             return this.quill.getSelection();
@@ -5140,6 +5145,11 @@ var LinkBlotProperties = function (_TextPopupWindow) {
 
         _this.editing = false;
 
+        /**
+         * The link scheme
+         */
+        _this.scheme = "http";
+
         _this.content.innerHTML = __webpack_require__(61);
         cssClass(_this.content, "mc-lbp", true);
 
@@ -5151,9 +5161,8 @@ var LinkBlotProperties = function (_TextPopupWindow) {
 
         _this.refs.editingBlock.addEventListener("submit", _this.onSaveClick.bind(_this));
 
-        _this.refs.textbox.addEventListener("keydown", function (e) {
-            if (e.key === "Escape") _this.onEscapeHit();
-        });
+        _this.refs.textbox.addEventListener("keydown", _this.onTextboxKeydown.bind(_this));
+        _this.refs.textbox.addEventListener("input", _this.onTextboxInput.bind(_this));
 
         _this.updateDisplayedBlock();
         return _this;
@@ -5176,20 +5185,66 @@ var LinkBlotProperties = function (_TextPopupWindow) {
 
             if (this.interestingRange.length === 0) return;
 
+            // set content
+            var text = this.interestingPad.getText(this.interestingRange.index, this.interestingRange.length);
+            this.scheme = this.parseLinkValue(text).scheme;
+            this.refs.textbox.value = text;
+            this.refs.url.innerText = text;
+            this.refs.url.setAttribute("href", "#");
+
             // switch mode
             this.editing = true;
             this.updateDisplayedBlock();
-
-            // clear content
-            this.refs.textbox.value = "";
-            this.refs.url.innerText = "";
-            this.refs.url.setAttribute("href", "#");
 
             // show
             this.showThePopup();
 
             // focus
             this.refs.textbox.select();
+        }
+
+        /**
+         * Input is the text user types and the output is the
+         * link scheme and the href content / false if empty
+         */
+
+    }, {
+        key: "parseLinkValue",
+        value: function parseLinkValue(value) {
+            // remove scheme if present
+            var withoutScheme = value.replace(/^(https?\:\/\/)|(mailto\:)|(tel\:)/, "");
+
+            // handle emails
+            if (this.isEmail(withoutScheme)) {
+                return {
+                    scheme: "mailto",
+                    href: "mailto:" + withoutScheme
+                };
+            }
+
+            // handle telephone numbers
+            if (this.isTelephone(withoutScheme)) {
+                return {
+                    scheme: "tel",
+                    href: "tel:" + withoutScheme
+                };
+            }
+
+            // else handle http
+            return {
+                scheme: "http",
+                href: "http://" + withoutScheme
+            };
+        }
+    }, {
+        key: "isEmail",
+        value: function isEmail(text) {
+            return !!text.match(/^\S+@\S+\.\S+$/);
+        }
+    }, {
+        key: "isTelephone",
+        value: function isTelephone(text) {
+            return !!text.match(/^\+?[\d\-\s]+$/);
         }
 
         /**
@@ -5208,6 +5263,20 @@ var LinkBlotProperties = function (_TextPopupWindow) {
             }
 
             this.updatePopupPosition();
+
+            this.updateDisplayedScheme();
+        }
+
+        /**
+         * Updates the active scheme icon
+         */
+
+    }, {
+        key: "updateDisplayedScheme",
+        value: function updateDisplayedScheme() {
+            cssClass(this.refs.httpScheme, "active", this.scheme === "http");
+            cssClass(this.refs.mailtoScheme, "active", this.scheme === "mailto");
+            cssClass(this.refs.telScheme, "active", this.scheme === "tel");
         }
 
         ///////////
@@ -5234,6 +5303,9 @@ var LinkBlotProperties = function (_TextPopupWindow) {
         key: "onPopupShowBySelection",
         value: function onPopupShowBySelection(format) {
             // load link into the form
+            var linkValue = this.parseLinkValue(format.link);
+            this.scheme = linkValue.scheme;
+
             this.refs.textbox.value = format.link;
             this.refs.url.innerText = format.link;
             this.refs.url.setAttribute("href", format.link);
@@ -5246,6 +5318,7 @@ var LinkBlotProperties = function (_TextPopupWindow) {
     }, {
         key: "onEditClick",
         value: function onEditClick() {
+            this.scheme = this.parseLinkValue(this.refs.textbox.value).scheme;
             this.editing = true;
             this.updateDisplayedBlock();
 
@@ -5265,14 +5338,15 @@ var LinkBlotProperties = function (_TextPopupWindow) {
             // on submit prevent page reload
             if (e.type === "submit") e.preventDefault();
 
-            var href = this.refs.textbox.value;
+            var linkValue = this.parseLinkValue(this.refs.textbox.value);
+            this.scheme = linkValue.scheme;
 
             // select desired range
             TextPad.focus();
             this.interestingPad.quill.setSelection(this.interestingRange.index, this.interestingRange.length);
 
             // update format
-            this.interestingPad.format("link", href);
+            this.interestingPad.format("link", linkValue.href);
 
             // change mode
             this.editing = false;
@@ -5295,6 +5369,19 @@ var LinkBlotProperties = function (_TextPopupWindow) {
             // forget the range
             this.interestingRange = null;
             this.interestingPad = null;
+        }
+    }, {
+        key: "onTextboxInput",
+        value: function onTextboxInput(e) {
+            var linkValue = this.parseLinkValue(this.refs.textbox.value);
+            this.scheme = linkValue.scheme;
+
+            this.updateDisplayedScheme();
+        }
+    }, {
+        key: "onTextboxKeydown",
+        value: function onTextboxKeydown(e) {
+            if (e.key === "Escape") this.onEscapeHit();
         }
 
         /**
@@ -5330,7 +5417,7 @@ module.exports = LinkBlotProperties;
 /* 61 */
 /***/ (function(module, exports) {
 
-module.exports = "<div ref=\"viewingBlock\" class=\"mc-lbp__block\">\n    Visit URL: <a ref=\"url\" href=\"#\" target=\"_blank\">url here</a>\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"edit\">Edit</a>\n    <span class=\"mc-lbp__bar\"></span>\n    <a ref=\"remove\">Remove</a>\n</div>\n<form ref=\"editingBlock\" class=\"mc-lbp__block\">\n    <input type=\"text\" ref=\"textbox\" placeholder=\"URL\">\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"save\">Save</a>\n</form>";
+module.exports = "<div ref=\"viewingBlock\" class=\"mc-lbp__block\">\n    Visit URL: <a ref=\"url\" href=\"#\" target=\"_blank\">url here</a>\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"edit\">Edit</a>\n    <span class=\"mc-lbp__bar\"></span>\n    <a ref=\"remove\">Remove</a>\n</div>\n<form ref=\"editingBlock\" class=\"mc-lbp__block\">\n    <a class=\"mc-lbp__scheme\" ref=\"httpScheme\">Web</a>\n    <a class=\"mc-lbp__scheme\" ref=\"telScheme\">Tel</a>\n    <a class=\"mc-lbp__scheme\" ref=\"mailtoScheme\">Email</a>\n    <input type=\"text\" ref=\"textbox\" placeholder=\"URL\">\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"save\">Save</a>\n</form>";
 
 /***/ }),
 /* 62 */

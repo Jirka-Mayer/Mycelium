@@ -130,6 +130,32 @@ class DeltaRendererTest extends TestCase
     /**
      * @test
      */
+    public function it_mangles_emails()
+    {
+        list($blocks, $html) = $this->renderToBlocks([
+            "ops" => [
+                ["insert" => "Hello "],
+                ["insert" => "world", "attributes" => ["link" => "mailto:world@example.com"]],
+                ["insert" => "\n"],
+            ]
+        ]);
+
+        $this->assertEquals([
+            ["text" => [
+                ["Hello ", []],
+                ["world", ["link" => "mailto:world@example.com"]]
+            ]],
+        ], $blocks);
+
+        $this->assertEquals(
+            false, strpos($html, "world@example.com"),
+            "The email can still be simply detected in the output."
+        );
+    }
+
+    /**
+     * @test
+     */
     public function it_converts_embeds()
     {
         list($blocks, $html) = $this->renderToBlocks([

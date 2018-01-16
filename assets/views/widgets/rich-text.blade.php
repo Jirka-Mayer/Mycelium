@@ -42,7 +42,8 @@
         {{-- print rendered content before quill loads --}}
         {!!
             $renderer->renderHtml(
-                $shroom->data("public")->get($key, $default)
+                $shroom->data("public")->get($key, $default),
+                false
             )
         !!}
     </div>

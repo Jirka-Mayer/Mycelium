@@ -195,6 +195,11 @@ class TextPad
         return this.quill.getContents()
     }
 
+    getText(index, length)
+    {
+        return this.quill.getText(index, length)
+    }
+
     getSelection()
     {
         return this.quill.getSelection()

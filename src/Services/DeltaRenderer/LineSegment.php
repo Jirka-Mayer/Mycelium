@@ -19,7 +19,7 @@ class LineSegment
     /**
      * Render segment to HTML
      */
-    public function toHtml()
+    public function toHtml($mangleContacts)
     {
         $html = htmlentities($this->text);
 
@@ -38,10 +38,62 @@ class LineSegment
         // wrap links
         if (isset($this->attributes["link"]) && $this->attributes["link"])
         {
-            $html = '<a href="' . htmlentities($this->attributes["link"]) .
-                '" target="_blank">' . $html . '</a>';
+            $html = $this->convertLinkToHtml(
+                $this->attributes["link"],
+                $html,
+                $mangleContacts
+            );
         }
 
         return $html;
+    }
+
+    /**
+     * Converts a link to html
+     */
+    protected function convertLinkToHtml($href, $content, $mangleContacts)
+    {
+        // if not email/tel disable mangling (for this link)
+        if (substr($href, 0, 7) !== "mailto:" && substr($href, 0, 4) !== "tel:")
+            $mangleContacts = false;
+
+        // simple print without mangling
+        if (!$mangleContacts)
+            return '<a href="' . htmlentities($href) .
+                '" target="_blank">' . $content . '</a>';
+
+        // mangle the whole thing
+        return $this->mangleHtml('<a href="' . htmlentities($href) .
+                '" target="_blank">' . $content . '</a>');
+    }
+
+    protected function mangleHtml($html)
+    {
+        // mangle the href and text
+        $js = "";
+
+        // get parts
+        $parts = collect(str_split($html, 4));
+
+        // setup index array
+        $indices = [];
+        for ($i = 0; $i < count($parts); $i++)
+            $indices[] = $i;
+
+        // shuffle indices
+        $indices = collect($indices)->shuffle();
+
+        // shuffle parts
+        $shuffledParts = clone $parts;
+        for ($i = 0; $i < count($parts); $i++)
+            $shuffledParts[$indices[$i]] = $parts[$i];
+
+        $js .= "var parts = " . json_encode($shuffledParts) . ";";
+        $js .= "var indices = " . json_encode($indices) . ";";
+        $js .= "for (var i = 0; i < parts.length; i++) {";
+        $js .= "document.write(parts[indices[i]]);";
+        $js .= "}";
+
+        return "<script>{$js}</script>";
     }
 }

@@ -36,14 +36,15 @@ class Embed implements Block
     /**
      * Render embed to HTML
      */
-    public function toHtml(DeltaRenderer $renderer)
+    public function toHtml(DeltaRenderer $renderer, $mangleContacts)
     {
         // render table embed
         if (isset($this->value["table"]))
             return TableEmbed::toHtml(
                 $this->value["table"],
                 $this->attributes,
-                $renderer
+                $renderer,
+                $mangleContacts
             );
 
         return "<pre>Unknown embed type.</pre>";

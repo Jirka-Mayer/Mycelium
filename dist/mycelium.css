@@ -391,3 +391,15 @@ body.mc-ql-table-blot__content .ql-clipboard p {
 .mc-lbp input:focus {
   outline: 1px solid #41738f;
 }
+.mc-lbp .mc-lbp__scheme {
+  color: rgba(0,0,0,0.4);
+  text-decoration: none;
+  cursor: inherit;
+}
+.mc-lbp .mc-lbp__scheme.active {
+  font-weight: 700;
+  color: #41738f;
+}
+.mc-lbp .mc-lbp__scheme:hover {
+  text-decoration: none;
+}

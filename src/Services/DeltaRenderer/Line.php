@@ -88,12 +88,12 @@ class Line implements Block
     /**
      * Renders line as HTML
      */
-    public function toHtml(DeltaRenderer $renderer)
+    public function toHtml(DeltaRenderer $renderer, $mangleContacts)
     {
         $html = "";
 
         foreach ($this->segments as $segment)
-            $html .= $segment->toHtml();
+            $html .= $segment->toHtml($mangleContacts);
 
         // headers
         if (isset($this->attributes["header"]))

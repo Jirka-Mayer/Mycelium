@@ -14,6 +14,11 @@ class LinkBlotProperties extends TextPopupWindow
          */
         this.editing = false
 
+        /**
+         * The link scheme
+         */
+        this.scheme = "http"
+
         this.content.innerHTML = require("./LinkBlotProperties.html")
         cssClass(this.content, "mc-lbp", true)
 
@@ -25,10 +30,8 @@ class LinkBlotProperties extends TextPopupWindow
 
         this.refs.editingBlock.addEventListener("submit", this.onSaveClick.bind(this))
 
-        this.refs.textbox.addEventListener("keydown", (e) => {
-            if (e.key === "Escape")
-                this.onEscapeHit()
-        })
+        this.refs.textbox.addEventListener("keydown", this.onTextboxKeydown.bind(this))
+        this.refs.textbox.addEventListener("input", this.onTextboxInput.bind(this))
 
         this.updateDisplayedBlock()
     }
@@ -49,20 +52,69 @@ class LinkBlotProperties extends TextPopupWindow
         if (this.interestingRange.length === 0)
             return
 
+        // set content
+        let text = this.interestingPad.getText(
+            this.interestingRange.index,
+            this.interestingRange.length
+        )
+        this.scheme = this.parseLinkValue(text).scheme
+        this.refs.textbox.value = text
+        this.refs.url.innerText = text
+        this.refs.url.setAttribute("href", "#")
+
         // switch mode
         this.editing = true
         this.updateDisplayedBlock()
-
-        // clear content
-        this.refs.textbox.value = ""
-        this.refs.url.innerText = ""
-        this.refs.url.setAttribute("href", "#")
 
         // show
         this.showThePopup()
 
         // focus
         this.refs.textbox.select()
+    }
+
+    /**
+     * Input is the text user types and the output is the
+     * link scheme and the href content / false if empty
+     */
+    parseLinkValue(value)
+    {
+        // remove scheme if present
+        let withoutScheme = value.replace(/^(https?\:\/\/)|(mailto\:)|(tel\:)/, "")
+
+        // handle emails
+        if (this.isEmail(withoutScheme))
+        {
+            return {
+                scheme: "mailto",
+                href: "mailto:" + withoutScheme
+            }
+        }
+
+        // handle telephone numbers
+        if (this.isTelephone(withoutScheme))
+        {
+            return {
+                scheme: "tel",
+                href: "tel:" + withoutScheme
+            }
+        }
+
+        // else handle http
+        return {
+            scheme: "http",
+            href: "http://" + withoutScheme
+        }
+    }
+
+    isEmail(text)
+    {
+        return !!text.match(/^\S+@\S+\.\S+$/)
+    }
+
+    isTelephone(text)
+    {
+        return !!text.match(/^\+?[\d\-\s]+$/)
     }
 
     /**
@@ -82,6 +134,18 @@ class LinkBlotProperties extends TextPopupWindow
         }
 
         this.updatePopupPosition()
+
+        this.updateDisplayedScheme()
+    }
+
+    /**
+     * Updates the active scheme icon
+     */
+    updateDisplayedScheme()
+    {
+        cssClass(this.refs.httpScheme, "active", this.scheme === "http")
+        cssClass(this.refs.mailtoScheme, "active", this.scheme === "mailto")
+        cssClass(this.refs.telScheme, "active", this.scheme === "tel")
     }
 
     ///////////
@@ -106,6 +170,9 @@ class LinkBlotProperties extends TextPopupWindow
     onPopupShowBySelection(format)
     {
         // load link into the form
+        let linkValue = this.parseLinkValue(format.link)
+        this.scheme = linkValue.scheme
+
         this.refs.textbox.value = format.link
         this.refs.url.innerText = format.link
         this.refs.url.setAttribute("href", format.link)
@@ -117,6 +184,7 @@ class LinkBlotProperties extends TextPopupWindow
 
     onEditClick()
     {
+        this.scheme = this.parseLinkValue(this.refs.textbox.value).scheme
         this.editing = true
         this.updateDisplayedBlock()
 
@@ -136,7 +204,8 @@ class LinkBlotProperties extends TextPopupWindow
         if (e.type === "submit")
             e.preventDefault()
 
-        let href = this.refs.textbox.value
+        let linkValue = this.parseLinkValue(this.refs.textbox.value)
+        this.scheme = linkValue.scheme
 
         // select desired range
         TextPad.focus()
@@ -145,7 +214,7 @@ class LinkBlotProperties extends TextPopupWindow
         )
         
         // update format
-        this.interestingPad.format("link", href)
+        this.interestingPad.format("link", linkValue.href)
 
         // change mode
         this.editing = false
@@ -170,6 +239,20 @@ class LinkBlotProperties extends TextPopupWindow
         // forget the range
         this.interestingRange = null
         this.interestingPad = null
+    }
+
+    onTextboxInput(e)
+    {
+        let linkValue = this.parseLinkValue(this.refs.textbox.value)
+        this.scheme = linkValue.scheme
+
+        this.updateDisplayedScheme()
+    }
+
+    onTextboxKeydown(e)
+    {
+        if (e.key === "Escape")
+            this.onEscapeHit()
     }
 
     /**

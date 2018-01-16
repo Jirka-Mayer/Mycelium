@@ -3,7 +3,6 @@ TODO
 
 ## Features
 
-- links to url/email/telephone
 - format options passed via config and rich-text widget
     - disallow sub-tables and other styles in tables
 - multiple css scopes

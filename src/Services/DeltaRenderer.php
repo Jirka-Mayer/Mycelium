@@ -12,12 +12,13 @@ class DeltaRenderer
 {
     /**
      * Render a delta to HTML
+     * @param bool $mangleContacts Mangle emails to it's hard to scrape them
      * @return string
      */
-    public function renderHtml($delta)
+    public function renderHtml($delta, $mangleContacts = true)
     {
         $blocks = $this->deltaToBlocks($delta);
-        $html = $this->blocksToHtml($blocks);
+        $html = $this->blocksToHtml($blocks, $mangleContacts);
         return $html;
     }
 
@@ -141,12 +142,12 @@ class DeltaRenderer
     /**
      * Renders blocks to HTML
      */
-    public function blocksToHtml($blocks)
+    public function blocksToHtml($blocks, $mangleContacts = true)
     {
         $html = "";
 
         foreach ($blocks as $block)
-            $html .= $block->toHtml($this);
+            $html .= $block->toHtml($this, $mangleContacts);
 
         return $html;
     }
