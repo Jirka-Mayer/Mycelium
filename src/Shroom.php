@@ -91,7 +91,35 @@ class Shroom extends Model
 
         $this->saveRevisions();
 
+        // this data is stored primarily in the database, but a backup
+        // in a file is made in case of database crash
+        $this->saveOverview();
+
         parent::save($options);
+    }
+
+    /**
+     * Saves the overview file containing all the data normally
+     * stored in the database
+     */
+    protected function saveOverview()
+    {
+        // create overview data
+        $overview = collect();
+
+        $overview->put("id", $this->id);
+        $overview->put("title", $this->title);
+        $overview->put("created_at", $this->created_at->format("Y-m-d H:i:s"));
+        $overview->put("updated_at", $this->updated_at->format("Y-m-d H:i:s"));
+        $overview->put("public_revision", $this->public_revision);
+        $overview->put("deleted_at", $this->deleted_at);
+        $overview->put("revisions", $this->revisions);
+
+        // save to file
+        static::$filesystem->put(
+            $this->getDirectoryName(null, "overview.json"),
+            $overview->toJson(JSON_PRETTY_PRINT)
+        );
     }
 
     /**
