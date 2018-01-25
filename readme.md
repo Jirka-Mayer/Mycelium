@@ -15,6 +15,9 @@ Documentation
     - [Shroom serving](docs/shroom-serving.md)
     - [Shroom view](docs/shroom-view.md)
     - [Authentication](docs/authentication.md)
+    - Storage folder
+        - [Folder layout](docs/storage-folder-layout.md)
+        - [Updates](docs/storage-updates.md)
 - Client side
     - [Window manager](docs/window-manager.md)
 - Client-server interface

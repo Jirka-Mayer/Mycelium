@@ -35,7 +35,7 @@ The update will be performed simmilarly to migrations database, but I don't want
 
 ## Shroom data
 
-The data fields in a shroom has to now be typed, so we add a special key to some objects, and that key defines the object type:
+The data fields in a shroom has to be typed now, so we add a special key to some objects, and that key defines the object type:
 
 ```json
 {
@@ -55,7 +55,7 @@ The data fields in a shroom has to now be typed, so we add a special key to some
 
 The data type is something different to a widget, one type may be handled by many widgets.
 
-Also all the mycelium types will be prefixed and same should apply to custom website specific data types, to avoid collisions.
+Also all the mycelium types will be prefixed and the same should apply to custom website specific data types, to avoid collisions.
 
 
 ## Updating scopes
@@ -64,7 +64,10 @@ What exactly can be updated and is mutually independent? Update scope.
 
 Listing of update scopes:
 
+Global:
 - mycelium storage structure
+
+Shroom:
 - shroom structure (folder names, spore location, revision file contents and layout...)
 - shroom data types
 - spore types

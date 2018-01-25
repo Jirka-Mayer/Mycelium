@@ -6,6 +6,7 @@ TODO
 - format options passed via config and rich-text widget
     - disallow sub-tables and other styles in tables
 - multiple css scopes
+- custom filesystem for each shroom instance pointed to the right directory
 
 
 Compatibility

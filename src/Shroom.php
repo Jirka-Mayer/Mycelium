@@ -9,7 +9,8 @@ class Shroom extends Model
     use ShroomConcerns\HandlesShroomId,
         ShroomConcerns\GeneratesSlug,
         ShroomConcerns\HasFilesystem,
-        ShroomConcerns\HasRevisions;
+        ShroomConcerns\HasRevisions,
+        ShroomConcerns\HasVersion;
 
     /**
      * Database table to save shrooms to
@@ -109,8 +110,17 @@ class Shroom extends Model
 
         $overview->put("id", $this->id);
         $overview->put("title", $this->title);
-        $overview->put("created_at", $this->created_at->format("Y-m-d H:i:s"));
-        $overview->put("updated_at", $this->updated_at->format("Y-m-d H:i:s"));
+        
+        if ($this->created_at !== null)
+            $overview->put("created_at", $this->created_at->format("Y-m-d H:i:s"));
+        else
+            $overview->put("created_at", null);
+
+        if ($this->updated_at !== null)
+            $overview->put("updated_at", $this->updated_at->format("Y-m-d H:i:s"));
+        else
+            $overview->put("updated_at", null);
+
         $overview->put("public_revision", $this->public_revision);
         $overview->put("deleted_at", $this->deleted_at);
         $overview->put("revisions", $this->revisions);

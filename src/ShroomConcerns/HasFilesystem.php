@@ -17,13 +17,27 @@ trait HasFilesystem
         if ($this->idChanged)
         {
             // remove the old directory
-            static::$filesystem->deleteDirectory($this->getDirectoryName($this->actualId));
+            static::$filesystem->deleteDirectory(
+                $this->getDirectoryName($this->actualId)
+            );
 
             $this->idChanged = false;
         }
 
         // create directory if needed
         static::$filesystem->makeDirectory($this->getDirectoryName());
+
+        // copy the version file if needed
+        // (but don't touch it otherwise, HasVersion trait handles the rest!)
+        if (!static::$filesystem->exists($this->getDirectoryName(null, "version.json")))
+        {
+            static::$filesystem->put(
+                $this->getDirectoryName(null, "version.json"),
+                file_get_contents(
+                    __DIR__ . "/../../assets/updates/default-shroom-version-file.json"
+                )
+            );
+        }
     }
 
     /**
@@ -34,7 +48,7 @@ trait HasFilesystem
      * @param  string|null $append
      * @return string
      */
-    protected function getDirectoryName($id = null, $append = null)
+    public function getDirectoryName($id = null, $append = null)
     {
         if ($id === null)
             $id = $this->id;

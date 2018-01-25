@@ -33,6 +33,12 @@ Publish related files:
 php artisan vendor:publish --provider=Mycelium\\MyceliumServiceProvider
 ```
 
+Initialize mycelium storage folder and update system:
+
+```
+php artisan mycelium:init
+```
+
 Customize config `config/mycelium.php`.
 
 > If you want to use [mycelium auth](authentication.md), setup the config now.

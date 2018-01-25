@@ -7,6 +7,8 @@ use Tests\TestCase;
 use Mycelium\Shroom;
 use Mycelium\EmptySlugException;
 
+use Illuminate\Support\Facades\Storage;
+
 class ShroomTest extends TestCase
 {
     public function setUp()
@@ -14,6 +16,10 @@ class ShroomTest extends TestCase
         parent::setUp();
 
         $this->migrate();
+
+        // mock filesystem
+        Storage::fake("mycelium-fake");
+        Shroom::setFilesystem(Storage::drive("mycelium-fake"));
     }
 
     /**
