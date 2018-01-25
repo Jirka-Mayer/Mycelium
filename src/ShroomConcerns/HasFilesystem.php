@@ -60,6 +60,9 @@ trait HasFilesystem
         else
             $path = $slug;
 
+        // prepend shroom folder to the path
+        $path = "shrooms/" . $path;
+
         if (is_string($append))
         {
             if (Str::startsWith($append, "/"))

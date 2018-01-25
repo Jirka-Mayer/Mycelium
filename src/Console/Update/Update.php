@@ -5,7 +5,7 @@ namespace Mycelium\Console\Update;
 use Illuminate\Console\Command;
 use Mycelium\Shroom;
 
-class ChangeUserPassword extends Command
+class Update extends Command
 {
     protected $signature = "mycelium:update";
 
@@ -53,13 +53,14 @@ class ChangeUserPassword extends Command
         // run each shroom through the updater
         foreach ($shrooms as $shroom)
         {
-            $this->info("Shroom {$shroom->slug}.");
+            $this->info("Shroom '{$shroom->slug}'.");
             
-            $updater->updateShroom($shroom)
+            $updater->updateShroom($shroom);
 
             $bar->advance();
         }
 
         $bar->finish();
+        $this->info("");
     }
 }

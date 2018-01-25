@@ -4,7 +4,7 @@ namespace Mycelium\Console\Update;
 
 use Illuminate\Console\Command;
 
-class ChangeUserPassword extends Command
+class InitializeUpdateSystem extends Command
 {
     protected $signature = "mycelium:init";
 
