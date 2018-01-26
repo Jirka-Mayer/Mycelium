@@ -3,22 +3,21 @@ TODO
 
 ## Features
 
-- format options passed via config and rich-text widget
-    - disallow sub-tables and other styles in tables
-- multiple css scopes
+- heading offset for RichText (or something simmilar)
+    - on a *by widget* basis
 - custom filesystem for each shroom instance pointed to the right directory
+- shroom output HTML caching
 
 
-Compatibility
+## Compatibility
 
 - `LinkBlotProperties` - remove `event.path`, not supported everywhere
 
 
-Documentation
+## Documentation
 
 - text pad
 - css scopes
-- event APIs for classes
 
 
 ## Bugs

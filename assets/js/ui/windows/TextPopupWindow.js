@@ -145,7 +145,7 @@ class TextPopupWindow extends Window
      */
     onBrowserWindowClick_popupHandler(e)
     {
-        // clicking inside the window doesn'thide it
+        // clicking inside the window doesn't hide it
         if (e.path.indexOf(this.element) >= 0)
             return
 
@@ -154,7 +154,7 @@ class TextPopupWindow extends Window
         setTimeout(() => {
         
             // if user clicks into a text pad
-            let clickInAPad = false
+            /*let clickInAPad = false
             for (let i = 0; i < e.path.length; i++)
             {
                 if (!e.path[i].getAttribute) // window object
@@ -165,11 +165,18 @@ class TextPopupWindow extends Window
                     clickInAPad = true
                     break
                 }
-            }
+            }*/
 
             // do not hide, if a the format was selected by the click
-            if (clickInAPad && this.isFormatInteresting(TextPad.getFormat()))
-                return
+            /*if (clickInAPad && this.isFormatInteresting(TextPad.getFormat()))
+                return*/
+
+            /*
+                NOTE:
+                Uncommenting does fix the issue with hide on reclick,
+                but causes a problem when switching to a different
+                text pad, because of the TextPad.getFormat() call
+             */
 
             this.onPopupHide()
 

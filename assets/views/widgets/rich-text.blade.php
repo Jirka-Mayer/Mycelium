@@ -4,8 +4,9 @@
     Arguments:
     $key - shroom data key
     $default - default value if no data under key
-    $class - css classes to be applied
-    $cssScope - css scope for the widget
+    $class - css classes to be applied (only to the root - the widget, not pad)
+    $cssScope - css scope for the widget (string/array of strings)
+    $formats - allowed formats
 --}}
 
 @inject("mycelium", "mycelium")
@@ -23,7 +24,18 @@
         $class = "";
 
     if (!isset($cssScope))
-        $cssScope = "default";
+        $cssScope = [];
+
+    if (!isset($formats))
+        $formats = config("mycelium.rich-text.formats");
+
+    // css scope to text
+    $cssScopeText = "";
+    if (is_string($cssScope))
+        $cssScopeText = "css-scope__" . $cssScope;
+    else if (is_array($cssScope))
+        foreach ($cssScope as $s)
+            $cssScopeText .= " css-scope__" . $s;
 
     // wrap default value
     $default = ["ops" => [
@@ -36,8 +48,9 @@
         mycelium-widget="rich-text"
         mycelium-key="{{ $key }}"
         mycelium-default="{{ json_encode($default) }}"
-        mycelium-css-scope="{{ $cssScope }}"
-        class="{{ $class }} {{ "css-scope__" . $cssScope }}"
+        mycelium-css-scope="{{ json_encode($cssScope) }}"
+        mycelium-formats="{{ json_encode($formats) }}"
+        class="{{ $class }}"
     >
         {{-- print rendered content before quill loads --}}
         {!!
@@ -48,7 +61,7 @@
         !!}
     </div>
 @else
-    <div class="{{ $class }} {{ "css-scope__" . $cssScope }}">
+    <div class="{{ $class }} {{ $cssScopeText }}">
         {!!
             $renderer->renderHtml(
                 $shroom->data("public")->get($key, $default)

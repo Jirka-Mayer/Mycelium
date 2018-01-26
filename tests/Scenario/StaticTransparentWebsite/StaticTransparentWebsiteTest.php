@@ -89,7 +89,12 @@ class StaticTransparentWebsiteTest extends ScenarioTestCase
         $this->login();
         $response = $this->post("/edit", [
             "data" => [
-                "content" => "New page content!"
+                "content" => [
+                    "@type" => "mycelium::rich-text",
+                    "ops" => [
+                        ["insert" => "New page content!\n"]
+                    ]
+                ]
             ]
         ]);
         $response->assertStatus(200);
@@ -106,7 +111,12 @@ class StaticTransparentWebsiteTest extends ScenarioTestCase
     {
         $this->login();
         $response = $this->post("/edit", [
-            "title" => "New title!"
+            "title" => [
+                    "@type" => "mycelium::rich-text",
+                    "ops" => [
+                        ["insert" => "New title!\n"]
+                    ]
+                ]
         ]);
         $response->assertStatus(200);
 

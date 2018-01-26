@@ -20,11 +20,17 @@ class TableCell
         this.textPad = new TextPad(
             this.element,
             this.tableBlot.contentWindow.Quill,
+            this.tableBlot.textPad.mycelium,
             {
                 isTableCell: true,
                 tableBlot: this.tableBlot,
                 tableCell: this,
-                initialContents: deltaContents
+                initialContents: deltaContents,
+
+                // formats are filtered automatically from inside the pad
+                formats: this.tableBlot.textPad.options.formats,
+                
+                cssScope: this.tableBlot.textPad.options.cssScope,
             }
         )
 

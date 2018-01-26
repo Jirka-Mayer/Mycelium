@@ -52,9 +52,30 @@ class RichText
         } catch (e) {}
 
         /**
+         * Allowed formats
+         */
+        this.formats = this.element.getAttribute("mycelium-formats")
+
+        try {
+            this.formats = JSON.parse(this.formats)
+        } catch (e) {}
+
+        /**
+         * CSS scope(s)
+         */
+        this.cssScope = this.element.getAttribute("mycelium-css-scope")
+
+        try {
+            this.cssScope = JSON.parse(this.cssScope)
+        } catch (e) {}
+
+        /**
          * Text pad for the actual text editing
          */
-        this.pad = new TextPad(this.element, this.window.Quill)
+        this.pad = new TextPad(this.element, this.window.Quill, this.mycelium, {
+            formats: this.formats,
+            cssScope: this.cssScope
+        })
 
         this.pad.on("text-change", this.onTextChange.bind(this))
     }
@@ -64,10 +85,12 @@ class RichText
      */
     onTextChange()
     {
-        this.shroom.setData(
-            this.key,
-            this.pad.getContents()
-        )
+        let data = this.pad.getContents()
+
+        // add type
+        data["@type"] = "mycelium::rich-text"
+
+        this.shroom.setData(this.key, data)
     }
 }
 

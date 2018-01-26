@@ -147,21 +147,7 @@ class IframeBlot extends Embed
         this.contentBody.style.margin = "0"
         this.contentDiv.style.padding = "1px"
 
-        this.setCssScopes()
-        
         this.copyCssStyles()
-    }
-
-    /**
-     * Sets proper css scopes to inner document
-     */
-    setCssScopes()
-    {
-        // get css scope
-        let scope = this.textPad.element.getAttribute("mycelium-css-scope")
-
-        // set scope class
-        this.contentDiv.className = CSS_SCOPE_CLASS_PREFIX + scope
     }
 
     /**

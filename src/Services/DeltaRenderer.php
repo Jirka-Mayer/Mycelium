@@ -23,6 +23,31 @@ class DeltaRenderer
     }
 
     /**
+     * Render delta to text
+     *
+     * This removes all embeds and formatting though
+     */
+    public function renderText($delta)
+    {
+        $text = "";
+
+        foreach ($delta["ops"] as $op)
+        {
+            if (!is_string($op["insert"]))
+                continue;
+
+            $text .= $op["insert"];
+        }
+
+        // remove trailing "\n" ever present in deltas
+        // (if the last character is "\n")
+        if (substr($text, strlen($text) - 1, 1) === "\n")
+            $text = substr($text, 0, strlen($text) - 1);
+
+        return $text;
+    }
+
+    /**
      * Converts delta format into an array of blocks (line/embed)
      */
     public function deltaToBlocks($delta)

@@ -1,13 +1,19 @@
 const EventBus = require("./EventBus.js")
 const defaultOptions = require("./utils/defaultOptions.js")
+const cssClass = require("./utils/cssClass.js")
 
 /**
  * A highly configurable text editor class, wrapping Quill.js
  */
 class TextPad
 {
-    constructor(element, Quill, options)
+    constructor(element, Quill, mycelium, options)
     {
+        /**
+         * Mycelium namespace reference
+         */
+        this.mycelium = mycelium
+
         /**
          * The HTML element to build the pad on
          */
@@ -28,6 +34,12 @@ class TextPad
              * Allowed formats
              */
             formats: null,
+
+            /**
+             * The css scope/scopes to apply to the pad
+             * @type {string/array of string}
+             */
+            cssScope: null,
 
             /**
              * Is this pad used in a table cell
@@ -51,6 +63,12 @@ class TextPad
              */
             initialContents: null
         })
+
+        this.applyCssScopes()
+
+        // remove certain formats for tables
+        if (this.options.isTableCell)
+            this.filterFormatsForTable()
 
         /**
          * Event bus for the instance
@@ -76,6 +94,40 @@ class TextPad
         this.quill.on("text-change", this.onTextChange.bind(this))
 
         this.quill.on("selection-change", this.onSelectionChange.bind(this))
+    }
+
+    /**
+     * Adds css scopes to the element
+     */
+    applyCssScopes()
+    {
+        if (typeof(this.options.cssScope) === "string")
+            this.options.cssScope = [this.options.cssScope]
+
+        for (let i = 0; i < this.options.cssScope.length; i++)
+        {
+            cssClass(
+                this.element,
+                "css-scope__" + this.options.cssScope[i],
+                true
+            )
+        }
+    }
+
+    /**
+     * Remove certain formats in tables
+     */
+    filterFormatsForTable()
+    {
+        for (let i = 0; i < this.options.formats.length; i++)
+        {
+            if (this.mycelium.config["rich-text"]["table-formats"]
+                .indexOf(this.options.formats[i]) === -1)
+            {
+                this.options.formats.splice(i, 1)
+                i--
+            }
+        }
     }
 
     /**

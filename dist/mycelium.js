@@ -403,14 +403,20 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var EventBus = __webpack_require__(3);
 var defaultOptions = __webpack_require__(8);
+var cssClass = __webpack_require__(6);
 
 /**
  * A highly configurable text editor class, wrapping Quill.js
  */
 
 var TextPad = function () {
-    function TextPad(element, Quill, options) {
+    function TextPad(element, Quill, mycelium, options) {
         _classCallCheck(this, TextPad);
+
+        /**
+         * Mycelium namespace reference
+         */
+        this.mycelium = mycelium;
 
         /**
          * The HTML element to build the pad on
@@ -434,6 +440,12 @@ var TextPad = function () {
             formats: null,
 
             /**
+             * The css scope/scopes to apply to the pad
+             * @type {string/array of string}
+             */
+            cssScope: null,
+
+            /**
              * Is this pad used in a table cell
              * @type {Boolean}
              */
@@ -455,6 +467,11 @@ var TextPad = function () {
              */
             initialContents: null
         });
+
+        this.applyCssScopes();
+
+        // remove certain formats for tables
+        if (this.options.isTableCell) this.filterFormatsForTable();
 
         /**
          * Event bus for the instance
@@ -482,11 +499,40 @@ var TextPad = function () {
     }
 
     /**
-     * Returns bounds of the pad on the screen
+     * Adds css scopes to the element
      */
 
 
     _createClass(TextPad, [{
+        key: "applyCssScopes",
+        value: function applyCssScopes() {
+            if (typeof this.options.cssScope === "string") this.options.cssScope = [this.options.cssScope];
+
+            for (var i = 0; i < this.options.cssScope.length; i++) {
+                cssClass(this.element, "css-scope__" + this.options.cssScope[i], true);
+            }
+        }
+
+        /**
+         * Remove certain formats in tables
+         */
+
+    }, {
+        key: "filterFormatsForTable",
+        value: function filterFormatsForTable() {
+            for (var i = 0; i < this.options.formats.length; i++) {
+                if (this.mycelium.config["rich-text"]["table-formats"].indexOf(this.options.formats[i]) === -1) {
+                    this.options.formats.splice(i, 1);
+                    i--;
+                }
+            }
+        }
+
+        /**
+         * Returns bounds of the pad on the screen
+         */
+
+    }, {
         key: "getPadBounds",
         value: function getPadBounds() {
             var rect = this.element.getBoundingClientRect();
@@ -1088,7 +1134,7 @@ function registerClasses(window) {
     if (!window.mycelium.class.ui) window.mycelium.class.ui = {};
 
     window.mycelium.class.ui.Toolbar = __webpack_require__(51);
-    window.mycelium.class.ui.WindowManager = __webpack_require__(63);
+    window.mycelium.class.ui.WindowManager = __webpack_require__(64);
 }
 
 function createShroom(window, shroomData) {
@@ -1456,9 +1502,30 @@ var RichText = function () {
         } catch (e) {}
 
         /**
+         * Allowed formats
+         */
+        this.formats = this.element.getAttribute("mycelium-formats");
+
+        try {
+            this.formats = JSON.parse(this.formats);
+        } catch (e) {}
+
+        /**
+         * CSS scope(s)
+         */
+        this.cssScope = this.element.getAttribute("mycelium-css-scope");
+
+        try {
+            this.cssScope = JSON.parse(this.cssScope);
+        } catch (e) {}
+
+        /**
          * Text pad for the actual text editing
          */
-        this.pad = new TextPad(this.element, this.window.Quill);
+        this.pad = new TextPad(this.element, this.window.Quill, this.mycelium, {
+            formats: this.formats,
+            cssScope: this.cssScope
+        });
 
         this.pad.on("text-change", this.onTextChange.bind(this));
     }
@@ -1471,7 +1538,12 @@ var RichText = function () {
     _createClass(RichText, [{
         key: "onTextChange",
         value: function onTextChange() {
-            this.shroom.setData(this.key, this.pad.getContents());
+            var data = this.pad.getContents();
+
+            // add type
+            data["@type"] = "mycelium::rich-text";
+
+            this.shroom.setData(this.key, data);
         }
     }]);
 
@@ -1910,7 +1982,7 @@ module.exports = Window;
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(17);
-module.exports = __webpack_require__(64);
+module.exports = __webpack_require__(65);
 
 
 /***/ }),
@@ -2531,11 +2603,16 @@ var TableCell = function () {
         /**
          * Cell text pad instance
          */
-        this.textPad = new TextPad(this.element, this.tableBlot.contentWindow.Quill, {
+        this.textPad = new TextPad(this.element, this.tableBlot.contentWindow.Quill, this.tableBlot.textPad.mycelium, {
             isTableCell: true,
             tableBlot: this.tableBlot,
             tableCell: this,
-            initialContents: deltaContents
+            initialContents: deltaContents,
+
+            // formats are filtered automatically from inside the pad
+            formats: this.tableBlot.textPad.options.formats,
+
+            cssScope: this.tableBlot.textPad.options.cssScope
         });
 
         // bind events
@@ -2858,23 +2935,7 @@ module.exports = function (Quill) {
                 this.contentBody.style.margin = "0";
                 this.contentDiv.style.padding = "1px";
 
-                this.setCssScopes();
-
                 this.copyCssStyles();
-            }
-
-            /**
-             * Sets proper css scopes to inner document
-             */
-
-        }, {
-            key: "setCssScopes",
-            value: function setCssScopes() {
-                // get css scope
-                var scope = this.textPad.element.getAttribute("mycelium-css-scope");
-
-                // set scope class
-                this.contentDiv.className = CSS_SCOPE_CLASS_PREFIX + scope;
             }
 
             /**
@@ -4339,7 +4400,12 @@ var Text = function () {
     _createClass(Text, [{
         key: "onInput",
         value: function onInput(e) {
-            this.shroom.setData(this.key, this.getText());
+            var data = {
+                "@type": "mycelium::rich-text",
+                "ops": [{ "insert": this.getText() + "\n" }]
+            };
+
+            this.shroom.setData(this.key, data);
         }
     }, {
         key: "onPaste",
@@ -4452,7 +4518,7 @@ var Toolbar = function () {
 
             // create toolbar element
             var element = document.createElement("div");
-            element.innerHTML = __webpack_require__(62);
+            element.innerHTML = __webpack_require__(63);
             element.className = "mc-toolbar";
 
             // create spacer
@@ -5127,7 +5193,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var TextPopupWindow = __webpack_require__(69);
+var TextPopupWindow = __webpack_require__(61);
 var getRefs = __webpack_require__(1);
 var cssClass = __webpack_require__(6);
 var TextPad = __webpack_require__(2);
@@ -5150,7 +5216,7 @@ var LinkBlotProperties = function (_TextPopupWindow) {
          */
         _this.scheme = "http";
 
-        _this.content.innerHTML = __webpack_require__(61);
+        _this.content.innerHTML = __webpack_require__(62);
         cssClass(_this.content, "mc-lbp", true);
 
         _this.refs = getRefs(_this.content);
@@ -5415,18 +5481,274 @@ module.exports = LinkBlotProperties;
 
 /***/ }),
 /* 61 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
-module.exports = "<div ref=\"viewingBlock\" class=\"mc-lbp__block\">\n    Visit URL: <a ref=\"url\" href=\"#\" target=\"_blank\">url here</a>\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"edit\">Edit</a>\n    <span class=\"mc-lbp__bar\"></span>\n    <a ref=\"remove\">Remove</a>\n</div>\n<form ref=\"editingBlock\" class=\"mc-lbp__block\">\n    <a class=\"mc-lbp__scheme\" ref=\"httpScheme\">Web</a>\n    <a class=\"mc-lbp__scheme\" ref=\"telScheme\">Tel</a>\n    <a class=\"mc-lbp__scheme\" ref=\"mailtoScheme\">Email</a>\n    <input type=\"text\" ref=\"textbox\" placeholder=\"URL\">\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"save\">Save</a>\n</form>";
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var Window = __webpack_require__(15);
+var TextPad = __webpack_require__(2);
+
+var TextPopupWindow = function (_Window) {
+    _inherits(TextPopupWindow, _Window);
+
+    function TextPopupWindow(window, document, mycelium) {
+        _classCallCheck(this, TextPopupWindow);
+
+        /**
+         * Range where interesting text is located
+         */
+        var _this = _possibleConstructorReturn(this, (TextPopupWindow.__proto__ || Object.getPrototypeOf(TextPopupWindow)).call(this, window, document, mycelium));
+
+        _this.interestingRange = null;
+
+        /**
+         * The text pad, where the interesting text is located
+         */
+        _this.interestingPad = null;
+
+        window.addEventListener("mousedown", _this.onBrowserWindowClick_popupHandler.bind(_this));
+
+        TextPad.on("selection-change", _this.onTextPadSelectionChange_popupHandler.bind(_this));
+        return _this;
+    }
+
+    /**
+     * Updates this.interestingRange to the currently selected one
+     */
+
+
+    _createClass(TextPopupWindow, [{
+        key: "updateInterestingRangeToSelected",
+        value: function updateInterestingRangeToSelected() {
+            /*
+                A format may only be selected if you have a cursor oper it
+                (I mean no selection -> length = 0)
+                If any selection - even if over a format, no format is selected
+             */
+
+            this.interestingPad = TextPad.activePad;
+
+            // no pad active
+            if (this.interestingPad === null) {
+                this.interestingRange = null;
+                return;
+            }
+
+            var selection = this.interestingPad.getSelection();
+
+            // exclude weird selections
+            if (selection === null || selection.length > 0) {
+                this.interestingRange = null;
+                return;
+            }
+
+            // find start
+            var start = selection.index;
+            while (start >= 0) {
+                if (!this.isFormatInteresting(this.interestingPad.getFormat(start, 0))) break;
+
+                start -= 1;
+            }
+
+            // document start
+            if (start < 0) start = 0;
+
+            var len = this.interestingPad.getLength();
+
+            // find end
+            var end = selection.index;
+            while (end < len) {
+                if (!this.isFormatInteresting(this.interestingPad.getFormat(end, 0))) break;
+
+                end += 1;
+            }
+
+            // it overcounts
+            end -= 1;
+
+            // calculate interesting range
+            this.interestingRange = {
+                index: start,
+                length: end - start
+            };
+        }
+
+        /**
+         * Shows the window at the correct position
+         */
+
+    }, {
+        key: "showThePopup",
+        value: function showThePopup() {
+            var _this2 = this;
+
+            // display window
+            this.maximize();
+
+            // let the window be displayed
+            setTimeout(function () {
+
+                // then update position
+                _this2.updatePopupPosition();
+            }, 0);
+        }
+
+        /**
+         * Updates window position
+         */
+
+    }, {
+        key: "updatePopupPosition",
+        value: function updatePopupPosition() {
+            // no text selected, this window should not even be displayed
+            if (this.interestingRange === null) return;
+
+            // get widnow display coordinates
+            var textPadBound = this.interestingPad.getPadBounds();
+
+            var selectionBounds = this.interestingPad.getSelectionBounds(this.interestingRange.index, this.interestingRange.length);
+
+            // update width, height properties
+            // (so we can access them now)
+            this.updateDisplay();
+
+            // calculate window position
+            var x = textPadBound.left + selectionBounds.left + selectionBounds.width / 2 - this.outerWidth / 2;
+
+            var y = textPadBound.top + selectionBounds.top + selectionBounds.height + 10;
+
+            // move the window
+            this.moveTo(x, y);
+        }
+
+        /**
+         * Listen for browser window clicks
+         * (strange name to avoid subclass name collisions)
+         */
+
+    }, {
+        key: "onBrowserWindowClick_popupHandler",
+        value: function onBrowserWindowClick_popupHandler(e) {
+            var _this3 = this;
+
+            // clicking inside the window doesn't hide it
+            if (e.path.indexOf(this.element) >= 0) return;
+
+            // delay the handling slightly so that quill can take
+            // action on selection change
+            setTimeout(function () {
+
+                // if user clicks into a text pad
+                /*let clickInAPad = false
+                for (let i = 0; i < e.path.length; i++)
+                {
+                    if (!e.path[i].getAttribute) // window object
+                        continue
+                     if (e.path[i].getAttribute("mycelium-text-pad") === "here")
+                    {
+                        clickInAPad = true
+                        break
+                    }
+                }*/
+
+                // do not hide, if a the format was selected by the click
+                /*if (clickInAPad && this.isFormatInteresting(TextPad.getFormat()))
+                    return*/
+
+                /*
+                    NOTE:
+                    Uncommenting does fix the issue with hide on reclick,
+                    but causes a problem when switching to a different
+                    text pad, because of the TextPad.getFormat() call
+                 */
+
+                _this3.onPopupHide();
+
+                _this3.minimize();
+            }, 0);
+        }
+
+        /**
+         * When text pad selection changes
+         */
+
+    }, {
+        key: "onTextPadSelectionChange_popupHandler",
+        value: function onTextPadSelectionChange_popupHandler(selection, format) {
+            // dont' do anything on deselect
+            if (selection === null) return;
+
+            // if no interesting format selected, again dont do anything
+            // (hide the window actually)
+            // 
+            // OR if the selection is not zero-length
+            if (!this.isFormatInteresting(format) || selection.length > 0) {
+                this.onPopupHide();
+
+                // hide
+                this.minimize();
+
+                return;
+            }
+
+            // save the interesting range
+            this.updateInterestingRangeToSelected();
+
+            this.onPopupShowBySelection(format);
+            this.showThePopup();
+        }
+
+        ///////////
+        // Hooks //
+        ///////////
+
+        /*
+            Override these to hook into events
+            or make the shing work
+         */
+
+        /**
+         * Returns true, if the format is interesting
+         */
+
+    }, {
+        key: "isFormatInteresting",
+        value: function isFormatInteresting(format) {
+            return false;
+        }
+    }, {
+        key: "onPopupHide",
+        value: function onPopupHide() {}
+    }, {
+        key: "onPopupShowBySelection",
+        value: function onPopupShowBySelection(format) {}
+    }]);
+
+    return TextPopupWindow;
+}(Window);
+
+module.exports = TextPopupWindow;
 
 /***/ }),
 /* 62 */
 /***/ (function(module, exports) {
 
-module.exports = "<!--\n    Icons used:\n    http://www.entypo.com/\n-->\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"toggleEdit\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M17.561,2.439c-1.442-1.443-2.525-1.227-2.525-1.227L8.984,7.264L2.21,14.037L1.2,18.799l4.763-1.01\n            l6.774-6.771l6.052-6.052C18.788,4.966,19.005,3.883,17.561,2.439z M5.68,17.217l-1.624,0.35c-0.156-0.293-0.345-0.586-0.69-0.932\n            c-0.346-0.346-0.639-0.533-0.932-0.691l0.35-1.623l0.47-0.469c0,0,0.883,0.018,1.881,1.016c0.997,0.996,1.016,1.881,1.016,1.881\n            L5.68,17.217z\"/>\n        </svg>\n    </button>\n\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"richTextToolbar\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M3.135,6.89c0.933-0.725,1.707-0.225,2.74,0.971c0.116,0.135,0.272-0.023,0.361-0.1\n            C6.324,7.683,7.687,6.456,7.754,6.4C7.82,6.341,7.9,6.231,7.795,6.108C7.688,5.985,7.301,5.483,7.052,5.157\n            c-1.808-2.365,4.946-3.969,3.909-3.994c-0.528-0.014-2.646-0.039-2.963-0.004C6.715,1.294,5.104,2.493,4.293,3.052\n            C3.232,3.778,2.836,4.204,2.771,4.263c-0.3,0.262-0.048,0.867-0.592,1.344C1.604,6.11,1.245,5.729,0.912,6.021\n            C0.747,6.167,0.285,6.513,0.153,6.628C0.02,6.745-0.004,6.942,0.132,7.099c0,0,1.264,1.396,1.37,1.52\n            C1.607,8.741,1.893,8.847,2.069,8.69c0.177-0.156,0.632-0.553,0.708-0.623C2.855,8.001,2.727,7.206,3.135,6.89z M8.843,7.407\n            c-0.12-0.139-0.269-0.143-0.397-0.029L7.012,8.63c-0.113,0.1-0.129,0.283-0.027,0.4l8.294,9.439c0.194,0.223,0.53,0.246,0.751,0.053\n            L17,17.709c0.222-0.195,0.245-0.533,0.052-0.758L8.843,7.407z M19.902,3.39c-0.074-0.494-0.33-0.391-0.463-0.182\n            c-0.133,0.211-0.721,1.102-0.963,1.506c-0.24,0.4-0.832,1.191-1.934,0.41c-1.148-0.811-0.749-1.377-0.549-1.758\n            c0.201-0.383,0.818-1.457,0.907-1.59c0.089-0.135-0.015-0.527-0.371-0.363c-0.357,0.164-2.523,1.025-2.823,2.26\n            c-0.307,1.256,0.257,2.379-0.85,3.494l-1.343,1.4l1.349,1.566l1.654-1.57c0.394-0.396,1.236-0.781,1.998-0.607\n            c1.633,0.369,2.524-0.244,3.061-1.258C20.057,5.792,19.977,3.884,19.902,3.39z M2.739,17.053c-0.208,0.209-0.208,0.549,0,0.758\n            l0.951,0.93c0.208,0.209,0.538,0.121,0.746-0.088l4.907-4.824L7.84,12.115L2.739,17.053z\"/>\n        </svg>\n    </button>\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__text\" ref=\"savingInfo\">\n    Saved\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div style=\"flex: 1\"></div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-logout\" ref=\"logout\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M19,10l-6-5v3H6v4h7v3L19,10z M3,3h8V1H3C1.9,1,1,1.9,1,3v14c0,1.1,0.9,2,2,2h8v-2H3V3z\"/>\n        </svg>\n    </button>\n</div>";
+module.exports = "<div ref=\"viewingBlock\" class=\"mc-lbp__block\">\n    Visit URL: <a ref=\"url\" href=\"#\" target=\"_blank\">url here</a>\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"edit\">Edit</a>\n    <span class=\"mc-lbp__bar\"></span>\n    <a ref=\"remove\">Remove</a>\n</div>\n<form ref=\"editingBlock\" class=\"mc-lbp__block\">\n    <a class=\"mc-lbp__scheme\" ref=\"httpScheme\">Web</a>\n    <a class=\"mc-lbp__scheme\" ref=\"telScheme\">Tel</a>\n    <a class=\"mc-lbp__scheme\" ref=\"mailtoScheme\">Email</a>\n    <input type=\"text\" ref=\"textbox\" placeholder=\"URL\">\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"save\">Save</a>\n</form>";
 
 /***/ }),
 /* 63 */
+/***/ (function(module, exports) {
+
+module.exports = "<!--\n    Icons used:\n    http://www.entypo.com/\n-->\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"toggleEdit\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M17.561,2.439c-1.442-1.443-2.525-1.227-2.525-1.227L8.984,7.264L2.21,14.037L1.2,18.799l4.763-1.01\n            l6.774-6.771l6.052-6.052C18.788,4.966,19.005,3.883,17.561,2.439z M5.68,17.217l-1.624,0.35c-0.156-0.293-0.345-0.586-0.69-0.932\n            c-0.346-0.346-0.639-0.533-0.932-0.691l0.35-1.623l0.47-0.469c0,0,0.883,0.018,1.881,1.016c0.997,0.996,1.016,1.881,1.016,1.881\n            L5.68,17.217z\"/>\n        </svg>\n    </button>\n\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"richTextToolbar\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M3.135,6.89c0.933-0.725,1.707-0.225,2.74,0.971c0.116,0.135,0.272-0.023,0.361-0.1\n            C6.324,7.683,7.687,6.456,7.754,6.4C7.82,6.341,7.9,6.231,7.795,6.108C7.688,5.985,7.301,5.483,7.052,5.157\n            c-1.808-2.365,4.946-3.969,3.909-3.994c-0.528-0.014-2.646-0.039-2.963-0.004C6.715,1.294,5.104,2.493,4.293,3.052\n            C3.232,3.778,2.836,4.204,2.771,4.263c-0.3,0.262-0.048,0.867-0.592,1.344C1.604,6.11,1.245,5.729,0.912,6.021\n            C0.747,6.167,0.285,6.513,0.153,6.628C0.02,6.745-0.004,6.942,0.132,7.099c0,0,1.264,1.396,1.37,1.52\n            C1.607,8.741,1.893,8.847,2.069,8.69c0.177-0.156,0.632-0.553,0.708-0.623C2.855,8.001,2.727,7.206,3.135,6.89z M8.843,7.407\n            c-0.12-0.139-0.269-0.143-0.397-0.029L7.012,8.63c-0.113,0.1-0.129,0.283-0.027,0.4l8.294,9.439c0.194,0.223,0.53,0.246,0.751,0.053\n            L17,17.709c0.222-0.195,0.245-0.533,0.052-0.758L8.843,7.407z M19.902,3.39c-0.074-0.494-0.33-0.391-0.463-0.182\n            c-0.133,0.211-0.721,1.102-0.963,1.506c-0.24,0.4-0.832,1.191-1.934,0.41c-1.148-0.811-0.749-1.377-0.549-1.758\n            c0.201-0.383,0.818-1.457,0.907-1.59c0.089-0.135-0.015-0.527-0.371-0.363c-0.357,0.164-2.523,1.025-2.823,2.26\n            c-0.307,1.256,0.257,2.379-0.85,3.494l-1.343,1.4l1.349,1.566l1.654-1.57c0.394-0.396,1.236-0.781,1.998-0.607\n            c1.633,0.369,2.524-0.244,3.061-1.258C20.057,5.792,19.977,3.884,19.902,3.39z M2.739,17.053c-0.208,0.209-0.208,0.549,0,0.758\n            l0.951,0.93c0.208,0.209,0.538,0.121,0.746-0.088l4.907-4.824L7.84,12.115L2.739,17.053z\"/>\n        </svg>\n    </button>\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__text\" ref=\"savingInfo\">\n    Saved\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div style=\"flex: 1\"></div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-logout\" ref=\"logout\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M19,10l-6-5v3H6v4h7v3L19,10z M3,3h8V1H3C1.9,1,1,1.9,1,3v14c0,1.1,0.9,2,2,2h8v-2H3V3z\"/>\n        </svg>\n    </button>\n</div>";
+
+/***/ }),
+/* 64 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5619,261 +5941,10 @@ var WindowManager = function () {
 module.exports = WindowManager;
 
 /***/ }),
-/* 64 */
+/* 65 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 65 */,
-/* 66 */,
-/* 67 */,
-/* 68 */,
-/* 69 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var Window = __webpack_require__(15);
-var TextPad = __webpack_require__(2);
-
-var TextPopupWindow = function (_Window) {
-    _inherits(TextPopupWindow, _Window);
-
-    function TextPopupWindow(window, document, mycelium) {
-        _classCallCheck(this, TextPopupWindow);
-
-        /**
-         * Range where interesting text is located
-         */
-        var _this = _possibleConstructorReturn(this, (TextPopupWindow.__proto__ || Object.getPrototypeOf(TextPopupWindow)).call(this, window, document, mycelium));
-
-        _this.interestingRange = null;
-
-        /**
-         * The text pad, where the interesting text is located
-         */
-        _this.interestingPad = null;
-
-        window.addEventListener("mousedown", _this.onBrowserWindowClick_popupHandler.bind(_this));
-
-        TextPad.on("selection-change", _this.onTextPadSelectionChange_popupHandler.bind(_this));
-        return _this;
-    }
-
-    /**
-     * Updates this.interestingRange to the currently selected one
-     */
-
-
-    _createClass(TextPopupWindow, [{
-        key: "updateInterestingRangeToSelected",
-        value: function updateInterestingRangeToSelected() {
-            /*
-                A format may only be selected if you have a cursor oper it
-                (I mean no selection -> length = 0)
-                If any selection - even if over a format, no format is selected
-             */
-
-            this.interestingPad = TextPad.activePad;
-
-            // no pad active
-            if (this.interestingPad === null) {
-                this.interestingRange = null;
-                return;
-            }
-
-            var selection = this.interestingPad.getSelection();
-
-            // exclude weird selections
-            if (selection === null || selection.length > 0) {
-                this.interestingRange = null;
-                return;
-            }
-
-            // find start
-            var start = selection.index;
-            while (start >= 0) {
-                if (!this.isFormatInteresting(this.interestingPad.getFormat(start, 0))) break;
-
-                start -= 1;
-            }
-
-            // document start
-            if (start < 0) start = 0;
-
-            var len = this.interestingPad.getLength();
-
-            // find end
-            var end = selection.index;
-            while (end < len) {
-                if (!this.isFormatInteresting(this.interestingPad.getFormat(end, 0))) break;
-
-                end += 1;
-            }
-
-            // it overcounts
-            end -= 1;
-
-            // calculate interesting range
-            this.interestingRange = {
-                index: start,
-                length: end - start
-            };
-        }
-
-        /**
-         * Shows the window at the correct position
-         */
-
-    }, {
-        key: "showThePopup",
-        value: function showThePopup() {
-            var _this2 = this;
-
-            // display window
-            this.maximize();
-
-            // let the window be displayed
-            setTimeout(function () {
-
-                // then update position
-                _this2.updatePopupPosition();
-            }, 0);
-        }
-
-        /**
-         * Updates window position
-         */
-
-    }, {
-        key: "updatePopupPosition",
-        value: function updatePopupPosition() {
-            // no text selected, this window should not even be displayed
-            if (this.interestingRange === null) return;
-
-            // get widnow display coordinates
-            var textPadBound = this.interestingPad.getPadBounds();
-
-            var selectionBounds = this.interestingPad.getSelectionBounds(this.interestingRange.index, this.interestingRange.length);
-
-            // update width, height properties
-            // (so we can access them now)
-            this.updateDisplay();
-
-            // calculate window position
-            var x = textPadBound.left + selectionBounds.left + selectionBounds.width / 2 - this.outerWidth / 2;
-
-            var y = textPadBound.top + selectionBounds.top + selectionBounds.height + 10;
-
-            // move the window
-            this.moveTo(x, y);
-        }
-
-        /**
-         * Listen for browser window clicks
-         * (strange name to avoid subclass name collisions)
-         */
-
-    }, {
-        key: "onBrowserWindowClick_popupHandler",
-        value: function onBrowserWindowClick_popupHandler(e) {
-            var _this3 = this;
-
-            // clicking inside the window doesn'thide it
-            if (e.path.indexOf(this.element) >= 0) return;
-
-            // delay the handling slightly so that quill can take
-            // action on selection change
-            setTimeout(function () {
-
-                // if user clicks into a text pad
-                var clickInAPad = false;
-                for (var i = 0; i < e.path.length; i++) {
-                    if (!e.path[i].getAttribute) // window object
-                        continue;
-
-                    if (e.path[i].getAttribute("mycelium-text-pad") === "here") {
-                        clickInAPad = true;
-                        break;
-                    }
-                }
-
-                // do not hide, if a the format was selected by the click
-                if (clickInAPad && _this3.isFormatInteresting(TextPad.getFormat())) return;
-
-                _this3.onPopupHide();
-
-                _this3.minimize();
-            }, 0);
-        }
-
-        /**
-         * When text pad selection changes
-         */
-
-    }, {
-        key: "onTextPadSelectionChange_popupHandler",
-        value: function onTextPadSelectionChange_popupHandler(selection, format) {
-            // dont' do anything on deselect
-            if (selection === null) return;
-
-            // if no interesting format selected, again dont do anything
-            // (hide the window actually)
-            // 
-            // OR if the selection is not zero-length
-            if (!this.isFormatInteresting(format) || selection.length > 0) {
-                this.onPopupHide();
-
-                // hide
-                this.minimize();
-
-                return;
-            }
-
-            // save the interesting range
-            this.updateInterestingRangeToSelected();
-
-            this.onPopupShowBySelection(format);
-            this.showThePopup();
-        }
-
-        ///////////
-        // Hooks //
-        ///////////
-
-        /*
-            Override these to hook into events
-            or make the shing work
-         */
-
-        /**
-         * Returns true, if the format is interesting
-         */
-
-    }, {
-        key: "isFormatInteresting",
-        value: function isFormatInteresting(format) {
-            return false;
-        }
-    }, {
-        key: "onPopupHide",
-        value: function onPopupHide() {}
-    }, {
-        key: "onPopupShowBySelection",
-        value: function onPopupShowBySelection(format) {}
-    }]);
-
-    return TextPopupWindow;
-}(Window);
-
-module.exports = TextPopupWindow;
 
 /***/ })
 /******/ ]);

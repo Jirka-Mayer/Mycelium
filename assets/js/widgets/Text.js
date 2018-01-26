@@ -43,7 +43,14 @@ class Text
 
     onInput(e)
     {
-        this.shroom.setData(this.key, this.getText())
+        let data = {
+            "@type": "mycelium::rich-text",
+            "ops": [
+                {"insert": this.getText() + "\n"}
+            ]
+        }
+
+        this.shroom.setData(this.key, data)
     }
 
     onPaste(e)
