@@ -113,7 +113,7 @@ class TableBlot extends IframeBlot
     {
         // tell pad that a change occured
         // (trigger text-change event)
-        this.insertAt(0, "")
+        this.textPad.quill.insertText(0, "")
     }
 
     /**
@@ -121,8 +121,8 @@ class TableBlot extends IframeBlot
      */
     createInitialTable()
     {
-        // create a 2x5 table
-        for (let i = 0; i < 5; i++)
+        // create a 2x2 table
+        for (let i = 0; i < 2; i++)
             this.addRow(2)
     }
 

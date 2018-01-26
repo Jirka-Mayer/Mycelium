@@ -13,7 +13,8 @@ function htmlToDelta(document, html)
         formats: null, // all
         modules: {
             clipboard: {
-                matchers: require("../matchers.js")(Quill)
+                matchers: require("../matchers.js")(Quill),
+                matchVisual: false
             }
         }
     })

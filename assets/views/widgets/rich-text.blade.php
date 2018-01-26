@@ -66,7 +66,14 @@
         mycelium-headers="{{ json_encode($headers) }}"
         mycelium-table-headers="{{ json_encode($tableHeaders) }}"
         class="{{ $class }}"
-    ></div>
+    >
+        {!!
+            $renderer->renderHtml(
+                $shroom->data("public")->get($key, $default),
+                false
+            )
+        !!}
+    </div>
 @else
     <div class="{{ $class }} {{ $cssScopeText }}">
         {!!

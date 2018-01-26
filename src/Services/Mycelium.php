@@ -94,4 +94,37 @@ class Mycelium
             "editor" => $this->editor()
         ];
     }
+
+    ////////////////////////////////////
+    // Helper for asset cache busting //
+    ////////////////////////////////////
+
+    /**
+     * Returns asset url with the proper cache busting hash
+     *
+     * (see views/js.blade.php)
+     */
+    public function cacheBustedAsset($asset)
+    {
+        $manifestFilename = __DIR__ . "/../../dist/mix-manifest.json";
+
+        // load manifest
+        $manifest = json_decode(
+            file_get_contents($manifestFilename),
+            true
+        );
+
+        // in case of error
+        $bustedName = $asset;
+
+        // get busted name
+        if ($manifest !== null
+            && is_array($manifest)
+            && array_key_exists($asset, $manifest))
+        {
+            $bustedName = $manifest[$asset];
+        }
+
+        return asset("vendor/mycelium" . $bustedName);
+    }    
 }

@@ -1,13 +1,13 @@
 module.exports = function(Quill) {
 
-const Embed = Quill.import("blots/embed")
+const BlockEmbed = Quill.import("blots/block/embed")
 const ClipCache = require("../IframeClipCache.js")
 const cssClass = require("../../utils/cssClass.js")
 
 const DIMENSION_TIMER_INTERVAL = 5000
 const CSS_SCOPE_CLASS_PREFIX = "css-scope__"
 
-class IframeBlot extends Embed
+class IframeBlot extends BlockEmbed
 {
     constructor(element, value)
     {

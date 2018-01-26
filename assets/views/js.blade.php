@@ -19,12 +19,12 @@
     {{-- load mycelium --}}
     <script
         type="text/javascript"
-        src="{{ asset("vendor/mycelium/mycelium.js") }}"
+        src="{{ $mycelium->cacheBustedAsset("/mycelium.js") }}"
     ></script>
     <link
         rel="stylesheet"
         type="text/css"
-        href="{{ asset("vendor/mycelium/mycelium.css") }}"
+        href="{{ $mycelium->cacheBustedAsset("/mycelium.css") }}"
     >
 
     <script type="text/javascript">

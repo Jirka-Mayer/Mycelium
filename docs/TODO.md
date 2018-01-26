@@ -6,7 +6,6 @@ TODO
 
 - custom filesystem for each shroom instance pointed to the right directory
 - shroom output HTML caching
-- mycelium asset cache busting
 
 
 ## Compatibility

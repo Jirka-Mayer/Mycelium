@@ -103,8 +103,6 @@ class RichText
          */
         this.pad = new TextPad(this.element, this.window.Quill, this.mycelium, {
             cssScope: this.cssScope,
-            initialContents: this.shroom.getData(this.key),
-
             formats: this.formats,
             tableFormats: this.tableFormats,
             headers: this.headers,

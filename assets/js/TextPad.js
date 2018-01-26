@@ -96,7 +96,8 @@ class TextPad
             formats: this.options.formats,
             modules: {
                 clipboard: {
-                    matchers: require("./quill/matchers.js")(Quill)
+                    matchers: require("./quill/matchers.js")(Quill),
+                    matchVisual: false
                 }
             }
         })
