@@ -114,6 +114,9 @@ class TextPad
      */
     applyCssScopes()
     {
+        if (this.options.cssScope === null)
+            return
+
         if (typeof(this.options.cssScope) === "string")
             this.options.cssScope = [this.options.cssScope]
 

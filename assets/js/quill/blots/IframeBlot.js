@@ -2,8 +2,10 @@ module.exports = function(Quill) {
 
 const Embed = Quill.import("blots/embed")
 const ClipCache = require("../IframeClipCache.js")
+const cssClass = require("../../utils/cssClass.js")
 
 const DIMENSION_TIMER_INTERVAL = 5000
+const CSS_SCOPE_CLASS_PREFIX = "css-scope__"
 
 class IframeBlot extends Embed
 {
@@ -147,6 +149,7 @@ class IframeBlot extends Embed
         this.contentDiv.style.padding = "1px"
 
         this.copyCssStyles()
+        this.applyCssScopes()
     }
 
     /**
@@ -178,6 +181,29 @@ class IframeBlot extends Embed
             copy.innerHTML = styles[i].innerHTML
 
             this.contentDocument.body.appendChild(copy)
+        }
+    }
+
+    /**
+     * Adds css scopes to the content div element
+     */
+    applyCssScopes()
+    {
+        let scopes = this.textPad.options.cssScope
+
+        if (scopes === null)
+            return
+
+        if (typeof(scopes) === "string")
+            scopes = [scopes]
+
+        for (let i = 0; i < scopes.length; i++)
+        {
+            cssClass(
+                this.contentDiv,
+                CSS_SCOPE_CLASS_PREFIX + scopes[i],
+                true
+            )
         }
     }
 

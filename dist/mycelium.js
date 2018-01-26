@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 16);
+/******/ 	return __webpack_require__(__webpack_require__.s = 18);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -70,8 +70,8 @@
 "use strict";
 
 
-var bind = __webpack_require__(9);
-var isBuffer = __webpack_require__(32);
+var bind = __webpack_require__(11);
+var isBuffer = __webpack_require__(33);
 
 /*global toString:true*/
 
@@ -377,6 +377,69 @@ module.exports = {
 /* 1 */
 /***/ (function(module, exports) {
 
+module.exports = function (Quill) {
+
+    /**
+     * Finds the parent text pad element
+     */
+    function getParentTextPad(element) {
+        // find parent widet
+        var el = element;
+        var padElement = null;
+
+        while (el.parentElement) {
+            if (el.getAttribute("mycelium-text-pad") === "here") {
+                padElement = el;
+                break;
+            }
+
+            el = el.parentElement;
+        }
+
+        // unable to find
+        if (!padElement) return null;
+
+        return padElement.textPad;
+    }
+
+    function HeaderMatcher(element, delta) {
+        var textPad = getParentTextPad(element);
+        var headers = null;
+
+        if (textPad === null) headers = { offset: 0, count: 6 };else headers = textPad.options.headers;
+
+        var min = headers ? headers.offset + 1 : 1;
+        var max = headers ? headers.offset + headers.count : 6;
+
+        // max is 6 anyway, regardless of any offset
+        if (max > 6) max = 6;
+
+        var level = parseInt(element.tagName[1]);
+        var text = element.innerText;
+
+        // clamp level
+        if (level < min) level = min;
+        if (level > max) level = max;
+
+        return {
+            ops: [{
+                insert: text
+            }, {
+                insert: "\n",
+                attributes: {
+                    header: level
+                }
+            }]
+        };
+    }
+
+    return HeaderMatcher;
+};
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
 /**
  * Return an object of all refs in a given element
  *
@@ -394,16 +457,16 @@ function getRefs(element) {
 module.exports = getRefs;
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventBus = __webpack_require__(3);
-var defaultOptions = __webpack_require__(8);
-var cssClass = __webpack_require__(6);
+var EventBus = __webpack_require__(4);
+var defaultOptions = __webpack_require__(9);
+var cssClass = __webpack_require__(5);
 
 var CSS_SCOPE_CLASS_PREFIX = "css-scope__";
 
@@ -500,7 +563,7 @@ var TextPad = function () {
             formats: this.options.formats,
             modules: {
                 clipboard: {
-                    matchers: __webpack_require__(25)(Quill)
+                    matchers: __webpack_require__(10)(Quill)
                 }
             }
         });
@@ -520,6 +583,8 @@ var TextPad = function () {
     _createClass(TextPad, [{
         key: "applyCssScopes",
         value: function applyCssScopes() {
+            if (this.options.cssScope === null) return;
+
             if (typeof this.options.cssScope === "string") this.options.cssScope = [this.options.cssScope];
 
             for (var i = 0; i < this.options.cssScope.length; i++) {
@@ -866,7 +931,7 @@ TextPad.on = TextPad.bus.on.bind(TextPad.bus);
 module.exports = TextPad;
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -938,7 +1003,35 @@ var EventBus = function () {
 module.exports = EventBus;
 
 /***/ }),
-/* 4 */
+/* 5 */
+/***/ (function(module, exports) {
+
+/**
+ * Enables or disables a css class on an element
+ */
+function cssClass(element, cssClass, enable) {
+    var newClasses = "";
+    var found = false;
+
+    for (var i = 0; i < element.classList.length; i++) {
+        if (element.classList[i] == cssClass) {
+            found = true;
+
+            if (enable) newClasses += element.classList[i] + " ";
+        } else {
+            newClasses += element.classList[i] + " ";
+        }
+    }
+
+    if (!found && enable) newClasses += cssClass;
+
+    element.className = newClasses;
+}
+
+module.exports = cssClass;
+
+/***/ }),
+/* 6 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -980,14 +1073,14 @@ IframeClipCache.cache = {};
 module.exports = IframeClipCache;
 
 /***/ }),
-/* 5 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
 var utils = __webpack_require__(0);
-var normalizeHeaderName = __webpack_require__(35);
+var normalizeHeaderName = __webpack_require__(36);
 
 var DEFAULT_CONTENT_TYPE = {
   'Content-Type': 'application/x-www-form-urlencoded'
@@ -1003,10 +1096,10 @@ function getDefaultAdapter() {
   var adapter;
   if (typeof XMLHttpRequest !== 'undefined') {
     // For browsers use XHR adapter
-    adapter = __webpack_require__(10);
+    adapter = __webpack_require__(12);
   } else if (typeof process !== 'undefined') {
     // For node use HTTP adapter
-    adapter = __webpack_require__(10);
+    adapter = __webpack_require__(12);
   }
   return adapter;
 }
@@ -1077,38 +1170,10 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = defaults;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(34)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(35)))
 
 /***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-/**
- * Enables or disables a css class on an element
- */
-function cssClass(element, cssClass, enable) {
-    var newClasses = "";
-    var found = false;
-
-    for (var i = 0; i < element.classList.length; i++) {
-        if (element.classList[i] == cssClass) {
-            found = true;
-
-            if (enable) newClasses += element.classList[i] + " ";
-        } else {
-            newClasses += element.classList[i] + " ";
-        }
-    }
-
-    if (!found && enable) newClasses += cssClass;
-
-    element.className = newClasses;
-}
-
-module.exports = cssClass;
-
-/***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -1116,24 +1181,24 @@ function setupQuill(window) {
     var Quill = window.Quill;
 
     // register blots
-    __webpack_require__(18)(Quill);
-    __webpack_require__(19)(Quill);
     __webpack_require__(20)(Quill);
     __webpack_require__(21)(Quill);
     __webpack_require__(22)(Quill);
+    __webpack_require__(23)(Quill);
+    __webpack_require__(24)(Quill);
 }
 
 function registerClasses(window) {
-    window.mycelium.class.Shroom = __webpack_require__(29);
+    window.mycelium.class.Shroom = __webpack_require__(30);
 
     if (!window.mycelium.class.widgets) window.mycelium.class.widgets = {};
 
-    window.mycelium.class.widgets.RichText = __webpack_require__(14);
+    window.mycelium.class.widgets.RichText = __webpack_require__(16);
 
     if (!window.mycelium.class.ui) window.mycelium.class.ui = {};
 
-    window.mycelium.class.ui.Toolbar = __webpack_require__(51);
-    window.mycelium.class.ui.WindowManager = __webpack_require__(64);
+    window.mycelium.class.ui.Toolbar = __webpack_require__(52);
+    window.mycelium.class.ui.WindowManager = __webpack_require__(65);
 }
 
 function createShroom(window, shroomData) {
@@ -1156,7 +1221,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports) {
 
 
@@ -1176,7 +1241,16 @@ function defaultOptions(options, defOptions) {
 module.exports = defaultOptions;
 
 /***/ }),
-/* 9 */
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = function (Quill) {
+
+    return [["h1", __webpack_require__(1)(Quill)], ["h2", __webpack_require__(1)(Quill)], ["h3", __webpack_require__(1)(Quill)], ["h4", __webpack_require__(1)(Quill)], ["h5", __webpack_require__(1)(Quill)], ["h6", __webpack_require__(1)(Quill)], ["iframe", __webpack_require__(27)(Quill)], ["table", __webpack_require__(28)(Quill)]];
+};
+
+/***/ }),
+/* 11 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1194,19 +1268,19 @@ module.exports = function bind(fn, thisArg) {
 
 
 /***/ }),
-/* 10 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var utils = __webpack_require__(0);
-var settle = __webpack_require__(36);
-var buildURL = __webpack_require__(38);
-var parseHeaders = __webpack_require__(39);
-var isURLSameOrigin = __webpack_require__(40);
-var createError = __webpack_require__(11);
-var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(41);
+var settle = __webpack_require__(37);
+var buildURL = __webpack_require__(39);
+var parseHeaders = __webpack_require__(40);
+var isURLSameOrigin = __webpack_require__(41);
+var createError = __webpack_require__(13);
+var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(42);
 
 module.exports = function xhrAdapter(config) {
   return new Promise(function dispatchXhrRequest(resolve, reject) {
@@ -1303,7 +1377,7 @@ module.exports = function xhrAdapter(config) {
     // This is only done if running in a standard browser environment.
     // Specifically not if we're in a web worker, or react-native.
     if (utils.isStandardBrowserEnv()) {
-      var cookies = __webpack_require__(42);
+      var cookies = __webpack_require__(43);
 
       // Add xsrf header
       var xsrfValue = (config.withCredentials || isURLSameOrigin(config.url)) && config.xsrfCookieName ?
@@ -1381,13 +1455,13 @@ module.exports = function xhrAdapter(config) {
 
 
 /***/ }),
-/* 11 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var enhanceError = __webpack_require__(37);
+var enhanceError = __webpack_require__(38);
 
 /**
  * Create an Error with the specified message, config, error code, request and response.
@@ -1406,7 +1480,7 @@ module.exports = function createError(message, config, code, request, response) 
 
 
 /***/ }),
-/* 12 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1418,7 +1492,7 @@ module.exports = function isCancel(value) {
 
 
 /***/ }),
-/* 13 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1444,14 +1518,14 @@ module.exports = Cancel;
 
 
 /***/ }),
-/* 14 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var TextPad = __webpack_require__(2);
+var TextPad = __webpack_require__(3);
 
 var RichText = function () {
     _createClass(RichText, null, [{
@@ -1584,17 +1658,17 @@ var RichText = function () {
 module.exports = RichText;
 
 /***/ }),
-/* 15 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var clamp = __webpack_require__(53);
-var cssClass = __webpack_require__(6);
-var getRefs = __webpack_require__(1);
-var defaultOptions = __webpack_require__(8);
+var clamp = __webpack_require__(54);
+var cssClass = __webpack_require__(5);
+var getRefs = __webpack_require__(2);
+var defaultOptions = __webpack_require__(9);
 
 /**
  * How long it takes for a window to minimize
@@ -1709,7 +1783,7 @@ var Window = function () {
         value: function _createDOM() {
             var element = this.document.createElement("div");
             element.className = "mc-window";
-            element.innerHTML = __webpack_require__(54);
+            element.innerHTML = __webpack_require__(55);
 
             this.element = element;
             this.bar = element.querySelector(".mc-window__bar");
@@ -2009,15 +2083,15 @@ var Window = function () {
 module.exports = Window;
 
 /***/ }),
-/* 16 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(17);
-module.exports = __webpack_require__(65);
+__webpack_require__(19);
+module.exports = __webpack_require__(66);
 
 
 /***/ }),
-/* 17 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 ///////////////////////////////
@@ -2039,10 +2113,10 @@ if (!window.mycelium.class) window.mycelium.class = {};
 // Register initialization //
 /////////////////////////////
 
-window.mycelium.initialization = __webpack_require__(7);
+window.mycelium.initialization = __webpack_require__(8);
 
 /***/ }),
-/* 18 */
+/* 20 */
 /***/ (function(module, exports) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2074,7 +2148,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 19 */
+/* 21 */
 /***/ (function(module, exports) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2106,7 +2180,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 20 */
+/* 22 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2157,7 +2231,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 21 */
+/* 23 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2198,7 +2272,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 22 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2213,10 +2287,10 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 module.exports = function (Quill) {
 
-    var getRefs = __webpack_require__(1);
-    var TableRow = __webpack_require__(23);
-    var IframeBlot = __webpack_require__(28)(Quill);
-    var ClipCache = __webpack_require__(4);
+    var getRefs = __webpack_require__(2);
+    var TableRow = __webpack_require__(25);
+    var IframeBlot = __webpack_require__(29)(Quill);
+    var ClipCache = __webpack_require__(6);
 
     var TableBlot = function (_IframeBlot) {
         _inherits(TableBlot, _IframeBlot);
@@ -2509,14 +2583,14 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 23 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var TableCell = __webpack_require__(24);
+var TableCell = __webpack_require__(26);
 
 var TableRow = function () {
     function TableRow(tableBlot, contents) {
@@ -2608,14 +2682,14 @@ var TableRow = function () {
 module.exports = TableRow;
 
 /***/ }),
-/* 24 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var TextPad = __webpack_require__(2);
+var TextPad = __webpack_require__(3);
 
 var TableCell = function () {
     function TableCell(tableBlot, deltaContents) {
@@ -2635,7 +2709,7 @@ var TableCell = function () {
          * Cell text pad instance
          */
         this.textPad = new TextPad(this.element, this.tableBlot.contentWindow.Quill, this.tableBlot.textPad.mycelium, {
-            cssScope: this.tableBlot.textPad.options.cssScope,
+            cssScope: null, // scopes are is set in the blot
             initialContents: deltaContents,
 
             formats: this.getFormatsForCell(),
@@ -2749,21 +2823,12 @@ var TableCell = function () {
 module.exports = TableCell;
 
 /***/ }),
-/* 25 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = function (Quill) {
 
-    return [["h1", __webpack_require__(70)(Quill)], ["h2", __webpack_require__(70)(Quill)], ["h3", __webpack_require__(70)(Quill)], ["h4", __webpack_require__(70)(Quill)], ["h5", __webpack_require__(70)(Quill)], ["h6", __webpack_require__(70)(Quill)], ["iframe", __webpack_require__(26)(Quill)], ["table", __webpack_require__(27)(Quill)]];
-};
-
-/***/ }),
-/* 26 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = function (Quill) {
-
-    var ClipCache = __webpack_require__(4);
+    var ClipCache = __webpack_require__(6);
 
     /**
      * Matches any iframe blot - used to enable copy-paste on iframe blots
@@ -2782,7 +2847,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = function (Quill) {
@@ -2799,7 +2864,7 @@ module.exports = function (Quill) {
             formats: null, // all
             modules: {
                 clipboard: {
-                    matchers: __webpack_require__(25)(Quill)
+                    matchers: __webpack_require__(10)(Quill)
                 }
             }
         });
@@ -2845,7 +2910,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2861,9 +2926,11 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 module.exports = function (Quill) {
 
     var Embed = Quill.import("blots/embed");
-    var ClipCache = __webpack_require__(4);
+    var ClipCache = __webpack_require__(6);
+    var cssClass = __webpack_require__(5);
 
     var DIMENSION_TIMER_INTERVAL = 5000;
+    var CSS_SCOPE_CLASS_PREFIX = "css-scope__";
 
     var IframeBlot = function (_Embed) {
         _inherits(IframeBlot, _Embed);
@@ -3011,6 +3078,7 @@ module.exports = function (Quill) {
                 this.contentDiv.style.padding = "1px";
 
                 this.copyCssStyles();
+                this.applyCssScopes();
             }
 
             /**
@@ -3039,6 +3107,24 @@ module.exports = function (Quill) {
                     _copy.innerHTML = styles[_i].innerHTML;
 
                     this.contentDocument.body.appendChild(_copy);
+                }
+            }
+
+            /**
+             * Adds css scopes to the content div element
+             */
+
+        }, {
+            key: "applyCssScopes",
+            value: function applyCssScopes() {
+                var scopes = this.textPad.options.cssScope;
+
+                if (scopes === null) return;
+
+                if (typeof scopes === "string") scopes = [scopes];
+
+                for (var i = 0; i < scopes.length; i++) {
+                    cssClass(this.contentDiv, CSS_SCOPE_CLASS_PREFIX + scopes[i], true);
                 }
             }
 
@@ -3097,7 +3183,7 @@ module.exports = function (Quill) {
 
                 quillLink.onload = function () {
                     // register blots
-                    __webpack_require__(7).setupQuill(_this3.contentWindow);
+                    __webpack_require__(8).setupQuill(_this3.contentWindow);
 
                     // redirect undo and redo commands
                     var history = _this3.contentWindow.Quill.import("modules/history");
@@ -3136,17 +3222,17 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var axios = __webpack_require__(30);
-var TextWidget = __webpack_require__(50);
-var RichTextWidget = __webpack_require__(14);
-var EventBus = __webpack_require__(3);
+var axios = __webpack_require__(31);
+var TextWidget = __webpack_require__(51);
+var RichTextWidget = __webpack_require__(16);
+var EventBus = __webpack_require__(4);
 
 // delay between a change and save call
 var AUTOSAVE_TIMEOUT = 2000;
@@ -3377,22 +3463,22 @@ var Shroom = function () {
 module.exports = Shroom;
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(31);
+module.exports = __webpack_require__(32);
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var utils = __webpack_require__(0);
-var bind = __webpack_require__(9);
-var Axios = __webpack_require__(33);
-var defaults = __webpack_require__(5);
+var bind = __webpack_require__(11);
+var Axios = __webpack_require__(34);
+var defaults = __webpack_require__(7);
 
 /**
  * Create an instance of Axios
@@ -3425,15 +3511,15 @@ axios.create = function create(instanceConfig) {
 };
 
 // Expose Cancel & CancelToken
-axios.Cancel = __webpack_require__(13);
-axios.CancelToken = __webpack_require__(48);
-axios.isCancel = __webpack_require__(12);
+axios.Cancel = __webpack_require__(15);
+axios.CancelToken = __webpack_require__(49);
+axios.isCancel = __webpack_require__(14);
 
 // Expose all/spread
 axios.all = function all(promises) {
   return Promise.all(promises);
 };
-axios.spread = __webpack_require__(49);
+axios.spread = __webpack_require__(50);
 
 module.exports = axios;
 
@@ -3442,7 +3528,7 @@ module.exports.default = axios;
 
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports) {
 
 /*!
@@ -3469,18 +3555,18 @@ function isSlowBuffer (obj) {
 
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var defaults = __webpack_require__(5);
+var defaults = __webpack_require__(7);
 var utils = __webpack_require__(0);
-var InterceptorManager = __webpack_require__(43);
-var dispatchRequest = __webpack_require__(44);
-var isAbsoluteURL = __webpack_require__(46);
-var combineURLs = __webpack_require__(47);
+var InterceptorManager = __webpack_require__(44);
+var dispatchRequest = __webpack_require__(45);
+var isAbsoluteURL = __webpack_require__(47);
+var combineURLs = __webpack_require__(48);
 
 /**
  * Create a new instance of Axios
@@ -3562,7 +3648,7 @@ module.exports = Axios;
 
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -3752,7 +3838,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 35 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3771,13 +3857,13 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
 
 
 /***/ }),
-/* 36 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var createError = __webpack_require__(11);
+var createError = __webpack_require__(13);
 
 /**
  * Resolve or reject a Promise based on response status.
@@ -3804,7 +3890,7 @@ module.exports = function settle(resolve, reject, response) {
 
 
 /***/ }),
-/* 37 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3832,7 +3918,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
 
 
 /***/ }),
-/* 38 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3907,7 +3993,7 @@ module.exports = function buildURL(url, params, paramsSerializer) {
 
 
 /***/ }),
-/* 39 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3951,7 +4037,7 @@ module.exports = function parseHeaders(headers) {
 
 
 /***/ }),
-/* 40 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4026,7 +4112,7 @@ module.exports = (
 
 
 /***/ }),
-/* 41 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4069,7 +4155,7 @@ module.exports = btoa;
 
 
 /***/ }),
-/* 42 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4129,7 +4215,7 @@ module.exports = (
 
 
 /***/ }),
-/* 43 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4188,16 +4274,16 @@ module.exports = InterceptorManager;
 
 
 /***/ }),
-/* 44 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var utils = __webpack_require__(0);
-var transformData = __webpack_require__(45);
-var isCancel = __webpack_require__(12);
-var defaults = __webpack_require__(5);
+var transformData = __webpack_require__(46);
+var isCancel = __webpack_require__(14);
+var defaults = __webpack_require__(7);
 
 /**
  * Throws a `Cancel` if cancellation has been requested.
@@ -4274,7 +4360,7 @@ module.exports = function dispatchRequest(config) {
 
 
 /***/ }),
-/* 45 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4301,7 +4387,7 @@ module.exports = function transformData(data, headers, fns) {
 
 
 /***/ }),
-/* 46 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4322,7 +4408,7 @@ module.exports = function isAbsoluteURL(url) {
 
 
 /***/ }),
-/* 47 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4343,13 +4429,13 @@ module.exports = function combineURLs(baseURL, relativeURL) {
 
 
 /***/ }),
-/* 48 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var Cancel = __webpack_require__(13);
+var Cancel = __webpack_require__(15);
 
 /**
  * A `CancelToken` is an object that can be used to request cancellation of an operation.
@@ -4407,7 +4493,7 @@ module.exports = CancelToken;
 
 
 /***/ }),
-/* 49 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4441,7 +4527,7 @@ module.exports = function spread(callback) {
 
 
 /***/ }),
-/* 50 */
+/* 51 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4538,16 +4624,16 @@ var Text = function () {
 module.exports = Text;
 
 /***/ }),
-/* 51 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var TextPadToolbar = __webpack_require__(52);
-var LinkBlotProperties = __webpack_require__(60);
-var getRefs = __webpack_require__(1);
+var TextPadToolbar = __webpack_require__(53);
+var LinkBlotProperties = __webpack_require__(61);
+var getRefs = __webpack_require__(2);
 
 var Toolbar = function () {
     function Toolbar(window, document, mycelium) {
@@ -4602,7 +4688,7 @@ var Toolbar = function () {
 
             // create toolbar element
             var element = document.createElement("div");
-            element.innerHTML = __webpack_require__(63);
+            element.innerHTML = __webpack_require__(64);
             element.className = "mc-toolbar";
 
             // create spacer
@@ -4702,7 +4788,7 @@ var Toolbar = function () {
 module.exports = Toolbar;
 
 /***/ }),
-/* 52 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4713,12 +4799,12 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var Window = __webpack_require__(15);
-var getRefs = __webpack_require__(1);
-var cssClass = __webpack_require__(6);
-var Picker = __webpack_require__(55);
-var Menu = __webpack_require__(57);
-var TextPad = __webpack_require__(2);
+var Window = __webpack_require__(17);
+var getRefs = __webpack_require__(2);
+var cssClass = __webpack_require__(5);
+var Picker = __webpack_require__(56);
+var Menu = __webpack_require__(58);
+var TextPad = __webpack_require__(3);
 
 var TextPadToolbar = function (_Window) {
     _inherits(TextPadToolbar, _Window);
@@ -4742,7 +4828,7 @@ var TextPadToolbar = function (_Window) {
     _createClass(TextPadToolbar, [{
         key: "buildDOM",
         value: function buildDOM() {
-            this.content.innerHTML = __webpack_require__(59);
+            this.content.innerHTML = __webpack_require__(60);
             this.refs = getRefs(this.content);
 
             this.headerPicker = new Picker(document, this.refs.header, [{ key: "p", label: "Normal" }]);
@@ -4925,7 +5011,7 @@ var TextPadToolbar = function (_Window) {
 module.exports = TextPadToolbar;
 
 /***/ }),
-/* 53 */
+/* 54 */
 /***/ (function(module, exports) {
 
 /**
@@ -4938,20 +5024,20 @@ function clamp(x, min, max) {
 module.exports = clamp;
 
 /***/ }),
-/* 54 */
+/* 55 */
 /***/ (function(module, exports) {
 
 module.exports = "<div class=\"mc-window__bar\">\n    <div class=\"mc-window__handle\"></div>\n\n    <div class=\"mc-window__button\" ref=\"minimize\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M4.516,7.548c0.436-0.446,1.043-0.481,1.576,0L10,11.295l3.908-3.747c0.533-0.481,1.141-0.446,1.574,0\n            c0.436,0.445,0.408,1.197,0,1.615c-0.406,0.418-4.695,4.502-4.695,4.502C10.57,13.888,10.285,14,10,14s-0.57-0.112-0.789-0.335\n            c0,0-4.287-4.084-4.695-4.502C4.107,8.745,4.08,7.993,4.516,7.548z\"/>\n        </svg>\n    </div>\n\n    <div class=\"mc-window__button\" ref=\"close\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M14.348,14.849c-0.469,0.469-1.229,0.469-1.697,0L10,11.819l-2.651,3.029c-0.469,0.469-1.229,0.469-1.697,0\n            c-0.469-0.469-0.469-1.229,0-1.697l2.758-3.15L5.651,6.849c-0.469-0.469-0.469-1.228,0-1.697s1.228-0.469,1.697,0L10,8.183\n            l2.651-3.031c0.469-0.469,1.228-0.469,1.697,0s0.469,1.229,0,1.697l-2.758,3.152l2.758,3.15\n            C14.817,13.62,14.817,14.38,14.348,14.849z\"/>\n        </svg>\n    </div>\n</div>\n<div class=\"mc-window__content\">\n    <!--window content-->\n</div>";
 
 /***/ }),
-/* 55 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventBus = __webpack_require__(3);
+var EventBus = __webpack_require__(4);
 
 /*
     Events:
@@ -5017,7 +5103,7 @@ var Picker = function () {
         key: "createDOM",
         value: function createDOM() {
             this.element.className += " mc-picker";
-            this.element.innerHTML = __webpack_require__(56);
+            this.element.innerHTML = __webpack_require__(57);
 
             this.label = this.element.querySelector(".mc-picker__label");
             this.optionsElement = this.element.querySelector(".mc-picker__options");
@@ -5133,20 +5219,20 @@ var Picker = function () {
 module.exports = Picker;
 
 /***/ }),
-/* 56 */
+/* 57 */
 /***/ (function(module, exports) {
 
 module.exports = "<span class=\"mc-picker\">\n    <span class=\"mc-picker__label\" data-label=\"\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-picker__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-picker__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-picker__options\" style=\"display: none\">\n    </span>\n</span>";
 
 /***/ }),
-/* 57 */
+/* 58 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventBus = __webpack_require__(3);
+var EventBus = __webpack_require__(4);
 
 /*
     Events:
@@ -5207,7 +5293,7 @@ var Menu = function () {
         key: "createDOM",
         value: function createDOM(label) {
             this.element.className += " mc-menu";
-            this.element.innerHTML = __webpack_require__(58);
+            this.element.innerHTML = __webpack_require__(59);
 
             this.label = this.element.querySelector(".mc-menu__label");
             this.itemsElement = this.element.querySelector(".mc-menu__items");
@@ -5303,19 +5389,19 @@ var Menu = function () {
 module.exports = Menu;
 
 /***/ }),
-/* 58 */
+/* 59 */
 /***/ (function(module, exports) {
 
 module.exports = "<span class=\"mc-menu\">\n    <span class=\"mc-menu__label\" data-label=\"\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-menu__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-menu__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-menu__items\" style=\"display: none\">\n    </span>\n</span>";
 
 /***/ }),
-/* 59 */
+/* 60 */
 /***/ (function(module, exports) {
 
 module.exports = "<div class=\"mc-rtwt\">\n\n    <!-- set bold style -->\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <!-- set italic style -->\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <!-- em -->\n    <!-- not yet, implemented later -->\n    <!--<button class=\"mc-rtwt__button\" ref=\"emphasis\">\n        E\n    </button>-->\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- pick header type -->\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- link -->\n    <button class=\"mc-rtwt__button\" ref=\"link\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"11\" y1=\"7\" y2=\"11\"></line>\n            <path class=\"mc-rtwt-stroke\" d=\"M8.9,4.577a3.476,3.476,0,0,1,.36,4.679A3.476,3.476,0,0,1,4.577,8.9C3.185,7.5,2.035,6.4,4.217,4.217S7.5,3.185,8.9,4.577Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M13.423,9.1a3.476,3.476,0,0,0-4.679-.36,3.476,3.476,0,0,0,.36,4.679c1.392,1.392,2.5,2.542,4.679.36S14.815,10.5,13.423,9.1Z\"></path>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- add a table -->\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        <svg viewBox=\"0 0 26 28\">\n            <g fill=\"#444\" transform=\"scale(0.02734375 0.02734375)\">\n                <path d=\"M292.571 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM950.857 164.571v621.714c0 50.286-41.143 91.429-91.429 91.429h-768c-50.286 0-91.429-41.143-91.429-91.429v-621.714c0-50.286 41.143-91.429 91.429-91.429h768c50.286 0 91.429 41.143 91.429 91.429z\" />\n            </g>\n        </svg>\n    </button>\n\n    <!-- insert something to a table -->\n    <span ref=\"tableInsert\"></span>\n\n    <!-- remove something from a table -->\n    <span ref=\"tableRemove\"></span>\n</div>";
 
 /***/ }),
-/* 60 */
+/* 61 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5326,10 +5412,10 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var TextPopupWindow = __webpack_require__(61);
-var getRefs = __webpack_require__(1);
-var cssClass = __webpack_require__(6);
-var TextPad = __webpack_require__(2);
+var TextPopupWindow = __webpack_require__(62);
+var getRefs = __webpack_require__(2);
+var cssClass = __webpack_require__(5);
+var TextPad = __webpack_require__(3);
 
 var LinkBlotProperties = function (_TextPopupWindow) {
     _inherits(LinkBlotProperties, _TextPopupWindow);
@@ -5349,7 +5435,7 @@ var LinkBlotProperties = function (_TextPopupWindow) {
          */
         _this.scheme = "http";
 
-        _this.content.innerHTML = __webpack_require__(62);
+        _this.content.innerHTML = __webpack_require__(63);
         cssClass(_this.content, "mc-lbp", true);
 
         _this.refs = getRefs(_this.content);
@@ -5613,7 +5699,7 @@ var LinkBlotProperties = function (_TextPopupWindow) {
 module.exports = LinkBlotProperties;
 
 /***/ }),
-/* 61 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5624,8 +5710,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var Window = __webpack_require__(15);
-var TextPad = __webpack_require__(2);
+var Window = __webpack_require__(17);
+var TextPad = __webpack_require__(3);
 
 var TextPopupWindow = function (_Window) {
     _inherits(TextPopupWindow, _Window);
@@ -5875,19 +5961,19 @@ var TextPopupWindow = function (_Window) {
 module.exports = TextPopupWindow;
 
 /***/ }),
-/* 62 */
+/* 63 */
 /***/ (function(module, exports) {
 
 module.exports = "<div ref=\"viewingBlock\" class=\"mc-lbp__block\">\n    Visit URL: <a ref=\"url\" href=\"#\" target=\"_blank\">url here</a>\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"edit\">Edit</a>\n    <span class=\"mc-lbp__bar\"></span>\n    <a ref=\"remove\">Remove</a>\n</div>\n<form ref=\"editingBlock\" class=\"mc-lbp__block\">\n    <a class=\"mc-lbp__scheme\" ref=\"httpScheme\">Web</a>\n    <a class=\"mc-lbp__scheme\" ref=\"telScheme\">Tel</a>\n    <a class=\"mc-lbp__scheme\" ref=\"mailtoScheme\">Email</a>\n    <input type=\"text\" ref=\"textbox\" placeholder=\"URL\">\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"save\">Save</a>\n</form>";
 
 /***/ }),
-/* 63 */
+/* 64 */
 /***/ (function(module, exports) {
 
 module.exports = "<!--\n    Icons used:\n    http://www.entypo.com/\n-->\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"toggleEdit\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M17.561,2.439c-1.442-1.443-2.525-1.227-2.525-1.227L8.984,7.264L2.21,14.037L1.2,18.799l4.763-1.01\n            l6.774-6.771l6.052-6.052C18.788,4.966,19.005,3.883,17.561,2.439z M5.68,17.217l-1.624,0.35c-0.156-0.293-0.345-0.586-0.69-0.932\n            c-0.346-0.346-0.639-0.533-0.932-0.691l0.35-1.623l0.47-0.469c0,0,0.883,0.018,1.881,1.016c0.997,0.996,1.016,1.881,1.016,1.881\n            L5.68,17.217z\"/>\n        </svg>\n    </button>\n\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"richTextToolbar\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M3.135,6.89c0.933-0.725,1.707-0.225,2.74,0.971c0.116,0.135,0.272-0.023,0.361-0.1\n            C6.324,7.683,7.687,6.456,7.754,6.4C7.82,6.341,7.9,6.231,7.795,6.108C7.688,5.985,7.301,5.483,7.052,5.157\n            c-1.808-2.365,4.946-3.969,3.909-3.994c-0.528-0.014-2.646-0.039-2.963-0.004C6.715,1.294,5.104,2.493,4.293,3.052\n            C3.232,3.778,2.836,4.204,2.771,4.263c-0.3,0.262-0.048,0.867-0.592,1.344C1.604,6.11,1.245,5.729,0.912,6.021\n            C0.747,6.167,0.285,6.513,0.153,6.628C0.02,6.745-0.004,6.942,0.132,7.099c0,0,1.264,1.396,1.37,1.52\n            C1.607,8.741,1.893,8.847,2.069,8.69c0.177-0.156,0.632-0.553,0.708-0.623C2.855,8.001,2.727,7.206,3.135,6.89z M8.843,7.407\n            c-0.12-0.139-0.269-0.143-0.397-0.029L7.012,8.63c-0.113,0.1-0.129,0.283-0.027,0.4l8.294,9.439c0.194,0.223,0.53,0.246,0.751,0.053\n            L17,17.709c0.222-0.195,0.245-0.533,0.052-0.758L8.843,7.407z M19.902,3.39c-0.074-0.494-0.33-0.391-0.463-0.182\n            c-0.133,0.211-0.721,1.102-0.963,1.506c-0.24,0.4-0.832,1.191-1.934,0.41c-1.148-0.811-0.749-1.377-0.549-1.758\n            c0.201-0.383,0.818-1.457,0.907-1.59c0.089-0.135-0.015-0.527-0.371-0.363c-0.357,0.164-2.523,1.025-2.823,2.26\n            c-0.307,1.256,0.257,2.379-0.85,3.494l-1.343,1.4l1.349,1.566l1.654-1.57c0.394-0.396,1.236-0.781,1.998-0.607\n            c1.633,0.369,2.524-0.244,3.061-1.258C20.057,5.792,19.977,3.884,19.902,3.39z M2.739,17.053c-0.208,0.209-0.208,0.549,0,0.758\n            l0.951,0.93c0.208,0.209,0.538,0.121,0.746-0.088l4.907-4.824L7.84,12.115L2.739,17.053z\"/>\n        </svg>\n    </button>\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__text\" ref=\"savingInfo\">\n    Saved\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div style=\"flex: 1\"></div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-logout\" ref=\"logout\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M19,10l-6-5v3H6v4h7v3L19,10z M3,3h8V1H3C1.9,1,1,1.9,1,3v14c0,1.1,0.9,2,2,2h8v-2H3V3z\"/>\n        </svg>\n    </button>\n</div>";
 
 /***/ }),
-/* 64 */
+/* 65 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6080,77 +6166,10 @@ var WindowManager = function () {
 module.exports = WindowManager;
 
 /***/ }),
-/* 65 */
+/* 66 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 66 */,
-/* 67 */,
-/* 68 */,
-/* 69 */,
-/* 70 */
-/***/ (function(module, exports) {
-
-module.exports = function (Quill) {
-
-    /**
-     * Finds the parent text pad element
-     */
-    function getParentTextPad(element) {
-        // find parent widet
-        var el = element;
-        var padElement = null;
-
-        while (el.parentElement) {
-            if (el.getAttribute("mycelium-text-pad") === "here") {
-                padElement = el;
-                break;
-            }
-
-            el = el.parentElement;
-        }
-
-        // unable to find
-        if (!padElement) return null;
-
-        return padElement.textPad;
-    }
-
-    function HeaderMatcher(element, delta) {
-        var textPad = getParentTextPad(element);
-        var headers = null;
-
-        if (textPad === null) headers = { offset: 0, count: 6 };else headers = textPad.options.headers;
-
-        var min = headers ? headers.offset + 1 : 1;
-        var max = headers ? headers.offset + headers.count : 6;
-
-        // max is 6 anyway, regardless of any offset
-        if (max > 6) max = 6;
-
-        var level = parseInt(element.tagName[1]);
-        var text = element.innerText;
-
-        // clamp level
-        if (level < min) level = min;
-        if (level > max) level = max;
-
-        return {
-            ops: [{
-                insert: text
-            }, {
-                insert: "\n",
-                attributes: {
-                    header: level
-                }
-            }]
-        };
-    }
-
-    return HeaderMatcher;
-};
 
 /***/ })
 /******/ ]);

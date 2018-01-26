@@ -22,7 +22,7 @@ class TableCell
             this.tableBlot.contentWindow.Quill,
             this.tableBlot.textPad.mycelium,
             {
-                cssScope: this.tableBlot.textPad.options.cssScope,
+                cssScope: null, // scopes are is set in the blot
                 initialContents: deltaContents,
 
                 formats: this.getFormatsForCell(),
