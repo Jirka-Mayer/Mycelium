@@ -52,15 +52,6 @@ class RichText
         } catch (e) {}
 
         /**
-         * Allowed formats
-         */
-        this.formats = this.element.getAttribute("mycelium-formats")
-
-        try {
-            this.formats = JSON.parse(this.formats)
-        } catch (e) {}
-
-        /**
          * CSS scope(s)
          */
         this.cssScope = this.element.getAttribute("mycelium-css-scope")
@@ -70,11 +61,54 @@ class RichText
         } catch (e) {}
 
         /**
+         * Allowed formats
+         */
+        this.formats = this.element.getAttribute("mycelium-formats")
+
+        try {
+            this.formats = JSON.parse(this.formats)
+        } catch (e) {}
+
+        /**
+         * Allowed table formats
+         */
+        this.tableFormats = this.element.getAttribute("mycelium-table-formats")
+
+        try {
+            if (this.tableFormats)
+                this.tableFormats = JSON.parse(this.tableFormats)
+        } catch (e) {}
+
+        /**
+         * Header settings
+         */
+        this.headers = this.element.getAttribute("mycelium-headers")
+
+        try {
+            this.headers = JSON.parse(this.headers)
+        } catch (e) {}
+
+        /**
+         * Table header settings
+         */
+        this.tableHeaders = this.element.getAttribute("mycelium-table-headers")
+
+        try {
+            if (this.tableHeaders)
+                this.tableHeaders = JSON.parse(this.tableHeaders)
+        } catch (e) {}
+
+        /**
          * Text pad for the actual text editing
          */
         this.pad = new TextPad(this.element, this.window.Quill, this.mycelium, {
+            cssScope: this.cssScope,
+            initialContents: this.shroom.getData(this.key),
+
             formats: this.formats,
-            cssScope: this.cssScope
+            tableFormats: this.tableFormats,
+            headers: this.headers,
+            tableHeaders: this.tableHeaders,
         })
 
         this.pad.on("text-change", this.onTextChange.bind(this))

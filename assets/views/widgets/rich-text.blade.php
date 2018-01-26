@@ -7,6 +7,9 @@
     $class - css classes to be applied (only to the root - the widget, not pad)
     $cssScope - css scope for the widget (string/array of strings)
     $formats - allowed formats
+    $tableFormats - formats allowed in tables (overrides all default action)
+    $headers - header offset and count
+    $tableHeaders - explicit headers for tables (default is inheritance)
 --}}
 
 @inject("mycelium", "mycelium")
@@ -29,6 +32,15 @@
     if (!isset($formats))
         $formats = config("mycelium.rich-text.formats");
 
+    if (!isset($tableFormats))
+        $tableFormats = null;
+
+    if (!isset($headers))
+        $headers = config("mycelium.rich-text.headers");
+
+    if (!isset($tableHeaders))
+        $tableHeaders = config("mycelium.rich-text.table-headers", null);
+
     // css scope to text
     $cssScopeText = "";
     if (is_string($cssScope))
@@ -50,16 +62,11 @@
         mycelium-default="{{ json_encode($default) }}"
         mycelium-css-scope="{{ json_encode($cssScope) }}"
         mycelium-formats="{{ json_encode($formats) }}"
+        mycelium-table-formats="{{ json_encode($tableFormats) }}"
+        mycelium-headers="{{ json_encode($headers) }}"
+        mycelium-table-headers="{{ json_encode($tableHeaders) }}"
         class="{{ $class }}"
-    >
-        {{-- print rendered content before quill loads --}}
-        {!!
-            $renderer->renderHtml(
-                $shroom->data("public")->get($key, $default),
-                false
-            )
-        !!}
-    </div>
+    ></div>
 @else
     <div class="{{ $class }} {{ $cssScopeText }}">
         {!!

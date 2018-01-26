@@ -405,6 +405,8 @@ var EventBus = __webpack_require__(3);
 var defaultOptions = __webpack_require__(8);
 var cssClass = __webpack_require__(6);
 
+var CSS_SCOPE_CLASS_PREFIX = "css-scope__";
+
 /**
  * A highly configurable text editor class, wrapping Quill.js
  */
@@ -435,15 +437,36 @@ var TextPad = function () {
         this.options = defaultOptions(options, {
 
             /**
+             * The css scope/scopes to apply to the pad
+             * @type {string/array of string}
+             */
+            cssScope: null,
+
+            /**
+             * Delta describing the initial content if it should
+             * not be inferd from the inner HTML
+             */
+            initialContents: null,
+
+            /**
              * Allowed formats
              */
             formats: null,
 
             /**
-             * The css scope/scopes to apply to the pad
-             * @type {string/array of string}
+             * Explicit formats for the embeded tables
              */
-            cssScope: null,
+            tableFormats: null,
+
+            /**
+             * Header settings for the pad
+             */
+            headers: null,
+
+            /**
+             * Header settings for the embeded tables
+             */
+            tableHeaders: null,
 
             /**
              * Is this pad used in a table cell
@@ -459,19 +482,10 @@ var TextPad = function () {
             /**
              * If in a table, this is the reference to the table cell
              */
-            tableCell: null,
-
-            /**
-             * Delta describing the initial content if it should
-             * not be inferd from the inner HTML
-             */
-            initialContents: null
+            tableCell: null
         });
 
         this.applyCssScopes();
-
-        // remove certain formats for tables
-        if (this.options.isTableCell) this.filterFormatsForTable();
 
         /**
          * Event bus for the instance
@@ -509,22 +523,7 @@ var TextPad = function () {
             if (typeof this.options.cssScope === "string") this.options.cssScope = [this.options.cssScope];
 
             for (var i = 0; i < this.options.cssScope.length; i++) {
-                cssClass(this.element, "css-scope__" + this.options.cssScope[i], true);
-            }
-        }
-
-        /**
-         * Remove certain formats in tables
-         */
-
-    }, {
-        key: "filterFormatsForTable",
-        value: function filterFormatsForTable() {
-            for (var i = 0; i < this.options.formats.length; i++) {
-                if (this.mycelium.config["rich-text"]["table-formats"].indexOf(this.options.formats[i]) === -1) {
-                    this.options.formats.splice(i, 1);
-                    i--;
-                }
+                cssClass(this.element, CSS_SCOPE_CLASS_PREFIX + this.options.cssScope[i], true);
             }
         }
 
@@ -745,7 +744,7 @@ var TextPad = function () {
             if (TextPad.activePad === pad) return;
 
             TextPad.activePad = pad;
-            TextPad.bus.fire("active-pad-change");
+            TextPad.bus.fire("active-pad-change", pad);
         }
 
         //////////////////////
@@ -1502,15 +1501,6 @@ var RichText = function () {
         } catch (e) {}
 
         /**
-         * Allowed formats
-         */
-        this.formats = this.element.getAttribute("mycelium-formats");
-
-        try {
-            this.formats = JSON.parse(this.formats);
-        } catch (e) {}
-
-        /**
          * CSS scope(s)
          */
         this.cssScope = this.element.getAttribute("mycelium-css-scope");
@@ -1520,11 +1510,52 @@ var RichText = function () {
         } catch (e) {}
 
         /**
+         * Allowed formats
+         */
+        this.formats = this.element.getAttribute("mycelium-formats");
+
+        try {
+            this.formats = JSON.parse(this.formats);
+        } catch (e) {}
+
+        /**
+         * Allowed table formats
+         */
+        this.tableFormats = this.element.getAttribute("mycelium-table-formats");
+
+        try {
+            if (this.tableFormats) this.tableFormats = JSON.parse(this.tableFormats);
+        } catch (e) {}
+
+        /**
+         * Header settings
+         */
+        this.headers = this.element.getAttribute("mycelium-headers");
+
+        try {
+            this.headers = JSON.parse(this.headers);
+        } catch (e) {}
+
+        /**
+         * Table header settings
+         */
+        this.tableHeaders = this.element.getAttribute("mycelium-table-headers");
+
+        try {
+            if (this.tableHeaders) this.tableHeaders = JSON.parse(this.tableHeaders);
+        } catch (e) {}
+
+        /**
          * Text pad for the actual text editing
          */
         this.pad = new TextPad(this.element, this.window.Quill, this.mycelium, {
+            cssScope: this.cssScope,
+            initialContents: this.shroom.getData(this.key),
+
             formats: this.formats,
-            cssScope: this.cssScope
+            tableFormats: this.tableFormats,
+            headers: this.headers,
+            tableHeaders: this.tableHeaders
         });
 
         this.pad.on("text-change", this.onTextChange.bind(this));
@@ -2161,7 +2192,7 @@ module.exports = function (Quill) {
     }(Block);
 
     HeaderBlot.blotName = "header";
-    HeaderBlot.tagName = ["H1", "H2"];
+    HeaderBlot.tagName = ["H1", "H2", "H3", "H4", "H5", "H6"];
 
     Quill.register(HeaderBlot);
 };
@@ -2604,15 +2635,17 @@ var TableCell = function () {
          * Cell text pad instance
          */
         this.textPad = new TextPad(this.element, this.tableBlot.contentWindow.Quill, this.tableBlot.textPad.mycelium, {
-            isTableCell: true,
-            tableBlot: this.tableBlot,
-            tableCell: this,
+            cssScope: this.tableBlot.textPad.options.cssScope,
             initialContents: deltaContents,
 
-            // formats are filtered automatically from inside the pad
-            formats: this.tableBlot.textPad.options.formats,
+            formats: this.getFormatsForCell(),
+            tableFormats: [],
+            headers: this.getHeadersForCell(),
+            tableHeaders: null,
 
-            cssScope: this.tableBlot.textPad.options.cssScope
+            isTableCell: true,
+            tableBlot: this.tableBlot,
+            tableCell: this
         });
 
         // bind events
@@ -2620,11 +2653,49 @@ var TableCell = function () {
     }
 
     /**
-     * Called when the pad content changes
+     * Prepare formats for the cell
      */
 
 
     _createClass(TableCell, [{
+        key: "getFormatsForCell",
+        value: function getFormatsForCell() {
+            // get parent formats
+            var formats = this.tableBlot.textPad.options.formats;
+
+            // explicit format overriding
+            if (this.tableBlot.textPad.options.tableFormats) return this.tableBlot.textPad.options.tableFormats;
+
+            // remove formats not listed in config
+            for (var i = 0; i < formats.length; i++) {
+                if (this.tableBlot.textPad.mycelium.config["rich-text"]["table-formats"].indexOf(formats[i]) === -1) {
+                    formats.splice(i, 1);
+                    i--;
+                }
+            }
+
+            return formats;
+        }
+
+        /**
+         * Prepare header settings for the cell
+         */
+
+    }, {
+        key: "getHeadersForCell",
+        value: function getHeadersForCell() {
+            // if some overriding takes place
+            if (this.tableBlot.textPad.options.tableHeaders) return this.tableBlot.textPad.options.tableHeaders;
+
+            // otherwise just use the parent settings
+            return this.tableBlot.textPad.options.headers;
+        }
+
+        /**
+         * Called when the pad content changes
+         */
+
+    }, {
         key: "onPadTextChange",
         value: function onPadTextChange() {
             // update iframe dimensions
@@ -2683,7 +2754,7 @@ module.exports = TableCell;
 
 module.exports = function (Quill) {
 
-    return [["iframe", __webpack_require__(26)(Quill)], ["table", __webpack_require__(27)(Quill)]];
+    return [["h1", __webpack_require__(70)(Quill)], ["h2", __webpack_require__(70)(Quill)], ["h3", __webpack_require__(70)(Quill)], ["h4", __webpack_require__(70)(Quill)], ["h5", __webpack_require__(70)(Quill)], ["h6", __webpack_require__(70)(Quill)], ["iframe", __webpack_require__(26)(Quill)], ["table", __webpack_require__(27)(Quill)]];
 };
 
 /***/ }),
@@ -2712,7 +2783,7 @@ module.exports = function (Quill) {
 
 /***/ }),
 /* 27 */
-/***/ (function(module, exports) {
+/***/ (function(module, exports, __webpack_require__) {
 
 module.exports = function (Quill) {
 
@@ -2722,11 +2793,16 @@ module.exports = function (Quill) {
     function htmlToDelta(document, html) {
         var element = document.createElement("div");
 
-        // TODO dependency injection!
-
         element.innerHTML = html;
 
-        var quill = new Quill(element);
+        var quill = new Quill(element, {
+            formats: null, // all
+            modules: {
+                clipboard: {
+                    matchers: __webpack_require__(25)(Quill)
+                }
+            }
+        });
 
         return quill.getContents();
     }
@@ -2788,7 +2864,6 @@ module.exports = function (Quill) {
     var ClipCache = __webpack_require__(4);
 
     var DIMENSION_TIMER_INTERVAL = 5000;
-    var CSS_SCOPE_CLASS_PREFIX = "css-scope__";
 
     var IframeBlot = function (_Embed) {
         _inherits(IframeBlot, _Embed);
@@ -2955,6 +3030,15 @@ module.exports = function (Quill) {
                     copy.setAttribute("rel", links[i].getAttribute("rel"));
 
                     this.contentDocument.body.appendChild(copy);
+                }
+
+                var styles = this.element.ownerDocument.querySelectorAll("style");
+
+                for (var _i = 0; _i < styles.length; _i++) {
+                    var _copy = this.contentDocument.createElement("style");
+                    _copy.innerHTML = styles[_i].innerHTML;
+
+                    this.contentDocument.body.appendChild(_copy);
                 }
             }
 
@@ -4661,7 +4745,7 @@ var TextPadToolbar = function (_Window) {
             this.content.innerHTML = __webpack_require__(59);
             this.refs = getRefs(this.content);
 
-            this.headerPicker = new Picker(document, this.refs.header, [{ key: "p", label: "Normal" }, { key: "h1", label: "Heading 1" }, { key: "h2", label: "Heading 2" }]);
+            this.headerPicker = new Picker(document, this.refs.header, [{ key: "p", label: "Normal" }]);
 
             this.tableInsertMenu = new Menu(document, this.refs.tableInsert, "Insert", [{ key: "row-below", label: "Row below" }, { key: "row-above", label: "Row above" }, { key: "column-left", label: "Column left" }, { key: "column-right", label: "Column right" }]);
 
@@ -4688,12 +4772,28 @@ var TextPadToolbar = function (_Window) {
 
             // we listen for widget selection changes to determine
             // changes in the styling UI like bold, header etc.
+            TextPad.on("active-pad-change", this.onActiveTextPadChange.bind(this));
             TextPad.on("selection-change", this.onTextPadSelectionChange.bind(this));
+
+            // a flag
+            this.selectionListenerEnabled = true;
         }
 
         /////////////////
         // UI altering //
         /////////////////
+
+    }, {
+        key: "onActiveTextPadChange",
+        value: function onActiveTextPadChange(pad) {
+            // update header selection
+            var options = [{ key: "p", label: "Normal" }];
+            var count = 0;
+            if (pad.options.headers) count = pad.options.headers.count;
+            for (var i = 1; i <= count; i++) {
+                options.push({ key: "h" + i, label: "Heading " + i });
+            }this.headerPicker.updateOptions(options);
+        }
 
         /**
          * When rich-text widget selection changes (any of them)
@@ -4702,6 +4802,8 @@ var TextPadToolbar = function (_Window) {
     }, {
         key: "onTextPadSelectionChange",
         value: function onTextPadSelectionChange(selection, format) {
+            if (!this.selectionListenerEnabled) return;
+
             // dont' do anything on deselect
             if (selection === null) return;
 
@@ -4712,7 +4814,16 @@ var TextPadToolbar = function (_Window) {
             cssClass(this.refs.italic, "mc-rtwt__button--active", !!format.italic);
 
             // header
-            if (format.header === undefined) this.headerPicker.pick("p");else this.headerPicker.pick("h" + format.header);
+            if (format.header === false || format.header === undefined) {
+                this.headerPicker.pick("p");
+            } else {
+                var level = format.header;
+
+                // undo level offset
+                if (TextPad.activePad.options.headers) level -= TextPad.activePad.options.headers.offset;
+
+                this.headerPicker.pick("h" + level);
+            }
         }
 
         /////////////////////
@@ -4732,13 +4843,18 @@ var TextPadToolbar = function (_Window) {
     }, {
         key: "onHeaderPick",
         value: function onHeaderPick(key) {
+            this.selectionListenerEnabled = false;
+
             var level = void 0;
 
             if (key == "p") level = false;else level = parseInt(key[1]);
 
-            if (level == TextPad.getFormat().header) level = false;
+            // offset level
+            if (level !== false && TextPad.activePad.options.headers) level += TextPad.activePad.options.headers.offset;
 
             TextPad.format("header", level);
+
+            this.selectionListenerEnabled = true;
         }
     }, {
         key: "onHeaderPickerExpand",
@@ -4906,6 +5022,23 @@ var Picker = function () {
             this.label = this.element.querySelector(".mc-picker__label");
             this.optionsElement = this.element.querySelector(".mc-picker__options");
 
+            this.updateOptions(this.options);
+        }
+
+        /**
+         * Update options to choose from
+         */
+
+    }, {
+        key: "updateOptions",
+        value: function updateOptions(options) {
+            // update property
+            this.options = options;
+
+            // clear options
+            this.optionsElement.innerHTML = "";
+
+            // add options
             for (var i = 0; i < this.options.length; i++) {
                 var option = this.document.createElement("div");
                 option.innerHTML = this.options[i].label;
@@ -5638,7 +5771,13 @@ var TextPopupWindow = function (_Window) {
             var _this3 = this;
 
             // clicking inside the window doesn't hide it
-            if (e.path.indexOf(this.element) >= 0) return;
+            var el = e.target;
+            while (el.parentElement) {
+                if (el === this.element) // click was inside the window
+                    return;
+
+                el = el.parentElement;
+            }
 
             // delay the handling slightly so that quill can take
             // action on selection change
@@ -5945,6 +6084,73 @@ module.exports = WindowManager;
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 66 */,
+/* 67 */,
+/* 68 */,
+/* 69 */,
+/* 70 */
+/***/ (function(module, exports) {
+
+module.exports = function (Quill) {
+
+    /**
+     * Finds the parent text pad element
+     */
+    function getParentTextPad(element) {
+        // find parent widet
+        var el = element;
+        var padElement = null;
+
+        while (el.parentElement) {
+            if (el.getAttribute("mycelium-text-pad") === "here") {
+                padElement = el;
+                break;
+            }
+
+            el = el.parentElement;
+        }
+
+        // unable to find
+        if (!padElement) return null;
+
+        return padElement.textPad;
+    }
+
+    function HeaderMatcher(element, delta) {
+        var textPad = getParentTextPad(element);
+        var headers = null;
+
+        if (textPad === null) headers = { offset: 0, count: 6 };else headers = textPad.options.headers;
+
+        var min = headers ? headers.offset + 1 : 1;
+        var max = headers ? headers.offset + headers.count : 6;
+
+        // max is 6 anyway, regardless of any offset
+        if (max > 6) max = 6;
+
+        var level = parseInt(element.tagName[1]);
+        var text = element.innerText;
+
+        // clamp level
+        if (level < min) level = min;
+        if (level > max) level = max;
+
+        return {
+            ops: [{
+                insert: text
+            }, {
+                insert: "\n",
+                attributes: {
+                    header: level
+                }
+            }]
+        };
+    }
+
+    return HeaderMatcher;
+};
 
 /***/ })
 /******/ ]);

@@ -7,11 +7,16 @@ function htmlToDelta(document, html)
 {
     let element = document.createElement("div")
 
-    // TODO dependency injection!
-
     element.innerHTML = html
 
-    let quill = new Quill(element)
+    let quill = new Quill(element, {
+        formats: null, // all
+        modules: {
+            clipboard: {
+                matchers: require("../matchers.js")(Quill)
+            }
+        }
+    })
 
     return quill.getContents()
 }

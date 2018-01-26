@@ -22,20 +22,61 @@ class TableCell
             this.tableBlot.contentWindow.Quill,
             this.tableBlot.textPad.mycelium,
             {
+                cssScope: this.tableBlot.textPad.options.cssScope,
+                initialContents: deltaContents,
+
+                formats: this.getFormatsForCell(),
+                tableFormats: [],
+                headers: this.getHeadersForCell(),
+                tableHeaders: null,
+
                 isTableCell: true,
                 tableBlot: this.tableBlot,
                 tableCell: this,
-                initialContents: deltaContents,
-
-                // formats are filtered automatically from inside the pad
-                formats: this.tableBlot.textPad.options.formats,
-                
-                cssScope: this.tableBlot.textPad.options.cssScope,
             }
         )
 
         // bind events
         this.textPad.on("text-change", this.onPadTextChange.bind(this))
+    }
+
+    /**
+     * Prepare formats for the cell
+     */
+    getFormatsForCell()
+    {
+        // get parent formats
+        let formats = this.tableBlot.textPad.options.formats
+
+        // explicit format overriding
+        if (this.tableBlot.textPad.options.tableFormats)
+            return this.tableBlot.textPad.options.tableFormats
+
+        // remove formats not listed in config
+        for (let i = 0; i < formats.length; i++)
+        {
+            if (this.tableBlot.textPad.mycelium.config["rich-text"]["table-formats"]
+                .indexOf(formats[i]) === -1)
+            {
+                formats.splice(i, 1)
+                i--
+            }
+        }
+
+        return formats
+    }
+
+    /**
+     * Prepare header settings for the cell
+     */
+    getHeadersForCell()
+    {
+        // if some overriding takes place
+        if (this.tableBlot.textPad.options.tableHeaders)
+            return this.tableBlot.textPad.options.tableHeaders
+
+        // otherwise just use the parent settings
+        return this.tableBlot.textPad.options.headers
     }
 
     /**

@@ -20,5 +20,6 @@ Documentation
         - [Updates](docs/storage-updates.md)
 - Client side
     - [Window manager](docs/window-manager.md)
+    - [Text pad](docs/text-pad.md)
 - Client-server interface
     - [Shroom serving](docs/single-shroom-http-interface.md)

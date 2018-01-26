@@ -146,8 +146,14 @@ class TextPopupWindow extends Window
     onBrowserWindowClick_popupHandler(e)
     {
         // clicking inside the window doesn't hide it
-        if (e.path.indexOf(this.element) >= 0)
-            return
+        let el = e.target
+        while (el.parentElement)
+        {
+            if (el === this.element) // click was inside the window
+                return
+
+            el = el.parentElement
+        }
 
         // delay the handling slightly so that quill can take
         // action on selection change

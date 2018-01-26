@@ -72,6 +72,21 @@ class Picker
         this.label = this.element.querySelector(".mc-picker__label")
         this.optionsElement = this.element.querySelector(".mc-picker__options")
 
+        this.updateOptions(this.options)
+    }
+
+    /**
+     * Update options to choose from
+     */
+    updateOptions(options)
+    {
+        // update property
+        this.options = options
+
+        // clear options
+        this.optionsElement.innerHTML = ""
+
+        // add options
         for (let i = 0; i < this.options.length; i++)
         {
             let option = this.document.createElement("div")

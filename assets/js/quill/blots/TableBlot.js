@@ -10,7 +10,7 @@ class TableBlot extends IframeBlot
     constructor(element, value)
     {
         super(element, value)
-        
+
         /**
          * Initial blot value
          */

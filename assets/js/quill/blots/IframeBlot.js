@@ -4,7 +4,6 @@ const Embed = Quill.import("blots/embed")
 const ClipCache = require("../IframeClipCache.js")
 
 const DIMENSION_TIMER_INTERVAL = 5000
-const CSS_SCOPE_CLASS_PREFIX = "css-scope__"
 
 class IframeBlot extends Embed
 {
@@ -166,6 +165,17 @@ class IframeBlot extends Embed
             copy.setAttribute("href", links[i].getAttribute("href"))
             copy.setAttribute("type", links[i].getAttribute("type"))
             copy.setAttribute("rel", links[i].getAttribute("rel"))
+
+            this.contentDocument.body.appendChild(copy)
+        }
+
+
+        let styles = this.element.ownerDocument.querySelectorAll("style")
+
+        for (let i = 0; i < styles.length; i++)
+        {
+            let copy = this.contentDocument.createElement("style")
+            copy.innerHTML = styles[i].innerHTML
 
             this.contentDocument.body.appendChild(copy)
         }

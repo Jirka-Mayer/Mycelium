@@ -2,6 +2,8 @@ const EventBus = require("./EventBus.js")
 const defaultOptions = require("./utils/defaultOptions.js")
 const cssClass = require("./utils/cssClass.js")
 
+const CSS_SCOPE_CLASS_PREFIX = "css-scope__"
+
 /**
  * A highly configurable text editor class, wrapping Quill.js
  */
@@ -29,6 +31,18 @@ class TextPad
          * Pad options
          */
         this.options = defaultOptions(options, {
+
+            /**
+             * The css scope/scopes to apply to the pad
+             * @type {string/array of string}
+             */
+            cssScope: null,
+
+            /**
+             * Delta describing the initial content if it should
+             * not be inferd from the inner HTML
+             */
+            initialContents: null,
             
             /**
              * Allowed formats
@@ -36,10 +50,19 @@ class TextPad
             formats: null,
 
             /**
-             * The css scope/scopes to apply to the pad
-             * @type {string/array of string}
+             * Explicit formats for the embeded tables
              */
-            cssScope: null,
+            tableFormats: null,
+
+            /**
+             * Header settings for the pad
+             */
+            headers: null,
+
+            /**
+             * Header settings for the embeded tables
+             */
+            tableHeaders: null,
 
             /**
              * Is this pad used in a table cell
@@ -56,19 +79,9 @@ class TextPad
              * If in a table, this is the reference to the table cell
              */
             tableCell: null,
-
-            /**
-             * Delta describing the initial content if it should
-             * not be inferd from the inner HTML
-             */
-            initialContents: null
         })
 
         this.applyCssScopes()
-
-        // remove certain formats for tables
-        if (this.options.isTableCell)
-            this.filterFormatsForTable()
 
         /**
          * Event bus for the instance
@@ -108,25 +121,9 @@ class TextPad
         {
             cssClass(
                 this.element,
-                "css-scope__" + this.options.cssScope[i],
+                CSS_SCOPE_CLASS_PREFIX + this.options.cssScope[i],
                 true
             )
-        }
-    }
-
-    /**
-     * Remove certain formats in tables
-     */
-    filterFormatsForTable()
-    {
-        for (let i = 0; i < this.options.formats.length; i++)
-        {
-            if (this.mycelium.config["rich-text"]["table-formats"]
-                .indexOf(this.options.formats[i]) === -1)
-            {
-                this.options.formats.splice(i, 1)
-                i--
-            }
         }
     }
 
@@ -337,7 +334,7 @@ class TextPad
             return
 
         TextPad.activePad = pad
-        TextPad.bus.fire("active-pad-change")
+        TextPad.bus.fire("active-pad-change", pad)
     }
 
     //////////////////////
