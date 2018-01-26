@@ -6,8 +6,9 @@ function setupQuill(window)
     // register blots
     require("./quill/blots/BoldBlot.js")(Quill)
     require("./quill/blots/ItalicBlot.js")(Quill)
-    require("./quill/blots/LinkBlot.js")(Quill)
     require("./quill/blots/HeaderBlot.js")(Quill)
+    require("./quill/blots/LinkBlot.js")(Quill)
+    require("./quill/blots/ImageBlot.js")(Quill)
     require("./quill/blots/TableBlot.js")(Quill)
 }
 

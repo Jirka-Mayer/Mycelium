@@ -27,6 +27,7 @@ return [
             "link",
             "header",
             "table",
+            "image",
         ],
 
         // formats allowed inside tables

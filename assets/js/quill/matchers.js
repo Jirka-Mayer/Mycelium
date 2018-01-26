@@ -10,6 +10,7 @@ return [
 
     ["iframe", require("./matchers/IframeMatcher.js")(Quill)],
     ["table", require("./matchers/TableMatcher.js")(Quill)],
+    ["figure", require("./matchers/ImageMatcher.js")(Quill)],
 ]
 
 }

@@ -62,6 +62,7 @@ class TextPadToolbar extends Window
         this.headerPicker.on("expand", this.onHeaderPickerExpand.bind(this))
 
         this.refs.link.addEventListener("click", this.onLinkClick.bind(this))
+        this.refs.image.addEventListener("click", this.onImageClick.bind(this))
         
         this.refs.table.addEventListener("click", this.onTableClick.bind(this))
 
@@ -186,6 +187,11 @@ class TextPadToolbar extends Window
     onLinkClick()
     {
         this.linkBlotProperties.createLink()
+    }
+
+    onImageClick()
+    {
+        TextPad.insertImage()
     }
 
     ////////////

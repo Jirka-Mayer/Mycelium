@@ -52,11 +52,6 @@ class TableBlot extends IframeBlot
          */
         this.lastSelectedCell = null
 
-        /**
-         * Event handlers to be freed on removal
-         */
-        this.eventHandlers = []
-
         this.createDOM()
 
         this.loadQuill(() => {

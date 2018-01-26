@@ -166,6 +166,28 @@ class TextPad
         return bounds
     }
 
+    ///////////
+    // Image //
+    ///////////
+
+    /**
+     * Inserts an image into the text
+     */
+    insertImage()
+    {
+        // upload spore and get it's link...
+        let url = "https://cdn-images-1.medium.com/max/200/1*rQJ6Hxaeh2ttdk3F2t0HtA.jpeg"
+
+        let range = this.quill.getSelection(true)
+        this.quill.insertText(range.index, "\n")
+        this.quill.insertEmbed(range.index + 1, "image", {
+            // static for debug
+            url: url,
+            title: "A very cool image indeed."
+        })
+        this.quill.setSelection(range.index + 2)
+    }
+
     ///////////////////
     // Table editing //
     ///////////////////
@@ -348,6 +370,8 @@ class TextPad
     /*
         Static methods reflecting isntance methods on the active pad
      */
+    
+    static insertImage() { if (TextPad.activePad) TextPad.activePad.insertImage() }
 
     // table editing mirrors
     static insertTable() { if (TextPad.activePad) TextPad.activePad.insertTable() }

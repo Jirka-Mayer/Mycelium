@@ -47,6 +47,14 @@ class Embed implements Block
                 $mangleContacts
             );
 
+        // render image embed
+        if (isset($this->value["image"]))
+            return ImageEmbed::toHtml(
+                $this->value["image"],
+                $this->attributes,
+                $renderer
+            );
+
         return "<pre>Unknown embed type.</pre>";
     }
 }
