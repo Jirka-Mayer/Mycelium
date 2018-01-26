@@ -46,7 +46,7 @@ class TableCell
     getFormatsForCell()
     {
         // get parent formats
-        let formats = this.tableBlot.textPad.options.formats
+        let formats = this.tableBlot.textPad.options.formats.slice()
 
         // explicit format overriding
         if (this.tableBlot.textPad.options.tableFormats)

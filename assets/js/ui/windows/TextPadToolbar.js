@@ -92,6 +92,8 @@ class TextPadToolbar extends Window
         let count = 0
         if (pad.options.headers)
             count = pad.options.headers.count
+        if (pad.options.formats && pad.options.formats.indexOf("header") === -1)
+            count = 0
         for (let i = 1; i <= count; i++)
             options.push({ key: "h" + i, label: "Heading " + i })
         this.headerPicker.updateOptions(options)

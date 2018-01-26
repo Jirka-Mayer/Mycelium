@@ -464,9 +464,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventBus = __webpack_require__(4);
+var EventBus = __webpack_require__(5);
 var defaultOptions = __webpack_require__(9);
-var cssClass = __webpack_require__(5);
+var cssClass = __webpack_require__(4);
 
 var CSS_SCOPE_CLASS_PREFIX = "css-scope__";
 
@@ -934,6 +934,34 @@ module.exports = TextPad;
 /* 4 */
 /***/ (function(module, exports) {
 
+/**
+ * Enables or disables a css class on an element
+ */
+function cssClass(element, cssClass, enable) {
+    var newClasses = "";
+    var found = false;
+
+    for (var i = 0; i < element.classList.length; i++) {
+        if (element.classList[i] == cssClass) {
+            found = true;
+
+            if (enable) newClasses += element.classList[i] + " ";
+        } else {
+            newClasses += element.classList[i] + " ";
+        }
+    }
+
+    if (!found && enable) newClasses += cssClass;
+
+    element.className = newClasses;
+}
+
+module.exports = cssClass;
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports) {
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -1001,34 +1029,6 @@ var EventBus = function () {
 }();
 
 module.exports = EventBus;
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports) {
-
-/**
- * Enables or disables a css class on an element
- */
-function cssClass(element, cssClass, enable) {
-    var newClasses = "";
-    var found = false;
-
-    for (var i = 0; i < element.classList.length; i++) {
-        if (element.classList[i] == cssClass) {
-            found = true;
-
-            if (enable) newClasses += element.classList[i] + " ";
-        } else {
-            newClasses += element.classList[i] + " ";
-        }
-    }
-
-    if (!found && enable) newClasses += cssClass;
-
-    element.className = newClasses;
-}
-
-module.exports = cssClass;
 
 /***/ }),
 /* 6 */
@@ -1666,7 +1666,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var clamp = __webpack_require__(54);
-var cssClass = __webpack_require__(5);
+var cssClass = __webpack_require__(4);
 var getRefs = __webpack_require__(2);
 var defaultOptions = __webpack_require__(9);
 
@@ -2735,7 +2735,7 @@ var TableCell = function () {
         key: "getFormatsForCell",
         value: function getFormatsForCell() {
             // get parent formats
-            var formats = this.tableBlot.textPad.options.formats;
+            var formats = this.tableBlot.textPad.options.formats.slice();
 
             // explicit format overriding
             if (this.tableBlot.textPad.options.tableFormats) return this.tableBlot.textPad.options.tableFormats;
@@ -2927,7 +2927,7 @@ module.exports = function (Quill) {
 
     var Embed = Quill.import("blots/embed");
     var ClipCache = __webpack_require__(6);
-    var cssClass = __webpack_require__(5);
+    var cssClass = __webpack_require__(4);
 
     var DIMENSION_TIMER_INTERVAL = 5000;
     var CSS_SCOPE_CLASS_PREFIX = "css-scope__";
@@ -3232,7 +3232,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var axios = __webpack_require__(31);
 var TextWidget = __webpack_require__(51);
 var RichTextWidget = __webpack_require__(16);
-var EventBus = __webpack_require__(4);
+var EventBus = __webpack_require__(5);
 
 // delay between a change and save call
 var AUTOSAVE_TIMEOUT = 2000;
@@ -4801,7 +4801,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var Window = __webpack_require__(17);
 var getRefs = __webpack_require__(2);
-var cssClass = __webpack_require__(5);
+var cssClass = __webpack_require__(4);
 var Picker = __webpack_require__(56);
 var Menu = __webpack_require__(58);
 var TextPad = __webpack_require__(3);
@@ -4876,6 +4876,7 @@ var TextPadToolbar = function (_Window) {
             var options = [{ key: "p", label: "Normal" }];
             var count = 0;
             if (pad.options.headers) count = pad.options.headers.count;
+            if (pad.options.formats && pad.options.formats.indexOf("header") === -1) count = 0;
             for (var i = 1; i <= count; i++) {
                 options.push({ key: "h" + i, label: "Heading " + i });
             }this.headerPicker.updateOptions(options);
@@ -5037,7 +5038,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventBus = __webpack_require__(4);
+var EventBus = __webpack_require__(5);
 
 /*
     Events:
@@ -5232,7 +5233,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventBus = __webpack_require__(4);
+var EventBus = __webpack_require__(5);
 
 /*
     Events:
@@ -5414,7 +5415,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 var TextPopupWindow = __webpack_require__(62);
 var getRefs = __webpack_require__(2);
-var cssClass = __webpack_require__(5);
+var cssClass = __webpack_require__(4);
 var TextPad = __webpack_require__(3);
 
 var LinkBlotProperties = function (_TextPopupWindow) {

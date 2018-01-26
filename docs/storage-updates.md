@@ -18,6 +18,8 @@ so you can exactly identify what has been completed and what has not.
 When updating you should first update the code via composer. This fetches the
 latest updates and makes sure they will be able to run.
 
+    composer update jirka-mayer/mycelium
+
 Then you run:
 
     php artisan mycelium:update
