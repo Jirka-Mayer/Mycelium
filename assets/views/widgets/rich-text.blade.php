@@ -70,7 +70,7 @@
         {!!
             $renderer->renderHtml(
                 $shroom->data("public")->get($key, $default),
-                false
+                false, false
             )
         !!}
     </div>

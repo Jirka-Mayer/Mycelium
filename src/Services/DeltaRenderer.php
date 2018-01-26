@@ -15,9 +15,9 @@ class DeltaRenderer
      * @param bool $mangleContacts Mangle emails to it's hard to scrape them
      * @return string
      */
-    public function renderHtml($delta, $mangleContacts = true)
+    public function renderHtml($delta, $mangleContacts = true, $trimEmbedNewlines = true)
     {
-        $blocks = $this->deltaToBlocks($delta);
+        $blocks = $this->deltaToBlocks($delta, $trimEmbedNewlines);
         $html = $this->blocksToHtml($blocks, $mangleContacts);
         return $html;
     }
@@ -50,7 +50,7 @@ class DeltaRenderer
     /**
      * Converts delta format into an array of blocks (line/embed)
      */
-    public function deltaToBlocks($delta)
+    public function deltaToBlocks($delta, $trimEmbedNewlines = true)
     {
         $blocks = [];
         $block = new Line;
@@ -121,7 +121,8 @@ class DeltaRenderer
             }
         }
 
-        $this->trimEmbedNewlines($blocks);
+        if ($trimEmbedNewlines)
+            $this->trimEmbedNewlines($blocks);
 
         return $blocks;
     }
