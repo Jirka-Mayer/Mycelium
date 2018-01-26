@@ -21,10 +21,16 @@ class ImageEmbed
             $value["title"] = "";
 
         $html = "<figure>";
+
+        /*
+            This way add resolution information:
+            
+            srcset="swing-200.jpg 200w, swing-400.jpg 400w, swing-800.jpg 800w"
+
+            https://cloudfour.com/thinks/dont-use-picture-most-of-the-time/
+         */
         
-        $html .= "<picture>";
         $html .= '<img src="' . htmlentities($value["url"]) . '">';
-        $html .= "</picture>";
 
         $html .= '<figcaption>' . htmlentities($value["title"]) . '</figcaption>';
 

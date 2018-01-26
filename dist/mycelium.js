@@ -3391,6 +3391,46 @@ var Shroom = function () {
         }
 
         ////////////
+        // Spores //
+        ////////////
+
+        /**
+         * User selects a file and it will be uploaded as a new spore
+         * Spore handle is returned in the promise
+         */
+
+    }, {
+        key: "uploadNewSpore",
+        value: function uploadNewSpore() {
+            var fileInput = this.document.createElement("input");
+            fileInput.type = "file";
+
+            fileInput.onchange = function () {
+
+                if (fileInput.files.length != 1) {
+                    console.warn("improper count");
+                    return;
+                }
+
+                var files = fileInput.files;
+                var formData = new FormData();
+                formData.append("my-file", files[0], files[0].name);
+
+                axios({
+                    method: "post",
+                    url: "upload-file",
+                    data: formData,
+                    config: { headers: { "Content-Type": "multipart/form-data" } }
+                }).then(function (response) {
+                    console.log(response);
+                });
+            };
+
+            // open the dialog
+            fileInput.click();
+        }
+
+        ////////////
         // Saving //
         ////////////
 
@@ -6272,7 +6312,7 @@ module.exports = function (Quill) {
         }, {
             key: "createDOM",
             value: function createDOM() {
-                this.contentDiv.innerHTML = "\n            <figure>\n                <picture>\n                    <img ref=\"img\">\n                </picture>\n                <figcaption ref=\"title\"></figcaption>\n            </figure>\n        ";
+                this.contentDiv.innerHTML = "\n            <figure>\n                <img ref=\"img\">\n                <figcaption ref=\"title\"></figcaption>\n            </figure>\n        ";
 
                 // get image reference
                 var refs = getRefs(this.contentDiv);

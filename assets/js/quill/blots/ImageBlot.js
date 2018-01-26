@@ -42,9 +42,7 @@ class ImageBlot extends IframeBlot
     {
         this.contentDiv.innerHTML = `
             <figure>
-                <picture>
-                    <img ref="img">
-                </picture>
+                <img ref="img">
                 <figcaption ref="title"></figcaption>
             </figure>
         `

@@ -135,6 +135,47 @@ class Shroom
     }
 
     ////////////
+    // Spores //
+    ////////////
+
+    /**
+     * User selects a file and it will be uploaded as a new spore
+     * Spore handle is returned in the promise
+     */
+    uploadNewSpore()
+    {
+        let fileInput = this.document.createElement("input")
+        fileInput.type = "file"
+
+        fileInput.onchange = function () {
+            
+            if (fileInput.files.length != 1)
+            {
+                console.warn("improper count")
+                return
+            }
+
+            let files = fileInput.files
+            let formData = new FormData()
+            formData.append("my-file", files[0], files[0].name)
+
+            axios({
+                method: "post",
+                url: "upload-file",
+                data: formData,
+                config: { headers: {"Content-Type": "multipart/form-data"} }
+            })
+            .then((response) => {
+                console.log(response)
+            })
+
+        }
+
+        // open the dialog
+        fileInput.click()
+    }
+
+    ////////////
     // Saving //
     ////////////
 
