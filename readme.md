@@ -21,5 +21,6 @@ Documentation
 - Client side
     - [Window manager](docs/window-manager.md)
     - [Text pad](docs/text-pad.md)
+    - [CSS scopes](docs/css-scopes.md)
 - Client-server interface
     - [Shroom serving](docs/single-shroom-http-interface.md)

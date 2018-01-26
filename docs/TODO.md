@@ -13,9 +13,6 @@ TODO
 
 ## Documentation
 
-- text pad
-- css scopes
-
 
 ## Bugs
 
