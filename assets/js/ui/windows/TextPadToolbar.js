@@ -87,6 +87,9 @@ class TextPadToolbar extends Window
 
     onActiveTextPadChange(pad)
     {
+        if (pad === null)
+            return
+
         // update header selection
         let options = [{ key: "p", label: "Normal" }]
         let count = 0

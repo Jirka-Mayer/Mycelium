@@ -4872,6 +4872,8 @@ var TextPadToolbar = function (_Window) {
     }, {
         key: "onActiveTextPadChange",
         value: function onActiveTextPadChange(pad) {
+            if (pad === null) return;
+
             // update header selection
             var options = [{ key: "p", label: "Normal" }];
             var count = 0;
