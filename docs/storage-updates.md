@@ -26,6 +26,8 @@ Then you run:
 
 This should perform all updates automatically.
 
+> Also don't forget to update assets - `php artisan vendor:publish`
+
 
 ## How does the update process works
 

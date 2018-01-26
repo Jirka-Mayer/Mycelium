@@ -42,12 +42,12 @@ class MyceliumServiceProvider extends ServiceProvider
 
             __DIR__ . "/../dist/mycelium.css" =>
                 public_path("vendor/mycelium/mycelium.css")
-        ], "public");
+        ], "mycelium-public");
 
         $this->publishes([
             __DIR__ . "/../assets/config/config.php" =>
                 config_path("mycelium.php")
-        ], "config");
+        ], "mycelium-config");
 
         if ($this->app->runningInConsole())
         {
