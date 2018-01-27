@@ -261,4 +261,25 @@ trait ServesShroom
             "id" => $this->shroomSlug()
         ]);
     }
+
+    ////////////
+    // Spores //
+    ////////////
+
+    /**
+     * Handles new spore upload
+     */
+    public function uploadSpore(Request $request)
+    {
+        // initialize shroom instance
+        $app->call([$this, "obtainShroom"]);
+
+        // check rights
+        if (!$app->call([$this, "isUserAnEditor"]))
+            throw new AuthorizationException;
+
+        // do stuff ...
+
+        return ["success" => true];
+    }
 }

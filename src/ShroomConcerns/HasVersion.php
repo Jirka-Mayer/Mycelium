@@ -12,12 +12,11 @@ trait HasVersion
     public function getCurrentVersion()
     {
         // no version file
-        if (!static::$filesystem->exists($this->getDirectoryName(null, "version.json")))
+        if (!$this->storage()->exists("version.json"))
             return null;
 
         // load version file
-        $versionFile = static::$filesystem->get(
-            $this->getDirectoryName(null, "version.json"));
+        $versionFile = $this->storage()->get("version.json");
         $versionFile = json_decode($versionFile, true);
 
         // parsing error
@@ -33,12 +32,11 @@ trait HasVersion
     public function setCurrentVersion($version)
     {
         // no version file, create one
-        if (!static::$filesystem->exists($this->getDirectoryName(null, "version.json")))
-            static::$filesystem->put($this->getDirectoryName(null, "version.json"), "{}");
+        if (!$this->storage()->exists("version.json"))
+            $this->storage()->put("version.json", "{}");
 
         // load version file
-        $versionFile = static::$filesystem->get(
-            $this->getDirectoryName(null, "version.json"));
+        $versionFile = $this->storage()->get("version.json");
         $versionFile = json_decode($versionFile, true);
 
         // parsing error
@@ -49,8 +47,8 @@ trait HasVersion
         $versionFile["shroom"] = $version;
 
         // save the file
-        static::$filesystem->put(
-            $this->getDirectoryName(null, "version.json"),
+        $this->storage()->put(
+            "version.json",
             json_encode($versionFile, JSON_PRETTY_PRINT)
         );
     }

@@ -130,4 +130,17 @@ class ShroomTest extends TestCase
 
         $this->assertEquals(42, $loadedShroom->data()->get("bar"));
     }
+
+    ////////////
+    // Spores //
+    ////////////
+
+    /**
+     * @test
+     */
+    /*public function it_stores_new_spores()
+    {
+        $shroom = new Shroom(["title" => "My shroom"]);
+        $shroom->save();
+    }*/
 }

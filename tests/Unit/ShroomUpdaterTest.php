@@ -38,18 +38,6 @@ class ShroomUpdaterTest extends TestCase
     /**
      * @test
      */
-    public function it_obtains_shroom_filesystem()
-    {
-        $shroom = Shroom::create(["title" => "My shroom"]);
-
-        $fs = $this->updater->createShroomFilesystem($shroom);
-
-        $this->assertTrue($fs->exists("version.json"));
-    }
-
-    /**
-     * @test
-     */
     public function shroom_returns_its_version()
     {
         $shroom = Shroom::create(["title" => "My shroom"]);
@@ -64,8 +52,7 @@ class ShroomUpdaterTest extends TestCase
         );
 
         // no version file
-        $fs = $this->updater->createShroomFilesystem($shroom);
-        $fs->delete("version.json");
+        $shroom->storage()->delete("version.json");
 
         $this->assertEquals(
             null,
@@ -82,10 +69,9 @@ class ShroomUpdaterTest extends TestCase
 
         $shroom->setCurrentVersion("new_version");
 
-        $fs = $this->updater->createShroomFilesystem($shroom);
         $this->assertEquals(
             "new_version",
-            json_decode($fs->get("version.json"), true)["shroom"]
+            json_decode($shroom->storage()->get("version.json"), true)["shroom"]
         );
     }
 
@@ -106,11 +92,10 @@ class ShroomUpdaterTest extends TestCase
         $this->updater->updateShroom($shroom);
 
         // update has done some changes
-        $fs = $this->updater->createShroomFilesystem($shroom);
-        $this->assertTrue($fs->exists("shroom-update-has-run.txt"));
+        $this->assertTrue($shroom->storage()->exists("shroom-update-has-run.txt"));
         $this->assertEquals(
             "Yep, it did!",
-            $fs->get("shroom-update-has-run.txt")
+            $shroom->storage()->get("shroom-update-has-run.txt")
         );
 
         // version has changed

@@ -10,7 +10,8 @@ class Shroom extends Model
         ShroomConcerns\GeneratesSlug,
         ShroomConcerns\HasFilesystem,
         ShroomConcerns\HasRevisions,
-        ShroomConcerns\HasVersion;
+        ShroomConcerns\HasVersion,
+        ShroomConcerns\HasSpores;
 
     /**
      * Database table to save shrooms to
@@ -126,8 +127,8 @@ class Shroom extends Model
         $overview->put("revisions", $this->revisions);
 
         // save to file
-        static::$filesystem->put(
-            $this->getDirectoryName(null, "overview.json"),
+        $this->storage()->put(
+            "overview.json",
             $overview->toJson(JSON_PRETTY_PRINT)
         );
     }

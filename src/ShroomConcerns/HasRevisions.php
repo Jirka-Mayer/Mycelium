@@ -103,17 +103,13 @@ trait HasRevisions
                 ShroomRevision::fromDatabase(
                     $index,
                     $attributes,
-                    static::$filesystem->get(
-                        $this->getDirectoryName(null, "revisions/revision-{$index}.json")
-                    )
+                    $this->storage()->get("revisions/revision-{$index}.json")
                 )
             );
         }
 
         $this->revisionBag->put("master", ShroomRevision::master(
-            static::$filesystem->get(
-                $this->getDirectoryName(null, "revisions/revision-master.json")
-            )
+            $this->storage()->get("revisions/revision-master.json")
         ));
     }
 
@@ -146,8 +142,8 @@ trait HasRevisions
         // save to files
         foreach ($this->revisionBag as $index => $revision)
         {
-            static::$filesystem->put(
-                $this->getDirectoryName(null, "revisions/revision-{$index}.json"),
+            $this->storage()->put(
+                "revisions/revision-{$index}.json",
                 $revision->exportToFile()
             );
         }

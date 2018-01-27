@@ -74,7 +74,7 @@ class ShroomUpdater
         // run the update
         $this->updateList->runUpdate(
             $update,
-            $this->createShroomFilesystem($shroom),
+            $shroom->storage(),
             $this->log
         );
 
@@ -86,18 +86,6 @@ class ShroomUpdater
 
         // log that we're done
         $this->log->info("Shroom update successful, new version is {$update["name"]}.");
-    }
-
-    /**
-     * Returns a filesystem pointing to the shroom directory
-     */
-    public function createShroomFilesystem(Shroom $shroom)
-    {
-        $fullPath = Shroom::getFilesystem()->path($shroom->getDirectoryName());
-
-        return app("filesystem")->createLocalDriver([
-            "root" => $fullPath
-        ]);
     }
 
     /**
