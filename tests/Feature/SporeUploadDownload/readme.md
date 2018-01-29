@@ -1,0 +1,1 @@
+Tests spore uploading and downloading.

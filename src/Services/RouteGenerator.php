@@ -31,12 +31,12 @@ class RouteGenerator
         );
 
         Route::get(
-            $url . "resource/{type}/{handle}",
+            $url . "resource/{handle}",
             $controller . "@getResource"
         );
 
         Route::get(
-            $url . "resource/{type}/{params}/{handle}",
+            $url . "resource/{params}/{handle}",
             $controller . "@getResourceWithParams"
         );
     }

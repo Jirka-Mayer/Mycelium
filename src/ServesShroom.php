@@ -271,15 +271,6 @@ trait ServesShroom
      */
     public function uploadSpore(Request $request, Container $app)
     {
-        // check if valid
-        if (!$request->file("spore")->isValid())
-        {
-            return [
-                "success" => false,
-                "message" => "File was not uploaded."
-            ];
-        }
-
         // initialize shroom instance
         $app->call([$this, "obtainShroom"]);
 
@@ -287,42 +278,48 @@ trait ServesShroom
         if (!$app->call([$this, "isUserAnEditor"]))
             throw new AuthorizationException;
 
-        // put the spore into the shroom
-        $spore = $this->shroom->putNewSpore(
-            $request->file("spore"),
-            $request->input("type")
-        );
-
-        // do post-upload handler specific actions
-        // TODO ...
-
-        return [
-            "success" => true,
-            "spore" => $spore
-        ];
+        // handle a part upload
+        return $this->shroom->sporePartUploaded($request->file("resource"), [
+            "type" => $request->input("type"),
+            "partCount" => $request->input("partCount", 1),
+            "partIndex" => $request->input("partIndex", 0),
+            "uploadId" => $request->input("uploadId")
+        ]);
     }
 
     /**
      * Handles request for a resource
      */
-    public function getResource($type, $handle, Mycelium $mycelium, Container $app)
+    public function getResource($handle, Mycelium $mycelium, Container $app)
     {
-        return $this->getResourceWithParams($type, null, $handle, $mycelium, $app);
+        return $this->getResourceWithParams(null, $handle, $mycelium, $app);
     }
 
     /**
      * Handles request for a resource with parameters
      */
-    public function getResourceWithParams($type, $params, $handle, Mycelium $mycelium, Container $app)
+    public function getResourceWithParams($params, $handle, Mycelium $mycelium, Container $app)
     {
         // initialize shroom instance
         $app->call([$this, "obtainShroom"]);
 
-        // resolve the spore handler
-        $handler = $mycelium->resolveSporeHandler($type, $this->shroom);
+        // get public revision
+        $revision = $this->shroom->revision("public");
+        if ($revision === null)
+            abrot(404);
 
-        // set the spore handle
-        $handler->setHandle($handle);
+        // check that the spore exists
+        if (!$revision->spores->has($handle))
+            abort(404);
+
+        // get the spore as collection
+        $spore = collect($revision->spores[$handle]);
+
+        // resolve the spore handler
+        $handler = $mycelium->resolveSporeHandler($spore["type"], $this->shroom);
+
+        // set spore reference
+        $handler->setSpore($spore);
 
         // set parameters to the handler
         $handler->setParams($params);

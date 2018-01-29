@@ -10,6 +10,7 @@ use Monolog\Logger as Monolog;
 use Mycelium\Services\Mycelium;
 use Mycelium\Services\RouteGenerator;
 use Mycelium\Services\DeltaRenderer;
+use Mycelium\SporeHandlers\FileHandler;
 use Mycelium\SporeHandlers\ImageHandler;
 use Mycelium\Update\MyceliumUpdater;
 use Mycelium\Update\ShroomUpdater;
@@ -20,6 +21,7 @@ class MyceliumServiceProvider extends ServiceProvider
     public function boot()
     {
         // register spore handlers
+        $this->app["mycelium"]->registerSporeHandler("file", FileHandler::class);
         $this->app["mycelium"]->registerSporeHandler("image", ImageHandler::class);
 
         Shroom::setFilesystem($this->app["mycelium.filesystem"]);

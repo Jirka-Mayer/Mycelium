@@ -60,7 +60,7 @@ Only the listed data keys will be updated.
 > Key removal is not supported (not needed).
 
 
-`GET /resource/{type}/{params?}/{sporeId}`
+`GET /resource/{params?}/{sporeId}`
 ------------------------------------------
 
 For downloading spores.

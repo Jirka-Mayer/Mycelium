@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 18);
+/******/ 	return __webpack_require__(__webpack_require__.s = 21);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -70,8 +70,8 @@
 "use strict";
 
 
-var bind = __webpack_require__(11);
-var isBuffer = __webpack_require__(33);
+var bind = __webpack_require__(13);
+var isBuffer = __webpack_require__(37);
 
 /*global toString:true*/
 
@@ -377,6 +377,26 @@ module.exports = {
 /* 1 */
 /***/ (function(module, exports) {
 
+/**
+ * Return an object of all refs in a given element
+ *
+ * Ref is an element with the ref="..." tag
+ */
+function getRefs(element) {
+    var refs = {};
+    var elements = element.querySelectorAll('[ref]');
+
+    for (var i = 0; i < elements.length; i++) {
+        refs[elements[i].getAttribute("ref")] = elements[i];
+    }return refs;
+}
+
+module.exports = getRefs;
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
 module.exports = function (Quill) {
 
     /**
@@ -437,35 +457,263 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 2 */
+/* 3 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var asap = __webpack_require__(19);
+
+function noop() {}
+
+// States:
+//
+// 0 - pending
+// 1 - fulfilled with _value
+// 2 - rejected with _value
+// 3 - adopted the state of another promise, _value
+//
+// once the state is no longer pending (0) it is immutable
+
+// All `_` prefixed properties will be reduced to `_{random number}`
+// at build time to obfuscate them and discourage their use.
+// We don't use symbols or Object.defineProperty to fully hide them
+// because the performance isn't good enough.
+
+
+// to avoid using try/catch inside critical functions, we
+// extract them to here.
+var LAST_ERROR = null;
+var IS_ERROR = {};
+function getThen(obj) {
+  try {
+    return obj.then;
+  } catch (ex) {
+    LAST_ERROR = ex;
+    return IS_ERROR;
+  }
+}
+
+function tryCallOne(fn, a) {
+  try {
+    return fn(a);
+  } catch (ex) {
+    LAST_ERROR = ex;
+    return IS_ERROR;
+  }
+}
+function tryCallTwo(fn, a, b) {
+  try {
+    fn(a, b);
+  } catch (ex) {
+    LAST_ERROR = ex;
+    return IS_ERROR;
+  }
+}
+
+module.exports = Promise;
+
+function Promise(fn) {
+  if (typeof this !== 'object') {
+    throw new TypeError('Promises must be constructed via new');
+  }
+  if (typeof fn !== 'function') {
+    throw new TypeError('Promise constructor\'s argument is not a function');
+  }
+  this._75 = 0;
+  this._83 = 0;
+  this._18 = null;
+  this._38 = null;
+  if (fn === noop) return;
+  doResolve(fn, this);
+}
+Promise._47 = null;
+Promise._71 = null;
+Promise._44 = noop;
+
+Promise.prototype.then = function(onFulfilled, onRejected) {
+  if (this.constructor !== Promise) {
+    return safeThen(this, onFulfilled, onRejected);
+  }
+  var res = new Promise(noop);
+  handle(this, new Handler(onFulfilled, onRejected, res));
+  return res;
+};
+
+function safeThen(self, onFulfilled, onRejected) {
+  return new self.constructor(function (resolve, reject) {
+    var res = new Promise(noop);
+    res.then(resolve, reject);
+    handle(self, new Handler(onFulfilled, onRejected, res));
+  });
+}
+function handle(self, deferred) {
+  while (self._83 === 3) {
+    self = self._18;
+  }
+  if (Promise._47) {
+    Promise._47(self);
+  }
+  if (self._83 === 0) {
+    if (self._75 === 0) {
+      self._75 = 1;
+      self._38 = deferred;
+      return;
+    }
+    if (self._75 === 1) {
+      self._75 = 2;
+      self._38 = [self._38, deferred];
+      return;
+    }
+    self._38.push(deferred);
+    return;
+  }
+  handleResolved(self, deferred);
+}
+
+function handleResolved(self, deferred) {
+  asap(function() {
+    var cb = self._83 === 1 ? deferred.onFulfilled : deferred.onRejected;
+    if (cb === null) {
+      if (self._83 === 1) {
+        resolve(deferred.promise, self._18);
+      } else {
+        reject(deferred.promise, self._18);
+      }
+      return;
+    }
+    var ret = tryCallOne(cb, self._18);
+    if (ret === IS_ERROR) {
+      reject(deferred.promise, LAST_ERROR);
+    } else {
+      resolve(deferred.promise, ret);
+    }
+  });
+}
+function resolve(self, newValue) {
+  // Promise Resolution Procedure: https://github.com/promises-aplus/promises-spec#the-promise-resolution-procedure
+  if (newValue === self) {
+    return reject(
+      self,
+      new TypeError('A promise cannot be resolved with itself.')
+    );
+  }
+  if (
+    newValue &&
+    (typeof newValue === 'object' || typeof newValue === 'function')
+  ) {
+    var then = getThen(newValue);
+    if (then === IS_ERROR) {
+      return reject(self, LAST_ERROR);
+    }
+    if (
+      then === self.then &&
+      newValue instanceof Promise
+    ) {
+      self._83 = 3;
+      self._18 = newValue;
+      finale(self);
+      return;
+    } else if (typeof then === 'function') {
+      doResolve(then.bind(newValue), self);
+      return;
+    }
+  }
+  self._83 = 1;
+  self._18 = newValue;
+  finale(self);
+}
+
+function reject(self, newValue) {
+  self._83 = 2;
+  self._18 = newValue;
+  if (Promise._71) {
+    Promise._71(self, newValue);
+  }
+  finale(self);
+}
+function finale(self) {
+  if (self._75 === 1) {
+    handle(self, self._38);
+    self._38 = null;
+  }
+  if (self._75 === 2) {
+    for (var i = 0; i < self._38.length; i++) {
+      handle(self, self._38[i]);
+    }
+    self._38 = null;
+  }
+}
+
+function Handler(onFulfilled, onRejected, promise){
+  this.onFulfilled = typeof onFulfilled === 'function' ? onFulfilled : null;
+  this.onRejected = typeof onRejected === 'function' ? onRejected : null;
+  this.promise = promise;
+}
+
+/**
+ * Take a potentially misbehaving resolver function and make sure
+ * onFulfilled and onRejected are only called once.
+ *
+ * Makes no guarantees about asynchrony.
+ */
+function doResolve(fn, promise) {
+  var done = false;
+  var res = tryCallTwo(fn, function (value) {
+    if (done) return;
+    done = true;
+    resolve(promise, value);
+  }, function (reason) {
+    if (done) return;
+    done = true;
+    reject(promise, reason);
+  });
+  if (!done && res === IS_ERROR) {
+    done = true;
+    reject(promise, LAST_ERROR);
+  }
+}
+
+
+/***/ }),
+/* 4 */
 /***/ (function(module, exports) {
 
 /**
- * Return an object of all refs in a given element
- *
- * Ref is an element with the ref="..." tag
+ * Enables or disables a css class on an element
  */
-function getRefs(element) {
-    var refs = {};
-    var elements = element.querySelectorAll('[ref]');
+function cssClass(element, cssClass, enable) {
+    var newClasses = "";
+    var found = false;
 
-    for (var i = 0; i < elements.length; i++) {
-        refs[elements[i].getAttribute("ref")] = elements[i];
-    }return refs;
+    for (var i = 0; i < element.classList.length; i++) {
+        if (element.classList[i] == cssClass) {
+            found = true;
+
+            if (enable) newClasses += element.classList[i] + " ";
+        } else {
+            newClasses += element.classList[i] + " ";
+        }
+    }
+
+    if (!found && enable) newClasses += cssClass;
+
+    element.className = newClasses;
 }
 
-module.exports = getRefs;
+module.exports = cssClass;
 
 /***/ }),
-/* 3 */
+/* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventBus = __webpack_require__(5);
-var defaultOptions = __webpack_require__(9);
+var EventBus = __webpack_require__(7);
+var defaultOptions = __webpack_require__(11);
 var cssClass = __webpack_require__(4);
 
 var CSS_SCOPE_CLASS_PREFIX = "css-scope__";
@@ -563,7 +811,7 @@ var TextPad = function () {
             formats: this.options.formats,
             modules: {
                 clipboard: {
-                    matchers: __webpack_require__(10)(Quill),
+                    matchers: __webpack_require__(12)(Quill),
                     matchVisual: false
                 }
             }
@@ -962,35 +1210,49 @@ TextPad.on = TextPad.bus.on.bind(TextPad.bus);
 module.exports = TextPad;
 
 /***/ }),
-/* 4 */
+/* 6 */
 /***/ (function(module, exports) {
 
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
 /**
- * Enables or disables a css class on an element
+ * Chache for iframe blot clipboard functioning
  */
-function cssClass(element, cssClass, enable) {
-    var newClasses = "";
-    var found = false;
-
-    for (var i = 0; i < element.classList.length; i++) {
-        if (element.classList[i] == cssClass) {
-            found = true;
-
-            if (enable) newClasses += element.classList[i] + " ";
-        } else {
-            newClasses += element.classList[i] + " ";
-        }
+var IframeClipCache = function () {
+    function IframeClipCache() {
+        _classCallCheck(this, IframeClipCache);
     }
 
-    if (!found && enable) newClasses += cssClass;
+    _createClass(IframeClipCache, null, [{
+        key: "generateId",
+        value: function generateId() {
+            return Math.random().toString(36).substring(7);
+        }
+    }, {
+        key: "setValue",
+        value: function setValue(id, value) {
+            IframeClipCache.cache[id] = value;
+        }
+    }, {
+        key: "getValue",
+        value: function getValue(id) {
+            if (IframeClipCache.cache[id] === undefined) return null;
 
-    element.className = newClasses;
-}
+            return IframeClipCache.cache[id];
+        }
+    }]);
 
-module.exports = cssClass;
+    return IframeClipCache;
+}();
+
+IframeClipCache.cache = {};
+
+module.exports = IframeClipCache;
 
 /***/ }),
-/* 5 */
+/* 7 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -1062,56 +1324,14 @@ var EventBus = function () {
 module.exports = EventBus;
 
 /***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-/**
- * Chache for iframe blot clipboard functioning
- */
-var IframeClipCache = function () {
-    function IframeClipCache() {
-        _classCallCheck(this, IframeClipCache);
-    }
-
-    _createClass(IframeClipCache, null, [{
-        key: "generateId",
-        value: function generateId() {
-            return Math.random().toString(36).substring(7);
-        }
-    }, {
-        key: "setValue",
-        value: function setValue(id, value) {
-            IframeClipCache.cache[id] = value;
-        }
-    }, {
-        key: "getValue",
-        value: function getValue(id) {
-            if (IframeClipCache.cache[id] === undefined) return null;
-
-            return IframeClipCache.cache[id];
-        }
-    }]);
-
-    return IframeClipCache;
-}();
-
-IframeClipCache.cache = {};
-
-module.exports = IframeClipCache;
-
-/***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 /* WEBPACK VAR INJECTION */(function(process) {
 
 var utils = __webpack_require__(0);
-var normalizeHeaderName = __webpack_require__(36);
+var normalizeHeaderName = __webpack_require__(40);
 
 var DEFAULT_CONTENT_TYPE = {
   'Content-Type': 'application/x-www-form-urlencoded'
@@ -1127,10 +1347,10 @@ function getDefaultAdapter() {
   var adapter;
   if (typeof XMLHttpRequest !== 'undefined') {
     // For browsers use XHR adapter
-    adapter = __webpack_require__(12);
+    adapter = __webpack_require__(14);
   } else if (typeof process !== 'undefined') {
     // For node use HTTP adapter
-    adapter = __webpack_require__(12);
+    adapter = __webpack_require__(14);
   }
   return adapter;
 }
@@ -1201,10 +1421,10 @@ utils.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
 
 module.exports = defaults;
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(35)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(39)))
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, exports, __webpack_require__) {
 
 
@@ -1212,25 +1432,25 @@ function setupQuill(window) {
     var Quill = window.Quill;
 
     // register blots
-    __webpack_require__(20)(Quill);
-    __webpack_require__(21)(Quill);
     __webpack_require__(23)(Quill);
-    __webpack_require__(22)(Quill);
-    __webpack_require__(71)(Quill);
     __webpack_require__(24)(Quill);
+    __webpack_require__(25)(Quill);
+    __webpack_require__(26)(Quill);
+    __webpack_require__(27)(Quill);
+    __webpack_require__(28)(Quill);
 }
 
 function registerClasses(window) {
-    window.mycelium.class.Shroom = __webpack_require__(30);
+    window.mycelium.class.Shroom = __webpack_require__(34);
 
     if (!window.mycelium.class.widgets) window.mycelium.class.widgets = {};
 
-    window.mycelium.class.widgets.RichText = __webpack_require__(16);
+    window.mycelium.class.widgets.RichText = __webpack_require__(18);
 
     if (!window.mycelium.class.ui) window.mycelium.class.ui = {};
 
-    window.mycelium.class.ui.Toolbar = __webpack_require__(52);
-    window.mycelium.class.ui.WindowManager = __webpack_require__(65);
+    window.mycelium.class.ui.Toolbar = __webpack_require__(66);
+    window.mycelium.class.ui.WindowManager = __webpack_require__(79);
 }
 
 function createShroom(window, shroomData) {
@@ -1253,7 +1473,319 @@ module.exports = {
 };
 
 /***/ }),
-/* 9 */
+/* 10 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+module.exports = function (Quill) {
+
+    var BlockEmbed = Quill.import("blots/block/embed");
+    var ClipCache = __webpack_require__(6);
+    var cssClass = __webpack_require__(4);
+
+    var DIMENSION_TIMER_INTERVAL = 5000;
+    var CSS_SCOPE_CLASS_PREFIX = "css-scope__";
+
+    var IframeBlot = function (_BlockEmbed) {
+        _inherits(IframeBlot, _BlockEmbed);
+
+        function IframeBlot(element, value) {
+            _classCallCheck(this, IframeBlot);
+
+            /*
+                NOTE: I'm creating custom variables even if they already
+                exist on the blot, because I like consistent naming with
+                the rest of my library
+             */
+
+            /**
+             * The html element
+             */
+            var _this = _possibleConstructorReturn(this, (IframeBlot.__proto__ || Object.getPrototypeOf(IframeBlot)).call(this, element, value));
+
+            _this.element = element;
+
+            /**
+             * ID of the clip-cache storage
+             */
+            _this.clipCacheId = ClipCache.generateId();
+
+            // a tick to let Quill put the element into the DOM
+            setTimeout(function () {
+
+                // check compatibility
+                if (!element.contentDocument || !element.contentWindow) {
+                    console.error("iframe javascript interface not supported");
+                    return;
+                }
+
+                _this.initialize();
+            }, 0);
+            return _this;
+        }
+
+        _createClass(IframeBlot, [{
+            key: "deleteAt",
+            value: function deleteAt(index, length) {
+                if (this.delete) this.delete();
+
+                _get(IframeBlot.prototype.__proto__ || Object.getPrototypeOf(IframeBlot.prototype), "deleteAt", this).call(this, index, length);
+            }
+        }, {
+            key: "value",
+            value: function value() {
+                // override this
+                return _get(IframeBlot.prototype.__proto__ || Object.getPrototypeOf(IframeBlot.prototype), "value", this).call(this);
+            }
+
+            ///////////////////////////
+            // Custom implementation //
+            ///////////////////////////
+
+            /**
+             * Initialize all necessary things
+             */
+
+        }, {
+            key: "initialize",
+            value: function initialize() {
+                /**
+                 * Parent text pad
+                 */
+                this.textPad = null;
+
+                /**
+                 * Document of the iframe content
+                 */
+                this.contentDocument = this.element.contentDocument;
+
+                /**
+                 * Window of the iframe content
+                 */
+                this.contentWindow = this.element.contentWindow;
+
+                /**
+                 * Body of the content document
+                 */
+                this.contentBody = this.contentDocument.body;
+
+                /**
+                 * Content div of the iframe
+                 */
+                this.contentDiv = null;
+
+                this.getParentTextPad();
+
+                this.setupDomAndStyles();
+
+                this.startDimensionTimer();
+            }
+
+            /**
+             * Finds the parent text pad element
+             */
+
+        }, {
+            key: "getParentTextPad",
+            value: function getParentTextPad() {
+                // find parent widet
+                var el = this.element;
+                var padElement = null;
+
+                while (el.parentElement) {
+                    if (el.getAttribute("mycelium-text-pad") === "here") {
+                        padElement = el;
+                        break;
+                    }
+
+                    el = el.parentElement;
+                }
+
+                if (!padElement) {
+                    console.error("Unable to find parent text pad!");
+                    return null;
+                }
+
+                this.textPad = padElement.textPad;
+            }
+
+            /**
+             * Create content document
+             */
+
+        }, {
+            key: "setupDomAndStyles",
+            value: function setupDomAndStyles() {
+                // set iframe attributes
+                this.element.setAttribute("scrolling", "no");
+                this.element.setAttribute("frameborder", "0");
+
+                // set clip-cache id
+                this.element.setAttribute("mycelium-clip-cache-id", this.clipCacheId);
+
+                // create and register content div
+                this.contentBody.innerHTML = "<div></div>";
+                this.contentDiv = this.contentBody.children[0];
+
+                // remove margin and margin overflow
+                this.contentBody.style.margin = "0";
+                this.contentDiv.style.padding = "1px";
+
+                this.copyCssStyles();
+                this.applyCssScopes();
+            }
+
+            /**
+             * Applies all CSS styles to the iframe content
+             * that are in the main document body
+             */
+
+        }, {
+            key: "copyCssStyles",
+            value: function copyCssStyles() {
+                var links = this.element.ownerDocument.querySelectorAll('link[rel="stylesheet"]');
+
+                for (var i = 0; i < links.length; i++) {
+                    var copy = this.contentDocument.createElement("link");
+                    copy.setAttribute("href", links[i].getAttribute("href"));
+                    copy.setAttribute("type", links[i].getAttribute("type"));
+                    copy.setAttribute("rel", links[i].getAttribute("rel"));
+
+                    this.contentDocument.body.appendChild(copy);
+                }
+
+                var styles = this.element.ownerDocument.querySelectorAll("style");
+
+                for (var _i = 0; _i < styles.length; _i++) {
+                    var _copy = this.contentDocument.createElement("style");
+                    _copy.innerHTML = styles[_i].innerHTML;
+
+                    this.contentDocument.body.appendChild(_copy);
+                }
+            }
+
+            /**
+             * Adds css scopes to the content div element
+             */
+
+        }, {
+            key: "applyCssScopes",
+            value: function applyCssScopes() {
+                var scopes = this.textPad.options.cssScope;
+
+                if (scopes === null) return;
+
+                if (typeof scopes === "string") scopes = [scopes];
+
+                for (var i = 0; i < scopes.length; i++) {
+                    cssClass(this.contentDiv, CSS_SCOPE_CLASS_PREFIX + scopes[i], true);
+                }
+            }
+
+            /**
+             * Starts the dimension timer
+             */
+
+        }, {
+            key: "startDimensionTimer",
+            value: function startDimensionTimer() {
+                var _this2 = this;
+
+                // call the update once right after initialization
+                setTimeout(function () {
+                    _this2.updateDimensions();
+                }, 500);
+
+                // random offset
+                setTimeout(function () {
+
+                    // interval
+                    _this2.dimensionTimerId = setInterval(function () {
+                        _this2.updateDimensions();
+                    }, DIMENSION_TIMER_INTERVAL);
+                }, Math.random() * DIMENSION_TIMER_INTERVAL);
+            }
+
+            /**
+             * Updates iframe height
+             */
+
+        }, {
+            key: "updateDimensions",
+            value: function updateDimensions() {
+                this.element.style.height = this.contentDiv.offsetHeight + "px";
+            }
+
+            /**
+             * Loads quill.js in the iframe
+             * (not called by default, you have to call this yourself)
+             */
+
+        }, {
+            key: "loadQuill",
+            value: function loadQuill(callback) {
+                var _this3 = this;
+
+                var rootQuillScript = this.element.ownerDocument.querySelector('script[mycelium-quill-script]');
+
+                if (!rootQuillScript) {
+                    console.error("Mycelium quill script not found!");
+                    return;
+                }
+
+                quillLink = this.contentDocument.createElement("script");
+
+                quillLink.onload = function () {
+                    // register blots
+                    __webpack_require__(9).setupQuill(_this3.contentWindow);
+
+                    // redirect undo and redo commands
+                    var history = _this3.contentWindow.Quill.import("modules/history");
+                    history.prototype.undo = function () {
+                        _this3.textPad.quill.history.undo();
+                    };
+                    history.prototype.redo = function () {
+                        _this3.textPad.quill.history.redo();
+                    };
+
+                    callback();
+                };
+
+                quillLink.src = rootQuillScript.src;
+                this.contentBody.appendChild(quillLink);
+            }
+
+            /**
+             * Called, when the blot is being deleted
+             */
+
+        }, {
+            key: "destroy",
+            value: function destroy() {
+                // remove timer
+                clearInterval(this.dimensionTimerId);
+            }
+        }]);
+
+        return IframeBlot;
+    }(BlockEmbed);
+
+    IframeBlot.tagName = "iframe";
+
+    return IframeBlot;
+};
+
+/***/ }),
+/* 11 */
 /***/ (function(module, exports) {
 
 
@@ -1273,16 +1805,16 @@ function defaultOptions(options, defOptions) {
 module.exports = defaultOptions;
 
 /***/ }),
-/* 10 */
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = function (Quill) {
 
-    return [["h1", __webpack_require__(1)(Quill)], ["h2", __webpack_require__(1)(Quill)], ["h3", __webpack_require__(1)(Quill)], ["h4", __webpack_require__(1)(Quill)], ["h5", __webpack_require__(1)(Quill)], ["h6", __webpack_require__(1)(Quill)], ["iframe", __webpack_require__(27)(Quill)], ["table", __webpack_require__(28)(Quill)], ["figure", __webpack_require__(72)(Quill)]];
+    return [["h1", __webpack_require__(2)(Quill)], ["h2", __webpack_require__(2)(Quill)], ["h3", __webpack_require__(2)(Quill)], ["h4", __webpack_require__(2)(Quill)], ["h5", __webpack_require__(2)(Quill)], ["h6", __webpack_require__(2)(Quill)], ["iframe", __webpack_require__(31)(Quill)], ["table", __webpack_require__(32)(Quill)], ["figure", __webpack_require__(33)(Quill)]];
 };
 
 /***/ }),
-/* 11 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1300,19 +1832,19 @@ module.exports = function bind(fn, thisArg) {
 
 
 /***/ }),
-/* 12 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var utils = __webpack_require__(0);
-var settle = __webpack_require__(37);
-var buildURL = __webpack_require__(39);
-var parseHeaders = __webpack_require__(40);
-var isURLSameOrigin = __webpack_require__(41);
-var createError = __webpack_require__(13);
-var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(42);
+var settle = __webpack_require__(41);
+var buildURL = __webpack_require__(43);
+var parseHeaders = __webpack_require__(44);
+var isURLSameOrigin = __webpack_require__(45);
+var createError = __webpack_require__(15);
+var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(46);
 
 module.exports = function xhrAdapter(config) {
   return new Promise(function dispatchXhrRequest(resolve, reject) {
@@ -1409,7 +1941,7 @@ module.exports = function xhrAdapter(config) {
     // This is only done if running in a standard browser environment.
     // Specifically not if we're in a web worker, or react-native.
     if (utils.isStandardBrowserEnv()) {
-      var cookies = __webpack_require__(43);
+      var cookies = __webpack_require__(47);
 
       // Add xsrf header
       var xsrfValue = (config.withCredentials || isURLSameOrigin(config.url)) && config.xsrfCookieName ?
@@ -1487,13 +2019,13 @@ module.exports = function xhrAdapter(config) {
 
 
 /***/ }),
-/* 13 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var enhanceError = __webpack_require__(38);
+var enhanceError = __webpack_require__(42);
 
 /**
  * Create an Error with the specified message, config, error code, request and response.
@@ -1512,7 +2044,7 @@ module.exports = function createError(message, config, code, request, response) 
 
 
 /***/ }),
-/* 14 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1524,7 +2056,7 @@ module.exports = function isCancel(value) {
 
 
 /***/ }),
-/* 15 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1550,14 +2082,14 @@ module.exports = Cancel;
 
 
 /***/ }),
-/* 16 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var TextPad = __webpack_require__(3);
+var TextPad = __webpack_require__(5);
 
 var RichText = function () {
     _createClass(RichText, null, [{
@@ -1688,17 +2220,248 @@ var RichText = function () {
 module.exports = RichText;
 
 /***/ }),
-/* 17 */
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(global) {
+
+// Use the fastest means possible to execute a task in its own turn, with
+// priority over other events including IO, animation, reflow, and redraw
+// events in browsers.
+//
+// An exception thrown by a task will permanently interrupt the processing of
+// subsequent tasks. The higher level `asap` function ensures that if an
+// exception is thrown by a task, that the task queue will continue flushing as
+// soon as possible, but if you use `rawAsap` directly, you are responsible to
+// either ensure that no exceptions are thrown from your task, or to manually
+// call `rawAsap.requestFlush` if an exception is thrown.
+module.exports = rawAsap;
+function rawAsap(task) {
+    if (!queue.length) {
+        requestFlush();
+        flushing = true;
+    }
+    // Equivalent to push, but avoids a function call.
+    queue[queue.length] = task;
+}
+
+var queue = [];
+// Once a flush has been requested, no further calls to `requestFlush` are
+// necessary until the next `flush` completes.
+var flushing = false;
+// `requestFlush` is an implementation-specific method that attempts to kick
+// off a `flush` event as quickly as possible. `flush` will attempt to exhaust
+// the event queue before yielding to the browser's own event loop.
+var requestFlush;
+// The position of the next task to execute in the task queue. This is
+// preserved between calls to `flush` so that it can be resumed if
+// a task throws an exception.
+var index = 0;
+// If a task schedules additional tasks recursively, the task queue can grow
+// unbounded. To prevent memory exhaustion, the task queue will periodically
+// truncate already-completed tasks.
+var capacity = 1024;
+
+// The flush function processes all tasks that have been scheduled with
+// `rawAsap` unless and until one of those tasks throws an exception.
+// If a task throws an exception, `flush` ensures that its state will remain
+// consistent and will resume where it left off when called again.
+// However, `flush` does not make any arrangements to be called again if an
+// exception is thrown.
+function flush() {
+    while (index < queue.length) {
+        var currentIndex = index;
+        // Advance the index before calling the task. This ensures that we will
+        // begin flushing on the next task the task throws an error.
+        index = index + 1;
+        queue[currentIndex].call();
+        // Prevent leaking memory for long chains of recursive calls to `asap`.
+        // If we call `asap` within tasks scheduled by `asap`, the queue will
+        // grow, but to avoid an O(n) walk for every task we execute, we don't
+        // shift tasks off the queue after they have been executed.
+        // Instead, we periodically shift 1024 tasks off the queue.
+        if (index > capacity) {
+            // Manually shift all values starting at the index back to the
+            // beginning of the queue.
+            for (var scan = 0, newLength = queue.length - index; scan < newLength; scan++) {
+                queue[scan] = queue[scan + index];
+            }
+            queue.length -= index;
+            index = 0;
+        }
+    }
+    queue.length = 0;
+    index = 0;
+    flushing = false;
+}
+
+// `requestFlush` is implemented using a strategy based on data collected from
+// every available SauceLabs Selenium web driver worker at time of writing.
+// https://docs.google.com/spreadsheets/d/1mG-5UYGup5qxGdEMWkhP6BWCz053NUb2E1QoUTU16uA/edit#gid=783724593
+
+// Safari 6 and 6.1 for desktop, iPad, and iPhone are the only browsers that
+// have WebKitMutationObserver but not un-prefixed MutationObserver.
+// Must use `global` or `self` instead of `window` to work in both frames and web
+// workers. `global` is a provision of Browserify, Mr, Mrs, or Mop.
+
+/* globals self */
+var scope = typeof global !== "undefined" ? global : self;
+var BrowserMutationObserver = scope.MutationObserver || scope.WebKitMutationObserver;
+
+// MutationObservers are desirable because they have high priority and work
+// reliably everywhere they are implemented.
+// They are implemented in all modern browsers.
+//
+// - Android 4-4.3
+// - Chrome 26-34
+// - Firefox 14-29
+// - Internet Explorer 11
+// - iPad Safari 6-7.1
+// - iPhone Safari 7-7.1
+// - Safari 6-7
+if (typeof BrowserMutationObserver === "function") {
+    requestFlush = makeRequestCallFromMutationObserver(flush);
+
+// MessageChannels are desirable because they give direct access to the HTML
+// task queue, are implemented in Internet Explorer 10, Safari 5.0-1, and Opera
+// 11-12, and in web workers in many engines.
+// Although message channels yield to any queued rendering and IO tasks, they
+// would be better than imposing the 4ms delay of timers.
+// However, they do not work reliably in Internet Explorer or Safari.
+
+// Internet Explorer 10 is the only browser that has setImmediate but does
+// not have MutationObservers.
+// Although setImmediate yields to the browser's renderer, it would be
+// preferrable to falling back to setTimeout since it does not have
+// the minimum 4ms penalty.
+// Unfortunately there appears to be a bug in Internet Explorer 10 Mobile (and
+// Desktop to a lesser extent) that renders both setImmediate and
+// MessageChannel useless for the purposes of ASAP.
+// https://github.com/kriskowal/q/issues/396
+
+// Timers are implemented universally.
+// We fall back to timers in workers in most engines, and in foreground
+// contexts in the following browsers.
+// However, note that even this simple case requires nuances to operate in a
+// broad spectrum of browsers.
+//
+// - Firefox 3-13
+// - Internet Explorer 6-9
+// - iPad Safari 4.3
+// - Lynx 2.8.7
+} else {
+    requestFlush = makeRequestCallFromTimer(flush);
+}
+
+// `requestFlush` requests that the high priority event queue be flushed as
+// soon as possible.
+// This is useful to prevent an error thrown in a task from stalling the event
+// queue if the exception handled by Node.js’s
+// `process.on("uncaughtException")` or by a domain.
+rawAsap.requestFlush = requestFlush;
+
+// To request a high priority event, we induce a mutation observer by toggling
+// the text of a text node between "1" and "-1".
+function makeRequestCallFromMutationObserver(callback) {
+    var toggle = 1;
+    var observer = new BrowserMutationObserver(callback);
+    var node = document.createTextNode("");
+    observer.observe(node, {characterData: true});
+    return function requestCall() {
+        toggle = -toggle;
+        node.data = toggle;
+    };
+}
+
+// The message channel technique was discovered by Malte Ubl and was the
+// original foundation for this library.
+// http://www.nonblocking.io/2011/06/windownexttick.html
+
+// Safari 6.0.5 (at least) intermittently fails to create message ports on a
+// page's first load. Thankfully, this version of Safari supports
+// MutationObservers, so we don't need to fall back in that case.
+
+// function makeRequestCallFromMessageChannel(callback) {
+//     var channel = new MessageChannel();
+//     channel.port1.onmessage = callback;
+//     return function requestCall() {
+//         channel.port2.postMessage(0);
+//     };
+// }
+
+// For reasons explained above, we are also unable to use `setImmediate`
+// under any circumstances.
+// Even if we were, there is another bug in Internet Explorer 10.
+// It is not sufficient to assign `setImmediate` to `requestFlush` because
+// `setImmediate` must be called *by name* and therefore must be wrapped in a
+// closure.
+// Never forget.
+
+// function makeRequestCallFromSetImmediate(callback) {
+//     return function requestCall() {
+//         setImmediate(callback);
+//     };
+// }
+
+// Safari 6.0 has a problem where timers will get lost while the user is
+// scrolling. This problem does not impact ASAP because Safari 6.0 supports
+// mutation observers, so that implementation is used instead.
+// However, if we ever elect to use timers in Safari, the prevalent work-around
+// is to add a scroll event listener that calls for a flush.
+
+// `setTimeout` does not call the passed callback if the delay is less than
+// approximately 7 in web workers in Firefox 8 through 18, and sometimes not
+// even then.
+
+function makeRequestCallFromTimer(callback) {
+    return function requestCall() {
+        // We dispatch a timeout with a specified delay of 0 for engines that
+        // can reliably accommodate that request. This will usually be snapped
+        // to a 4 milisecond delay, but once we're flushing, there's no delay
+        // between events.
+        var timeoutHandle = setTimeout(handleTimer, 0);
+        // However, since this timer gets frequently dropped in Firefox
+        // workers, we enlist an interval handle that will try to fire
+        // an event 20 times per second until it succeeds.
+        var intervalHandle = setInterval(handleTimer, 50);
+
+        function handleTimer() {
+            // Whichever timer succeeds will cancel both timers and
+            // execute the callback.
+            clearTimeout(timeoutHandle);
+            clearInterval(intervalHandle);
+            callback();
+        }
+    };
+}
+
+// This is for `asap.js` only.
+// Its name will be periodically randomized to break any code that depends on
+// its existence.
+rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
+
+// ASAP was originally a nextTick shim included in Q. This was factored out
+// into this ASAP package. It was later adapted to RSVP which made further
+// amendments. These decisions, particularly to marginalize MessageChannel and
+// to capture the MutationObserver implementation in a closure, were integrated
+// back into ASAP proper.
+// https://github.com/tildeio/rsvp.js/blob/cddf7232546a9cf858524b75cde6f9edf72620a7/lib/rsvp/asap.js
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(59)))
+
+/***/ }),
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var clamp = __webpack_require__(54);
+var clamp = __webpack_require__(68);
 var cssClass = __webpack_require__(4);
-var getRefs = __webpack_require__(2);
-var defaultOptions = __webpack_require__(9);
+var getRefs = __webpack_require__(1);
+var defaultOptions = __webpack_require__(11);
 
 /**
  * How long it takes for a window to minimize
@@ -1813,7 +2576,7 @@ var Window = function () {
         value: function _createDOM() {
             var element = this.document.createElement("div");
             element.className = "mc-window";
-            element.innerHTML = __webpack_require__(55);
+            element.innerHTML = __webpack_require__(69);
 
             this.element = element;
             this.bar = element.querySelector(".mc-window__bar");
@@ -2113,15 +2876,15 @@ var Window = function () {
 module.exports = Window;
 
 /***/ }),
-/* 18 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(19);
-module.exports = __webpack_require__(66);
+__webpack_require__(22);
+module.exports = __webpack_require__(80);
 
 
 /***/ }),
-/* 19 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 ///////////////////////////////
@@ -2143,10 +2906,10 @@ if (!window.mycelium.class) window.mycelium.class = {};
 // Register initialization //
 /////////////////////////////
 
-window.mycelium.initialization = __webpack_require__(8);
+window.mycelium.initialization = __webpack_require__(9);
 
 /***/ }),
-/* 20 */
+/* 23 */
 /***/ (function(module, exports) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2178,7 +2941,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 21 */
+/* 24 */
 /***/ (function(module, exports) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2210,7 +2973,48 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 22 */
+/* 25 */
+/***/ (function(module, exports) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+module.exports = function (Quill) {
+
+    var Block = Quill.import("blots/block");
+
+    var HeaderBlot = function (_Block) {
+        _inherits(HeaderBlot, _Block);
+
+        function HeaderBlot() {
+            _classCallCheck(this, HeaderBlot);
+
+            return _possibleConstructorReturn(this, (HeaderBlot.__proto__ || Object.getPrototypeOf(HeaderBlot)).apply(this, arguments));
+        }
+
+        _createClass(HeaderBlot, null, [{
+            key: "formats",
+            value: function formats(node) {
+                return HeaderBlot.tagName.indexOf(node.tagName) + 1;
+            }
+        }]);
+
+        return HeaderBlot;
+    }(Block);
+
+    HeaderBlot.blotName = "header";
+    HeaderBlot.tagName = ["H1", "H2", "H3", "H4", "H5", "H6"];
+
+    Quill.register(HeaderBlot);
+};
+
+/***/ }),
+/* 26 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2261,48 +3065,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 23 */
-/***/ (function(module, exports) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-module.exports = function (Quill) {
-
-    var Block = Quill.import("blots/block");
-
-    var HeaderBlot = function (_Block) {
-        _inherits(HeaderBlot, _Block);
-
-        function HeaderBlot() {
-            _classCallCheck(this, HeaderBlot);
-
-            return _possibleConstructorReturn(this, (HeaderBlot.__proto__ || Object.getPrototypeOf(HeaderBlot)).apply(this, arguments));
-        }
-
-        _createClass(HeaderBlot, null, [{
-            key: "formats",
-            value: function formats(node) {
-                return HeaderBlot.tagName.indexOf(node.tagName) + 1;
-            }
-        }]);
-
-        return HeaderBlot;
-    }(Block);
-
-    HeaderBlot.blotName = "header";
-    HeaderBlot.tagName = ["H1", "H2", "H3", "H4", "H5", "H6"];
-
-    Quill.register(HeaderBlot);
-};
-
-/***/ }),
-/* 24 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2317,9 +3080,132 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 module.exports = function (Quill) {
 
-    var getRefs = __webpack_require__(2);
-    var TableRow = __webpack_require__(25);
-    var IframeBlot = __webpack_require__(29)(Quill);
+    var getRefs = __webpack_require__(1);
+    var IframeBlot = __webpack_require__(10)(Quill);
+    var ClipCache = __webpack_require__(6);
+
+    var ImageBlot = function (_IframeBlot) {
+        _inherits(ImageBlot, _IframeBlot);
+
+        function ImageBlot(element, value) {
+            _classCallCheck(this, ImageBlot);
+
+            /**
+             * Initial blot value
+             */
+            var _this = _possibleConstructorReturn(this, (ImageBlot.__proto__ || Object.getPrototypeOf(ImageBlot)).call(this, element, value));
+
+            _this.initialValue = value;
+
+            /**
+             * Flag
+             */
+            _this.initialized = false;
+            return _this;
+        }
+
+        _createClass(ImageBlot, [{
+            key: "initialize",
+            value: function initialize() {
+                var _this2 = this;
+
+                _get(ImageBlot.prototype.__proto__ || Object.getPrototypeOf(ImageBlot.prototype), "initialize", this).call(this);
+
+                // set iframe body class
+                this.contentBody.className = "mc-ql-image-blot__content";
+
+                this.createDOM();
+
+                this.loadQuill(function () {
+
+                    _this2.updateDimensions();
+
+                    _this2.initialized = true;
+                });
+            }
+        }, {
+            key: "createDOM",
+            value: function createDOM() {
+                this.contentDiv.innerHTML = "\n            <figure>\n                <img ref=\"img\">\n                <figcaption ref=\"title\"></figcaption>\n            </figure>\n        ";
+
+                // get image reference
+                var refs = getRefs(this.contentDiv);
+
+                refs.img.src = this.initialValue.url;
+                refs.title.innerText = this.initialValue.title;
+            }
+
+            /**
+             * Trigger shroom data update
+             */
+
+        }, {
+            key: "triggerShroomUpdate",
+            value: function triggerShroomUpdate() {
+                // tell pad that a change occured
+                // (trigger text-change event)
+                this.textPad.quill.insertText(0, "");
+            }
+
+            /**
+             * Returns quill delta value
+             */
+
+        }, {
+            key: "value",
+            value: function value() {
+                // returned value
+                var out = void 0;
+
+                // if not initialized yet, return the initial value
+                if (!this.initialized) {
+                    out = { image: this.initialValue };
+                }
+
+                // otherwise get the value
+                else {
+                        var value = this.initialValue;
+
+                        out = {
+                            image: value
+                        };
+                    }
+
+                // save value to clip-cache
+                ClipCache.setValue(this.clipCacheId, out);
+
+                return out;
+            }
+        }]);
+
+        return ImageBlot;
+    }(IframeBlot);
+
+    ImageBlot.blotName = "image";
+    ImageBlot.className = "mc-ql-image-blot";
+
+    Quill.register(ImageBlot);
+};
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+module.exports = function (Quill) {
+
+    var getRefs = __webpack_require__(1);
+    var TableRow = __webpack_require__(29);
+    var IframeBlot = __webpack_require__(10)(Quill);
     var ClipCache = __webpack_require__(6);
 
     var TableBlot = function (_IframeBlot) {
@@ -2608,14 +3494,14 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 25 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var TableCell = __webpack_require__(26);
+var TableCell = __webpack_require__(30);
 
 var TableRow = function () {
     function TableRow(tableBlot, contents) {
@@ -2707,14 +3593,14 @@ var TableRow = function () {
 module.exports = TableRow;
 
 /***/ }),
-/* 26 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var TextPad = __webpack_require__(3);
+var TextPad = __webpack_require__(5);
 
 var TableCell = function () {
     function TableCell(tableBlot, deltaContents) {
@@ -2848,7 +3734,7 @@ var TableCell = function () {
 module.exports = TableCell;
 
 /***/ }),
-/* 27 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = function (Quill) {
@@ -2872,7 +3758,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 28 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = function (Quill) {
@@ -2889,7 +3775,7 @@ module.exports = function (Quill) {
             formats: null, // all
             modules: {
                 clipboard: {
-                    matchers: __webpack_require__(10)(Quill),
+                    matchers: __webpack_require__(12)(Quill),
                     matchVisual: false
                 }
             }
@@ -2936,329 +3822,47 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 29 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+/* 33 */
+/***/ (function(module, exports) {
 
 module.exports = function (Quill) {
 
-    var BlockEmbed = Quill.import("blots/block/embed");
-    var ClipCache = __webpack_require__(6);
-    var cssClass = __webpack_require__(4);
+    function ImageMatcher(element, delta) {
+        var img = element.querySelector("img");
+        var figcaption = element.querySelector("figcaption");
 
-    var DIMENSION_TIMER_INTERVAL = 5000;
-    var CSS_SCOPE_CLASS_PREFIX = "css-scope__";
+        var url = img.src;
+        var title = figcaption.innerText;
 
-    var IframeBlot = function (_BlockEmbed) {
-        _inherits(IframeBlot, _BlockEmbed);
-
-        function IframeBlot(element, value) {
-            _classCallCheck(this, IframeBlot);
-
-            /*
-                NOTE: I'm creating custom variables even if they already
-                exist on the blot, because I like consistent naming with
-                the rest of my library
-             */
-
-            /**
-             * The html element
-             */
-            var _this = _possibleConstructorReturn(this, (IframeBlot.__proto__ || Object.getPrototypeOf(IframeBlot)).call(this, element, value));
-
-            _this.element = element;
-
-            /**
-             * ID of the clip-cache storage
-             */
-            _this.clipCacheId = ClipCache.generateId();
-
-            // a tick to let Quill put the element into the DOM
-            setTimeout(function () {
-
-                // check compatibility
-                if (!element.contentDocument || !element.contentWindow) {
-                    console.error("iframe javascript interface not supported");
-                    return;
-                }
-
-                _this.initialize();
-            }, 0);
-            return _this;
-        }
-
-        _createClass(IframeBlot, [{
-            key: "deleteAt",
-            value: function deleteAt(index, length) {
-                if (this.delete) this.delete();
-
-                _get(IframeBlot.prototype.__proto__ || Object.getPrototypeOf(IframeBlot.prototype), "deleteAt", this).call(this, index, length);
-            }
-        }, {
-            key: "value",
-            value: function value() {
-                // override this
-                return _get(IframeBlot.prototype.__proto__ || Object.getPrototypeOf(IframeBlot.prototype), "value", this).call(this);
-            }
-
-            ///////////////////////////
-            // Custom implementation //
-            ///////////////////////////
-
-            /**
-             * Initialize all necessary things
-             */
-
-        }, {
-            key: "initialize",
-            value: function initialize() {
-                /**
-                 * Parent text pad
-                 */
-                this.textPad = null;
-
-                /**
-                 * Document of the iframe content
-                 */
-                this.contentDocument = this.element.contentDocument;
-
-                /**
-                 * Window of the iframe content
-                 */
-                this.contentWindow = this.element.contentWindow;
-
-                /**
-                 * Body of the content document
-                 */
-                this.contentBody = this.contentDocument.body;
-
-                /**
-                 * Content div of the iframe
-                 */
-                this.contentDiv = null;
-
-                this.getParentTextPad();
-
-                this.setupDomAndStyles();
-
-                this.startDimensionTimer();
-            }
-
-            /**
-             * Finds the parent text pad element
-             */
-
-        }, {
-            key: "getParentTextPad",
-            value: function getParentTextPad() {
-                // find parent widet
-                var el = this.element;
-                var padElement = null;
-
-                while (el.parentElement) {
-                    if (el.getAttribute("mycelium-text-pad") === "here") {
-                        padElement = el;
-                        break;
+        // return the full delta
+        return {
+            ops: [{
+                insert: {
+                    image: {
+                        url: url,
+                        title: title
                     }
-
-                    el = el.parentElement;
                 }
+            }]
+        };
+    }
 
-                if (!padElement) {
-                    console.error("Unable to find parent text pad!");
-                    return null;
-                }
-
-                this.textPad = padElement.textPad;
-            }
-
-            /**
-             * Create content document
-             */
-
-        }, {
-            key: "setupDomAndStyles",
-            value: function setupDomAndStyles() {
-                // set iframe attributes
-                this.element.setAttribute("scrolling", "no");
-                this.element.setAttribute("frameborder", "0");
-
-                // set clip-cache id
-                this.element.setAttribute("mycelium-clip-cache-id", this.clipCacheId);
-
-                // create and register content div
-                this.contentBody.innerHTML = "<div></div>";
-                this.contentDiv = this.contentBody.children[0];
-
-                // remove margin and margin overflow
-                this.contentBody.style.margin = "0";
-                this.contentDiv.style.padding = "1px";
-
-                this.copyCssStyles();
-                this.applyCssScopes();
-            }
-
-            /**
-             * Applies all CSS styles to the iframe content
-             * that are in the main document body
-             */
-
-        }, {
-            key: "copyCssStyles",
-            value: function copyCssStyles() {
-                var links = this.element.ownerDocument.querySelectorAll('link[rel="stylesheet"]');
-
-                for (var i = 0; i < links.length; i++) {
-                    var copy = this.contentDocument.createElement("link");
-                    copy.setAttribute("href", links[i].getAttribute("href"));
-                    copy.setAttribute("type", links[i].getAttribute("type"));
-                    copy.setAttribute("rel", links[i].getAttribute("rel"));
-
-                    this.contentDocument.body.appendChild(copy);
-                }
-
-                var styles = this.element.ownerDocument.querySelectorAll("style");
-
-                for (var _i = 0; _i < styles.length; _i++) {
-                    var _copy = this.contentDocument.createElement("style");
-                    _copy.innerHTML = styles[_i].innerHTML;
-
-                    this.contentDocument.body.appendChild(_copy);
-                }
-            }
-
-            /**
-             * Adds css scopes to the content div element
-             */
-
-        }, {
-            key: "applyCssScopes",
-            value: function applyCssScopes() {
-                var scopes = this.textPad.options.cssScope;
-
-                if (scopes === null) return;
-
-                if (typeof scopes === "string") scopes = [scopes];
-
-                for (var i = 0; i < scopes.length; i++) {
-                    cssClass(this.contentDiv, CSS_SCOPE_CLASS_PREFIX + scopes[i], true);
-                }
-            }
-
-            /**
-             * Starts the dimension timer
-             */
-
-        }, {
-            key: "startDimensionTimer",
-            value: function startDimensionTimer() {
-                var _this2 = this;
-
-                // call the update once right after initialization
-                setTimeout(function () {
-                    _this2.updateDimensions();
-                }, 500);
-
-                // random offset
-                setTimeout(function () {
-
-                    // interval
-                    _this2.dimensionTimerId = setInterval(function () {
-                        _this2.updateDimensions();
-                    }, DIMENSION_TIMER_INTERVAL);
-                }, Math.random() * DIMENSION_TIMER_INTERVAL);
-            }
-
-            /**
-             * Updates iframe height
-             */
-
-        }, {
-            key: "updateDimensions",
-            value: function updateDimensions() {
-                this.element.style.height = this.contentDiv.offsetHeight + "px";
-            }
-
-            /**
-             * Loads quill.js in the iframe
-             * (not called by default, you have to call this yourself)
-             */
-
-        }, {
-            key: "loadQuill",
-            value: function loadQuill(callback) {
-                var _this3 = this;
-
-                var rootQuillScript = this.element.ownerDocument.querySelector('script[mycelium-quill-script]');
-
-                if (!rootQuillScript) {
-                    console.error("Mycelium quill script not found!");
-                    return;
-                }
-
-                quillLink = this.contentDocument.createElement("script");
-
-                quillLink.onload = function () {
-                    // register blots
-                    __webpack_require__(8).setupQuill(_this3.contentWindow);
-
-                    // redirect undo and redo commands
-                    var history = _this3.contentWindow.Quill.import("modules/history");
-                    history.prototype.undo = function () {
-                        _this3.textPad.quill.history.undo();
-                    };
-                    history.prototype.redo = function () {
-                        _this3.textPad.quill.history.redo();
-                    };
-
-                    callback();
-                };
-
-                quillLink.src = rootQuillScript.src;
-                this.contentBody.appendChild(quillLink);
-            }
-
-            /**
-             * Called, when the blot is being deleted
-             */
-
-        }, {
-            key: "destroy",
-            value: function destroy() {
-                // remove timer
-                clearInterval(this.dimensionTimerId);
-            }
-        }]);
-
-        return IframeBlot;
-    }(BlockEmbed);
-
-    IframeBlot.tagName = "iframe";
-
-    return IframeBlot;
+    return ImageMatcher;
 };
 
 /***/ }),
-/* 30 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var axios = __webpack_require__(31);
-var TextWidget = __webpack_require__(51);
-var RichTextWidget = __webpack_require__(16);
-var EventBus = __webpack_require__(5);
+var axios = __webpack_require__(35);
+var TextWidget = __webpack_require__(55);
+var RichTextWidget = __webpack_require__(18);
+var EventBus = __webpack_require__(7);
+var SporeUploader = __webpack_require__(56);
 
 // delay between a change and save call
 var AUTOSAVE_TIMEOUT = 2000;
@@ -3335,6 +3939,7 @@ var Shroom = function () {
             this.title = data.title;
 
             this.data = data.data;
+            this.spores = data.spores;
 
             // if the provided data is empty, it's serialized
             // in php as [] instead of {}
@@ -3403,42 +4008,9 @@ var Shroom = function () {
     }, {
         key: "uploadNewSpore",
         value: function uploadNewSpore(type) {
-            var fileInput = this.document.createElement("input");
-            fileInput.type = "file";
-
-            fileInput.onchange = function () {
-
-                if (fileInput.files.length != 1) {
-                    console.warn("improper count");
-                    return;
-                }
-
-                var files = fileInput.files;
-                var formData = new FormData();
-
-                // file content and name
-                formData.append("spore", files[0], files[0].name);
-
-                // spore type (handler)
-                formData.append("type", type);
-
-                axios({
-                    method: "post",
-                    url: "upload-resource",
-                    data: formData,
-                    config: { headers: { "Content-Type": "multipart/form-data" } }
-                }).then(function (response) {
-                    if (!response.data.success) {
-                        console.error(response.data.message);
-                        return;
-                    }
-
-                    console.log(response.data.spore);
-                });
-            };
-
-            // open the dialog
-            fileInput.click();
+            return SporeUploader.fileDialog(this.document).then(function (file) {
+                return SporeUploader.upload(file, type);
+            });
         }
 
         ////////////
@@ -3540,22 +4112,22 @@ var Shroom = function () {
 module.exports = Shroom;
 
 /***/ }),
-/* 31 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__(32);
+module.exports = __webpack_require__(36);
 
 /***/ }),
-/* 32 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var utils = __webpack_require__(0);
-var bind = __webpack_require__(11);
-var Axios = __webpack_require__(34);
-var defaults = __webpack_require__(7);
+var bind = __webpack_require__(13);
+var Axios = __webpack_require__(38);
+var defaults = __webpack_require__(8);
 
 /**
  * Create an instance of Axios
@@ -3588,15 +4160,15 @@ axios.create = function create(instanceConfig) {
 };
 
 // Expose Cancel & CancelToken
-axios.Cancel = __webpack_require__(15);
-axios.CancelToken = __webpack_require__(49);
-axios.isCancel = __webpack_require__(14);
+axios.Cancel = __webpack_require__(17);
+axios.CancelToken = __webpack_require__(53);
+axios.isCancel = __webpack_require__(16);
 
 // Expose all/spread
 axios.all = function all(promises) {
   return Promise.all(promises);
 };
-axios.spread = __webpack_require__(50);
+axios.spread = __webpack_require__(54);
 
 module.exports = axios;
 
@@ -3605,7 +4177,7 @@ module.exports.default = axios;
 
 
 /***/ }),
-/* 33 */
+/* 37 */
 /***/ (function(module, exports) {
 
 /*!
@@ -3632,18 +4204,18 @@ function isSlowBuffer (obj) {
 
 
 /***/ }),
-/* 34 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var defaults = __webpack_require__(7);
+var defaults = __webpack_require__(8);
 var utils = __webpack_require__(0);
-var InterceptorManager = __webpack_require__(44);
-var dispatchRequest = __webpack_require__(45);
-var isAbsoluteURL = __webpack_require__(47);
-var combineURLs = __webpack_require__(48);
+var InterceptorManager = __webpack_require__(48);
+var dispatchRequest = __webpack_require__(49);
+var isAbsoluteURL = __webpack_require__(51);
+var combineURLs = __webpack_require__(52);
 
 /**
  * Create a new instance of Axios
@@ -3725,7 +4297,7 @@ module.exports = Axios;
 
 
 /***/ }),
-/* 35 */
+/* 39 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -3915,7 +4487,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 36 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3934,13 +4506,13 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
 
 
 /***/ }),
-/* 37 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var createError = __webpack_require__(13);
+var createError = __webpack_require__(15);
 
 /**
  * Resolve or reject a Promise based on response status.
@@ -3967,7 +4539,7 @@ module.exports = function settle(resolve, reject, response) {
 
 
 /***/ }),
-/* 38 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3995,7 +4567,7 @@ module.exports = function enhanceError(error, config, code, request, response) {
 
 
 /***/ }),
-/* 39 */
+/* 43 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4070,7 +4642,7 @@ module.exports = function buildURL(url, params, paramsSerializer) {
 
 
 /***/ }),
-/* 40 */
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4114,7 +4686,7 @@ module.exports = function parseHeaders(headers) {
 
 
 /***/ }),
-/* 41 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4189,7 +4761,7 @@ module.exports = (
 
 
 /***/ }),
-/* 42 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4232,7 +4804,7 @@ module.exports = btoa;
 
 
 /***/ }),
-/* 43 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4292,7 +4864,7 @@ module.exports = (
 
 
 /***/ }),
-/* 44 */
+/* 48 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4351,16 +4923,16 @@ module.exports = InterceptorManager;
 
 
 /***/ }),
-/* 45 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
 var utils = __webpack_require__(0);
-var transformData = __webpack_require__(46);
-var isCancel = __webpack_require__(14);
-var defaults = __webpack_require__(7);
+var transformData = __webpack_require__(50);
+var isCancel = __webpack_require__(16);
+var defaults = __webpack_require__(8);
 
 /**
  * Throws a `Cancel` if cancellation has been requested.
@@ -4437,7 +5009,7 @@ module.exports = function dispatchRequest(config) {
 
 
 /***/ }),
-/* 46 */
+/* 50 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4464,7 +5036,7 @@ module.exports = function transformData(data, headers, fns) {
 
 
 /***/ }),
-/* 47 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4485,7 +5057,7 @@ module.exports = function isAbsoluteURL(url) {
 
 
 /***/ }),
-/* 48 */
+/* 52 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4506,13 +5078,13 @@ module.exports = function combineURLs(baseURL, relativeURL) {
 
 
 /***/ }),
-/* 49 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var Cancel = __webpack_require__(15);
+var Cancel = __webpack_require__(17);
 
 /**
  * A `CancelToken` is an object that can be used to request cancellation of an operation.
@@ -4570,7 +5142,7 @@ module.exports = CancelToken;
 
 
 /***/ }),
-/* 50 */
+/* 54 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4604,7 +5176,7 @@ module.exports = function spread(callback) {
 
 
 /***/ }),
-/* 51 */
+/* 55 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4701,16 +5273,651 @@ var Text = function () {
 module.exports = Text;
 
 /***/ }),
-/* 52 */
+/* 56 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var TextPadToolbar = __webpack_require__(53);
-var LinkBlotProperties = __webpack_require__(61);
-var getRefs = __webpack_require__(2);
+var Promise = __webpack_require__(57);
+var axios = __webpack_require__(35);
+
+var PART_SIZE = 1024 * 1024; // 1 MB
+
+/**
+ * Handles spore upload by parts
+ */
+
+var SporeUploader = function () {
+    function SporeUploader() {
+        _classCallCheck(this, SporeUploader);
+    }
+
+    _createClass(SporeUploader, null, [{
+        key: "upload",
+
+        /**
+         * Perform the upload
+         * @param {File} file The file to be uploaded
+         * @param {string} type Spore handler type
+         */
+        value: function upload(file, type) {
+            return new Promise(function (resolve, reject) {
+
+                var partCount = Math.ceil(file.size / PART_SIZE);
+                var currentPart = -1;
+                var uploadId = Math.random().toString(36).substring(2);
+
+                // closure for the upload (to make it able to access the context)
+                // argument is the returned spore object from the last part upload
+                var uploadNextPart = function uploadNextPart(spore) {
+
+                    currentPart += 1;
+
+                    // last part has been send
+                    if (currentPart >= partCount) {
+                        console.warn("Upload done, handle: " + spore.handle);
+                        resolve(spore);
+                        return;
+                    }
+
+                    // part boundaries
+                    var start = currentPart * PART_SIZE;
+                    var end = (currentPart + 1) * PART_SIZE;
+
+                    if (end > file.size) end = file.size;
+
+                    // upload the part
+                    SporeUploader.uploadFilePart(file, type, start, end, currentPart, partCount, uploadId).then(function (spore) {
+                        uploadNextPart(spore);
+                    });
+                };
+
+                // start uploading
+                console.warn("Starting spore upload... " + uploadId);
+                uploadNextPart(null);
+            });
+        }
+
+        /**
+         * Private method for uploading a part of a file
+         */
+
+    }, {
+        key: "uploadFilePart",
+        value: function uploadFilePart(file, type, start, end, partIndex, partCount, uploadId) {
+            return new Promise(function (resolve, reject) {
+
+                var formData = new FormData();
+
+                // file content and name
+                formData.append("resource", file.slice(start, end, file.type), file.name);
+
+                // spore type (handler)
+                formData.append("type", type);
+
+                // part information
+                formData.append("partIndex", partIndex);
+                formData.append("partCount", partCount);
+
+                // id of the upload
+                formData.append("uploadId", uploadId);
+
+                console.warn("Uploading part " + partIndex + "/" + partCount);
+
+                axios({
+                    method: "post",
+                    url: "upload-resource",
+                    data: formData,
+                    config: { headers: { "Content-Type": "multipart/form-data" } }
+                }).then(function (response) {
+                    if (response.data.success !== true) {
+                        console.error(response.data.message);
+                        reject(response.data.message);
+                    }
+
+                    resolve(response.data.spore);
+                }).catch(function (error) {
+                    console.error(error);
+                    reject(error);
+                });
+            });
+        }
+
+        /**
+         * Shows the file dialog and lets the user choose a file
+         * @param {Document} document DOM Document object
+         */
+
+    }, {
+        key: "fileDialog",
+        value: function fileDialog(document) {
+            return new Promise(function (resolve, reject) {
+
+                // create a file input element
+                var fileInput = document.createElement("input");
+                fileInput.type = "file";
+
+                // register change handler
+                fileInput.onchange = function () {
+
+                    // allow only a single file
+                    if (fileInput.files.length != 1) reject();
+
+                    resolve(fileInput.files[0]);
+                };
+
+                // open the dialog
+                fileInput.click();
+            });
+        }
+    }]);
+
+    return SporeUploader;
+}();
+
+module.exports = SporeUploader;
+
+/***/ }),
+/* 57 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = __webpack_require__(58)
+
+
+/***/ }),
+/* 58 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+module.exports = __webpack_require__(3);
+__webpack_require__(60);
+__webpack_require__(61);
+__webpack_require__(62);
+__webpack_require__(63);
+__webpack_require__(65);
+
+
+/***/ }),
+/* 59 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+/* 60 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var Promise = __webpack_require__(3);
+
+module.exports = Promise;
+Promise.prototype.done = function (onFulfilled, onRejected) {
+  var self = arguments.length ? this.then.apply(this, arguments) : this;
+  self.then(null, function (err) {
+    setTimeout(function () {
+      throw err;
+    }, 0);
+  });
+};
+
+
+/***/ }),
+/* 61 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var Promise = __webpack_require__(3);
+
+module.exports = Promise;
+Promise.prototype['finally'] = function (f) {
+  return this.then(function (value) {
+    return Promise.resolve(f()).then(function () {
+      return value;
+    });
+  }, function (err) {
+    return Promise.resolve(f()).then(function () {
+      throw err;
+    });
+  });
+};
+
+
+/***/ }),
+/* 62 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+//This file contains the ES6 extensions to the core Promises/A+ API
+
+var Promise = __webpack_require__(3);
+
+module.exports = Promise;
+
+/* Static Functions */
+
+var TRUE = valuePromise(true);
+var FALSE = valuePromise(false);
+var NULL = valuePromise(null);
+var UNDEFINED = valuePromise(undefined);
+var ZERO = valuePromise(0);
+var EMPTYSTRING = valuePromise('');
+
+function valuePromise(value) {
+  var p = new Promise(Promise._44);
+  p._83 = 1;
+  p._18 = value;
+  return p;
+}
+Promise.resolve = function (value) {
+  if (value instanceof Promise) return value;
+
+  if (value === null) return NULL;
+  if (value === undefined) return UNDEFINED;
+  if (value === true) return TRUE;
+  if (value === false) return FALSE;
+  if (value === 0) return ZERO;
+  if (value === '') return EMPTYSTRING;
+
+  if (typeof value === 'object' || typeof value === 'function') {
+    try {
+      var then = value.then;
+      if (typeof then === 'function') {
+        return new Promise(then.bind(value));
+      }
+    } catch (ex) {
+      return new Promise(function (resolve, reject) {
+        reject(ex);
+      });
+    }
+  }
+  return valuePromise(value);
+};
+
+Promise.all = function (arr) {
+  var args = Array.prototype.slice.call(arr);
+
+  return new Promise(function (resolve, reject) {
+    if (args.length === 0) return resolve([]);
+    var remaining = args.length;
+    function res(i, val) {
+      if (val && (typeof val === 'object' || typeof val === 'function')) {
+        if (val instanceof Promise && val.then === Promise.prototype.then) {
+          while (val._83 === 3) {
+            val = val._18;
+          }
+          if (val._83 === 1) return res(i, val._18);
+          if (val._83 === 2) reject(val._18);
+          val.then(function (val) {
+            res(i, val);
+          }, reject);
+          return;
+        } else {
+          var then = val.then;
+          if (typeof then === 'function') {
+            var p = new Promise(then.bind(val));
+            p.then(function (val) {
+              res(i, val);
+            }, reject);
+            return;
+          }
+        }
+      }
+      args[i] = val;
+      if (--remaining === 0) {
+        resolve(args);
+      }
+    }
+    for (var i = 0; i < args.length; i++) {
+      res(i, args[i]);
+    }
+  });
+};
+
+Promise.reject = function (value) {
+  return new Promise(function (resolve, reject) {
+    reject(value);
+  });
+};
+
+Promise.race = function (values) {
+  return new Promise(function (resolve, reject) {
+    values.forEach(function(value){
+      Promise.resolve(value).then(resolve, reject);
+    });
+  });
+};
+
+/* Prototype Methods */
+
+Promise.prototype['catch'] = function (onRejected) {
+  return this.then(null, onRejected);
+};
+
+
+/***/ }),
+/* 63 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+// This file contains then/promise specific extensions that are only useful
+// for node.js interop
+
+var Promise = __webpack_require__(3);
+var asap = __webpack_require__(64);
+
+module.exports = Promise;
+
+/* Static Functions */
+
+Promise.denodeify = function (fn, argumentCount) {
+  if (
+    typeof argumentCount === 'number' && argumentCount !== Infinity
+  ) {
+    return denodeifyWithCount(fn, argumentCount);
+  } else {
+    return denodeifyWithoutCount(fn);
+  }
+};
+
+var callbackFn = (
+  'function (err, res) {' +
+  'if (err) { rj(err); } else { rs(res); }' +
+  '}'
+);
+function denodeifyWithCount(fn, argumentCount) {
+  var args = [];
+  for (var i = 0; i < argumentCount; i++) {
+    args.push('a' + i);
+  }
+  var body = [
+    'return function (' + args.join(',') + ') {',
+    'var self = this;',
+    'return new Promise(function (rs, rj) {',
+    'var res = fn.call(',
+    ['self'].concat(args).concat([callbackFn]).join(','),
+    ');',
+    'if (res &&',
+    '(typeof res === "object" || typeof res === "function") &&',
+    'typeof res.then === "function"',
+    ') {rs(res);}',
+    '});',
+    '};'
+  ].join('');
+  return Function(['Promise', 'fn'], body)(Promise, fn);
+}
+function denodeifyWithoutCount(fn) {
+  var fnLength = Math.max(fn.length - 1, 3);
+  var args = [];
+  for (var i = 0; i < fnLength; i++) {
+    args.push('a' + i);
+  }
+  var body = [
+    'return function (' + args.join(',') + ') {',
+    'var self = this;',
+    'var args;',
+    'var argLength = arguments.length;',
+    'if (arguments.length > ' + fnLength + ') {',
+    'args = new Array(arguments.length + 1);',
+    'for (var i = 0; i < arguments.length; i++) {',
+    'args[i] = arguments[i];',
+    '}',
+    '}',
+    'return new Promise(function (rs, rj) {',
+    'var cb = ' + callbackFn + ';',
+    'var res;',
+    'switch (argLength) {',
+    args.concat(['extra']).map(function (_, index) {
+      return (
+        'case ' + (index) + ':' +
+        'res = fn.call(' + ['self'].concat(args.slice(0, index)).concat('cb').join(',') + ');' +
+        'break;'
+      );
+    }).join(''),
+    'default:',
+    'args[argLength] = cb;',
+    'res = fn.apply(self, args);',
+    '}',
+    
+    'if (res &&',
+    '(typeof res === "object" || typeof res === "function") &&',
+    'typeof res.then === "function"',
+    ') {rs(res);}',
+    '});',
+    '};'
+  ].join('');
+
+  return Function(
+    ['Promise', 'fn'],
+    body
+  )(Promise, fn);
+}
+
+Promise.nodeify = function (fn) {
+  return function () {
+    var args = Array.prototype.slice.call(arguments);
+    var callback =
+      typeof args[args.length - 1] === 'function' ? args.pop() : null;
+    var ctx = this;
+    try {
+      return fn.apply(this, arguments).nodeify(callback, ctx);
+    } catch (ex) {
+      if (callback === null || typeof callback == 'undefined') {
+        return new Promise(function (resolve, reject) {
+          reject(ex);
+        });
+      } else {
+        asap(function () {
+          callback.call(ctx, ex);
+        })
+      }
+    }
+  }
+};
+
+Promise.prototype.nodeify = function (callback, ctx) {
+  if (typeof callback != 'function') return this;
+
+  this.then(function (value) {
+    asap(function () {
+      callback.call(ctx, null, value);
+    });
+  }, function (err) {
+    asap(function () {
+      callback.call(ctx, err);
+    });
+  });
+};
+
+
+/***/ }),
+/* 64 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+// rawAsap provides everything we need except exception management.
+var rawAsap = __webpack_require__(19);
+// RawTasks are recycled to reduce GC churn.
+var freeTasks = [];
+// We queue errors to ensure they are thrown in right order (FIFO).
+// Array-as-queue is good enough here, since we are just dealing with exceptions.
+var pendingErrors = [];
+var requestErrorThrow = rawAsap.makeRequestCallFromTimer(throwFirstError);
+
+function throwFirstError() {
+    if (pendingErrors.length) {
+        throw pendingErrors.shift();
+    }
+}
+
+/**
+ * Calls a task as soon as possible after returning, in its own event, with priority
+ * over other events like animation, reflow, and repaint. An error thrown from an
+ * event will not interrupt, nor even substantially slow down the processing of
+ * other events, but will be rather postponed to a lower priority event.
+ * @param {{call}} task A callable object, typically a function that takes no
+ * arguments.
+ */
+module.exports = asap;
+function asap(task) {
+    var rawTask;
+    if (freeTasks.length) {
+        rawTask = freeTasks.pop();
+    } else {
+        rawTask = new RawTask();
+    }
+    rawTask.task = task;
+    rawAsap(rawTask);
+}
+
+// We wrap tasks with recyclable task objects.  A task object implements
+// `call`, just like a function.
+function RawTask() {
+    this.task = null;
+}
+
+// The sole purpose of wrapping the task is to catch the exception and recycle
+// the task object after its single use.
+RawTask.prototype.call = function () {
+    try {
+        this.task.call();
+    } catch (error) {
+        if (asap.onerror) {
+            // This hook exists purely for testing purposes.
+            // Its name will be periodically randomized to break any code that
+            // depends on its existence.
+            asap.onerror(error);
+        } else {
+            // In a web browser, exceptions are not fatal. However, to avoid
+            // slowing down the queue of pending tasks, we rethrow the error in a
+            // lower priority turn.
+            pendingErrors.push(error);
+            requestErrorThrow();
+        }
+    } finally {
+        this.task = null;
+        freeTasks[freeTasks.length] = this;
+    }
+};
+
+
+/***/ }),
+/* 65 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var Promise = __webpack_require__(3);
+
+module.exports = Promise;
+Promise.enableSynchronous = function () {
+  Promise.prototype.isPending = function() {
+    return this.getState() == 0;
+  };
+
+  Promise.prototype.isFulfilled = function() {
+    return this.getState() == 1;
+  };
+
+  Promise.prototype.isRejected = function() {
+    return this.getState() == 2;
+  };
+
+  Promise.prototype.getValue = function () {
+    if (this._83 === 3) {
+      return this._18.getValue();
+    }
+
+    if (!this.isFulfilled()) {
+      throw new Error('Cannot get a value of an unfulfilled promise.');
+    }
+
+    return this._18;
+  };
+
+  Promise.prototype.getReason = function () {
+    if (this._83 === 3) {
+      return this._18.getReason();
+    }
+
+    if (!this.isRejected()) {
+      throw new Error('Cannot get a rejection reason of a non-rejected promise.');
+    }
+
+    return this._18;
+  };
+
+  Promise.prototype.getState = function () {
+    if (this._83 === 3) {
+      return this._18.getState();
+    }
+    if (this._83 === -1 || this._83 === -2) {
+      return 0;
+    }
+
+    return this._83;
+  };
+};
+
+Promise.disableSynchronous = function() {
+  Promise.prototype.isPending = undefined;
+  Promise.prototype.isFulfilled = undefined;
+  Promise.prototype.isRejected = undefined;
+  Promise.prototype.getValue = undefined;
+  Promise.prototype.getReason = undefined;
+  Promise.prototype.getState = undefined;
+};
+
+
+/***/ }),
+/* 66 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var TextPadToolbar = __webpack_require__(67);
+var LinkBlotProperties = __webpack_require__(75);
+var getRefs = __webpack_require__(1);
 
 var Toolbar = function () {
     function Toolbar(window, document, mycelium) {
@@ -4765,7 +5972,7 @@ var Toolbar = function () {
 
             // create toolbar element
             var element = document.createElement("div");
-            element.innerHTML = __webpack_require__(64);
+            element.innerHTML = __webpack_require__(78);
             element.className = "mc-toolbar";
 
             // create spacer
@@ -4865,7 +6072,7 @@ var Toolbar = function () {
 module.exports = Toolbar;
 
 /***/ }),
-/* 53 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -4876,12 +6083,12 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var Window = __webpack_require__(17);
-var getRefs = __webpack_require__(2);
+var Window = __webpack_require__(20);
+var getRefs = __webpack_require__(1);
 var cssClass = __webpack_require__(4);
-var Picker = __webpack_require__(56);
-var Menu = __webpack_require__(58);
-var TextPad = __webpack_require__(3);
+var Picker = __webpack_require__(70);
+var Menu = __webpack_require__(72);
+var TextPad = __webpack_require__(5);
 
 var TextPadToolbar = function (_Window) {
     _inherits(TextPadToolbar, _Window);
@@ -4905,7 +6112,7 @@ var TextPadToolbar = function (_Window) {
     _createClass(TextPadToolbar, [{
         key: "buildDOM",
         value: function buildDOM() {
-            this.content.innerHTML = __webpack_require__(60);
+            this.content.innerHTML = __webpack_require__(74);
             this.refs = getRefs(this.content);
 
             this.headerPicker = new Picker(document, this.refs.header, [{ key: "p", label: "Normal" }]);
@@ -5097,7 +6304,7 @@ var TextPadToolbar = function (_Window) {
 module.exports = TextPadToolbar;
 
 /***/ }),
-/* 54 */
+/* 68 */
 /***/ (function(module, exports) {
 
 /**
@@ -5110,20 +6317,20 @@ function clamp(x, min, max) {
 module.exports = clamp;
 
 /***/ }),
-/* 55 */
+/* 69 */
 /***/ (function(module, exports) {
 
 module.exports = "<div class=\"mc-window__bar\">\n    <div class=\"mc-window__handle\"></div>\n\n    <div class=\"mc-window__button\" ref=\"minimize\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M4.516,7.548c0.436-0.446,1.043-0.481,1.576,0L10,11.295l3.908-3.747c0.533-0.481,1.141-0.446,1.574,0\n            c0.436,0.445,0.408,1.197,0,1.615c-0.406,0.418-4.695,4.502-4.695,4.502C10.57,13.888,10.285,14,10,14s-0.57-0.112-0.789-0.335\n            c0,0-4.287-4.084-4.695-4.502C4.107,8.745,4.08,7.993,4.516,7.548z\"/>\n        </svg>\n    </div>\n\n    <div class=\"mc-window__button\" ref=\"close\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M14.348,14.849c-0.469,0.469-1.229,0.469-1.697,0L10,11.819l-2.651,3.029c-0.469,0.469-1.229,0.469-1.697,0\n            c-0.469-0.469-0.469-1.229,0-1.697l2.758-3.15L5.651,6.849c-0.469-0.469-0.469-1.228,0-1.697s1.228-0.469,1.697,0L10,8.183\n            l2.651-3.031c0.469-0.469,1.228-0.469,1.697,0s0.469,1.229,0,1.697l-2.758,3.152l2.758,3.15\n            C14.817,13.62,14.817,14.38,14.348,14.849z\"/>\n        </svg>\n    </div>\n</div>\n<div class=\"mc-window__content\">\n    <!--window content-->\n</div>";
 
 /***/ }),
-/* 56 */
+/* 70 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventBus = __webpack_require__(5);
+var EventBus = __webpack_require__(7);
 
 /*
     Events:
@@ -5189,7 +6396,7 @@ var Picker = function () {
         key: "createDOM",
         value: function createDOM() {
             this.element.className += " mc-picker";
-            this.element.innerHTML = __webpack_require__(57);
+            this.element.innerHTML = __webpack_require__(71);
 
             this.label = this.element.querySelector(".mc-picker__label");
             this.optionsElement = this.element.querySelector(".mc-picker__options");
@@ -5305,20 +6512,20 @@ var Picker = function () {
 module.exports = Picker;
 
 /***/ }),
-/* 57 */
+/* 71 */
 /***/ (function(module, exports) {
 
 module.exports = "<span class=\"mc-picker\">\n    <span class=\"mc-picker__label\" data-label=\"\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-picker__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-picker__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-picker__options\" style=\"display: none\">\n    </span>\n</span>";
 
 /***/ }),
-/* 58 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var EventBus = __webpack_require__(5);
+var EventBus = __webpack_require__(7);
 
 /*
     Events:
@@ -5379,7 +6586,7 @@ var Menu = function () {
         key: "createDOM",
         value: function createDOM(label) {
             this.element.className += " mc-menu";
-            this.element.innerHTML = __webpack_require__(59);
+            this.element.innerHTML = __webpack_require__(73);
 
             this.label = this.element.querySelector(".mc-menu__label");
             this.itemsElement = this.element.querySelector(".mc-menu__items");
@@ -5475,19 +6682,19 @@ var Menu = function () {
 module.exports = Menu;
 
 /***/ }),
-/* 59 */
+/* 73 */
 /***/ (function(module, exports) {
 
 module.exports = "<span class=\"mc-menu\">\n    <span class=\"mc-menu__label\" data-label=\"\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-menu__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-menu__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-menu__items\" style=\"display: none\">\n    </span>\n</span>";
 
 /***/ }),
-/* 60 */
+/* 74 */
 /***/ (function(module, exports) {
 
 module.exports = "<div class=\"mc-rtwt\">\n\n    <!-- set bold style -->\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <!-- set italic style -->\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <!-- em -->\n    <!-- not yet, implemented later -->\n    <!--<button class=\"mc-rtwt__button\" ref=\"emphasis\">\n        E\n    </button>-->\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- pick header type -->\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- link -->\n    <button class=\"mc-rtwt__button\" ref=\"link\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"11\" y1=\"7\" y2=\"11\"></line>\n            <path class=\"mc-rtwt-stroke\" d=\"M8.9,4.577a3.476,3.476,0,0,1,.36,4.679A3.476,3.476,0,0,1,4.577,8.9C3.185,7.5,2.035,6.4,4.217,4.217S7.5,3.185,8.9,4.577Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M13.423,9.1a3.476,3.476,0,0,0-4.679-.36,3.476,3.476,0,0,0,.36,4.679c1.392,1.392,2.5,2.542,4.679.36S14.815,10.5,13.423,9.1Z\"></path>\n        </svg>\n    </button>\n\n    <!-- image -->\n    <button class=\"mc-rtwt__button\" ref=\"image\">\n        <svg viewBox=\"0 0 18 18\">\n            <rect class=\"mc-rtwt-stroke\" height=\"10\" width=\"12\" x=\"3\" y=\"4\"></rect>\n            <circle class=\"ql-fill\" cx=\"6\" cy=\"7\" r=\"1\"></circle>\n            <polyline class=\"ql-even ql-fill\" points=\"5 12 5 11 7 9 8 10 11 7 13 9 13 12 5 12\"></polyline>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- add a table -->\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        <svg viewBox=\"0 0 26 28\">\n            <g fill=\"#444\" transform=\"scale(0.02734375 0.02734375)\">\n                <path d=\"M292.571 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM950.857 164.571v621.714c0 50.286-41.143 91.429-91.429 91.429h-768c-50.286 0-91.429-41.143-91.429-91.429v-621.714c0-50.286 41.143-91.429 91.429-91.429h768c50.286 0 91.429 41.143 91.429 91.429z\" />\n            </g>\n        </svg>\n    </button>\n\n    <!-- insert something to a table -->\n    <span ref=\"tableInsert\"></span>\n\n    <!-- remove something from a table -->\n    <span ref=\"tableRemove\"></span>\n</div>";
 
 /***/ }),
-/* 61 */
+/* 75 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5498,10 +6705,10 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var TextPopupWindow = __webpack_require__(62);
-var getRefs = __webpack_require__(2);
+var TextPopupWindow = __webpack_require__(76);
+var getRefs = __webpack_require__(1);
 var cssClass = __webpack_require__(4);
-var TextPad = __webpack_require__(3);
+var TextPad = __webpack_require__(5);
 
 var LinkBlotProperties = function (_TextPopupWindow) {
     _inherits(LinkBlotProperties, _TextPopupWindow);
@@ -5521,7 +6728,7 @@ var LinkBlotProperties = function (_TextPopupWindow) {
          */
         _this.scheme = "http";
 
-        _this.content.innerHTML = __webpack_require__(63);
+        _this.content.innerHTML = __webpack_require__(77);
         cssClass(_this.content, "mc-lbp", true);
 
         _this.refs = getRefs(_this.content);
@@ -5785,7 +6992,7 @@ var LinkBlotProperties = function (_TextPopupWindow) {
 module.exports = LinkBlotProperties;
 
 /***/ }),
-/* 62 */
+/* 76 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -5796,8 +7003,8 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var Window = __webpack_require__(17);
-var TextPad = __webpack_require__(3);
+var Window = __webpack_require__(20);
+var TextPad = __webpack_require__(5);
 
 var TextPopupWindow = function (_Window) {
     _inherits(TextPopupWindow, _Window);
@@ -6047,19 +7254,19 @@ var TextPopupWindow = function (_Window) {
 module.exports = TextPopupWindow;
 
 /***/ }),
-/* 63 */
+/* 77 */
 /***/ (function(module, exports) {
 
 module.exports = "<div ref=\"viewingBlock\" class=\"mc-lbp__block\">\n    Visit URL: <a ref=\"url\" href=\"#\" target=\"_blank\">url here</a>\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"edit\">Edit</a>\n    <span class=\"mc-lbp__bar\"></span>\n    <a ref=\"remove\">Remove</a>\n</div>\n<form ref=\"editingBlock\" class=\"mc-lbp__block\">\n    <a class=\"mc-lbp__scheme\" ref=\"httpScheme\">Web</a>\n    <a class=\"mc-lbp__scheme\" ref=\"telScheme\">Tel</a>\n    <a class=\"mc-lbp__scheme\" ref=\"mailtoScheme\">Email</a>\n    <input type=\"text\" ref=\"textbox\" placeholder=\"URL\">\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"save\">Save</a>\n</form>";
 
 /***/ }),
-/* 64 */
+/* 78 */
 /***/ (function(module, exports) {
 
 module.exports = "<!--\n    Icons used:\n    http://www.entypo.com/\n-->\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"toggleEdit\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M17.561,2.439c-1.442-1.443-2.525-1.227-2.525-1.227L8.984,7.264L2.21,14.037L1.2,18.799l4.763-1.01\n            l6.774-6.771l6.052-6.052C18.788,4.966,19.005,3.883,17.561,2.439z M5.68,17.217l-1.624,0.35c-0.156-0.293-0.345-0.586-0.69-0.932\n            c-0.346-0.346-0.639-0.533-0.932-0.691l0.35-1.623l0.47-0.469c0,0,0.883,0.018,1.881,1.016c0.997,0.996,1.016,1.881,1.016,1.881\n            L5.68,17.217z\"/>\n        </svg>\n    </button>\n\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"richTextToolbar\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M3.135,6.89c0.933-0.725,1.707-0.225,2.74,0.971c0.116,0.135,0.272-0.023,0.361-0.1\n            C6.324,7.683,7.687,6.456,7.754,6.4C7.82,6.341,7.9,6.231,7.795,6.108C7.688,5.985,7.301,5.483,7.052,5.157\n            c-1.808-2.365,4.946-3.969,3.909-3.994c-0.528-0.014-2.646-0.039-2.963-0.004C6.715,1.294,5.104,2.493,4.293,3.052\n            C3.232,3.778,2.836,4.204,2.771,4.263c-0.3,0.262-0.048,0.867-0.592,1.344C1.604,6.11,1.245,5.729,0.912,6.021\n            C0.747,6.167,0.285,6.513,0.153,6.628C0.02,6.745-0.004,6.942,0.132,7.099c0,0,1.264,1.396,1.37,1.52\n            C1.607,8.741,1.893,8.847,2.069,8.69c0.177-0.156,0.632-0.553,0.708-0.623C2.855,8.001,2.727,7.206,3.135,6.89z M8.843,7.407\n            c-0.12-0.139-0.269-0.143-0.397-0.029L7.012,8.63c-0.113,0.1-0.129,0.283-0.027,0.4l8.294,9.439c0.194,0.223,0.53,0.246,0.751,0.053\n            L17,17.709c0.222-0.195,0.245-0.533,0.052-0.758L8.843,7.407z M19.902,3.39c-0.074-0.494-0.33-0.391-0.463-0.182\n            c-0.133,0.211-0.721,1.102-0.963,1.506c-0.24,0.4-0.832,1.191-1.934,0.41c-1.148-0.811-0.749-1.377-0.549-1.758\n            c0.201-0.383,0.818-1.457,0.907-1.59c0.089-0.135-0.015-0.527-0.371-0.363c-0.357,0.164-2.523,1.025-2.823,2.26\n            c-0.307,1.256,0.257,2.379-0.85,3.494l-1.343,1.4l1.349,1.566l1.654-1.57c0.394-0.396,1.236-0.781,1.998-0.607\n            c1.633,0.369,2.524-0.244,3.061-1.258C20.057,5.792,19.977,3.884,19.902,3.39z M2.739,17.053c-0.208,0.209-0.208,0.549,0,0.758\n            l0.951,0.93c0.208,0.209,0.538,0.121,0.746-0.088l4.907-4.824L7.84,12.115L2.739,17.053z\"/>\n        </svg>\n    </button>\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__text\" ref=\"savingInfo\">\n    Saved\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div style=\"flex: 1\"></div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-logout\" ref=\"logout\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M19,10l-6-5v3H6v4h7v3L19,10z M3,3h8V1H3C1.9,1,1,1.9,1,3v14c0,1.1,0.9,2,2,2h8v-2H3V3z\"/>\n        </svg>\n    </button>\n</div>";
 
 /***/ }),
-/* 65 */
+/* 79 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6252,166 +7459,10 @@ var WindowManager = function () {
 module.exports = WindowManager;
 
 /***/ }),
-/* 66 */
+/* 80 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 67 */,
-/* 68 */,
-/* 69 */,
-/* 70 */,
-/* 71 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-var _get = function get(object, property, receiver) { if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { return get(parent, property, receiver); } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } };
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-module.exports = function (Quill) {
-
-    var getRefs = __webpack_require__(2);
-    var IframeBlot = __webpack_require__(29)(Quill);
-    var ClipCache = __webpack_require__(6);
-
-    var ImageBlot = function (_IframeBlot) {
-        _inherits(ImageBlot, _IframeBlot);
-
-        function ImageBlot(element, value) {
-            _classCallCheck(this, ImageBlot);
-
-            /**
-             * Initial blot value
-             */
-            var _this = _possibleConstructorReturn(this, (ImageBlot.__proto__ || Object.getPrototypeOf(ImageBlot)).call(this, element, value));
-
-            _this.initialValue = value;
-
-            /**
-             * Flag
-             */
-            _this.initialized = false;
-            return _this;
-        }
-
-        _createClass(ImageBlot, [{
-            key: "initialize",
-            value: function initialize() {
-                var _this2 = this;
-
-                _get(ImageBlot.prototype.__proto__ || Object.getPrototypeOf(ImageBlot.prototype), "initialize", this).call(this);
-
-                // set iframe body class
-                this.contentBody.className = "mc-ql-image-blot__content";
-
-                this.createDOM();
-
-                this.loadQuill(function () {
-
-                    _this2.updateDimensions();
-
-                    _this2.initialized = true;
-                });
-            }
-        }, {
-            key: "createDOM",
-            value: function createDOM() {
-                this.contentDiv.innerHTML = "\n            <figure>\n                <img ref=\"img\">\n                <figcaption ref=\"title\"></figcaption>\n            </figure>\n        ";
-
-                // get image reference
-                var refs = getRefs(this.contentDiv);
-
-                refs.img.src = this.initialValue.url;
-                refs.title.innerText = this.initialValue.title;
-            }
-
-            /**
-             * Trigger shroom data update
-             */
-
-        }, {
-            key: "triggerShroomUpdate",
-            value: function triggerShroomUpdate() {
-                // tell pad that a change occured
-                // (trigger text-change event)
-                this.textPad.quill.insertText(0, "");
-            }
-
-            /**
-             * Returns quill delta value
-             */
-
-        }, {
-            key: "value",
-            value: function value() {
-                // returned value
-                var out = void 0;
-
-                // if not initialized yet, return the initial value
-                if (!this.initialized) {
-                    out = { image: this.initialValue };
-                }
-
-                // otherwise get the value
-                else {
-                        var value = this.initialValue;
-
-                        out = {
-                            image: value
-                        };
-                    }
-
-                // save value to clip-cache
-                ClipCache.setValue(this.clipCacheId, out);
-
-                return out;
-            }
-        }]);
-
-        return ImageBlot;
-    }(IframeBlot);
-
-    ImageBlot.blotName = "image";
-    ImageBlot.className = "mc-ql-image-blot";
-
-    Quill.register(ImageBlot);
-};
-
-/***/ }),
-/* 72 */
-/***/ (function(module, exports) {
-
-module.exports = function (Quill) {
-
-    function ImageMatcher(element, delta) {
-        var img = element.querySelector("img");
-        var figcaption = element.querySelector("figcaption");
-
-        var url = img.src;
-        var title = figcaption.innerText;
-
-        // return the full delta
-        return {
-            ops: [{
-                insert: {
-                    image: {
-                        url: url,
-                        title: title
-                    }
-                }
-            }]
-        };
-    }
-
-    return ImageMatcher;
-};
 
 /***/ })
 /******/ ]);

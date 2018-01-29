@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
+use Storage;
+use Mycelium\Shroom;
 
 class FeatureTestCase extends TestCase
 {
@@ -11,6 +13,17 @@ class FeatureTestCase extends TestCase
      * @var string
      */
     public $feature = null;
+
+    public function setUp()
+    {
+        parent::setUp();
+
+        // mock filesystem
+        Storage::fake("mycelium-fake");
+        Shroom::setFilesystem(Storage::drive("mycelium-fake"));
+
+        $this->migrate();
+    }
 
     /**
      * Creates the application.

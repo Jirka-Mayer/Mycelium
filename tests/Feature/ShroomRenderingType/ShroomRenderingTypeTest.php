@@ -9,13 +9,6 @@ class ShroomRenderingTypeTest extends FeatureTestCase
 {
     public $feature = "ShroomRenderingType";
 
-    public function setUp()
-    {
-        parent::setUp();
-
-        $this->migrate();
-    }
-
     protected function asVisitor()
     {
         $this->app["session"]->put("bob is editor", false);

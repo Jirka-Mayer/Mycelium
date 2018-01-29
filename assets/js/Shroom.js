@@ -2,6 +2,7 @@ const axios = require("axios")
 const TextWidget = require("./widgets/Text.js")
 const RichTextWidget = require("./widgets/RichText.js")
 const EventBus = require("./EventBus.js")
+const SporeUploader = require("./SporeUploader.js")
 
 // delay between a change and save call
 const AUTOSAVE_TIMEOUT = 2000
@@ -74,6 +75,7 @@ class Shroom
         this.title = data.title
 
         this.data = data.data
+        this.spores = data.spores
 
         // if the provided data is empty, it's serialized
         // in php as [] instead of {}
@@ -145,46 +147,8 @@ class Shroom
      */
     uploadNewSpore(type)
     {
-        let fileInput = this.document.createElement("input")
-        fileInput.type = "file"
-
-        fileInput.onchange = function () {
-            
-            if (fileInput.files.length != 1)
-            {
-                console.warn("improper count")
-                return
-            }
-
-            let files = fileInput.files
-            let formData = new FormData()
-
-            // file content and name
-            formData.append("spore", files[0], files[0].name)
-
-            // spore type (handler)
-            formData.append("type", type)
-
-            axios({
-                method: "post",
-                url: "upload-resource",
-                data: formData,
-                config: { headers: {"Content-Type": "multipart/form-data"} }
-            })
-            .then((response) => {
-                if (!response.data.success)
-                {
-                    console.error(response.data.message)
-                    return
-                }
-
-                console.log(response.data.spore)
-            })
-
-        }
-
-        // open the dialog
-        fileInput.click()
+        return SporeUploader.fileDialog(this.document)
+            .then(file => SporeUploader.upload(file, type))
     }
 
     ////////////

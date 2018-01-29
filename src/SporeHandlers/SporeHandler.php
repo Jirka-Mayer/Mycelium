@@ -12,10 +12,10 @@ abstract class SporeHandler
     protected $shroom = null;
 
     /**
-     * The spore handle
-     * @var string
+     * The spore reference
+     * @var collection
      */
-    protected $handle = null;
+    protected $spore = null;
 
     /**
      * Request parameters
@@ -32,11 +32,11 @@ abstract class SporeHandler
     }
 
     /**
-     * Set the spore handle
+     * Set the spore
      */
-    public function setHandle($handle)
+    public function setSpore($spore)
     {
-        $this->handle = $handle;
+        $this->spore = $spore;
     }
 
     /**

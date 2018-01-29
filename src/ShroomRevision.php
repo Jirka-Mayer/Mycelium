@@ -177,47 +177,34 @@ class ShroomRevision
      *
      * Causes the revision to be saved.
      */
-    public function putNewSpore($file, $sporeType, Filesystem $storage)
+    public function putNewSpore($filePath, $sporeType, $name, Filesystem $storage)
     {
         // if this is not a master, you cannot add a spore
         if ($this->index !== null)
             throw new \Exception(
                 "You cannot put new spore into an already comitted revision.");
 
-        // slugify name
-        $name = $file->getClientOriginalName();
-
         // get filename
-        $filename = pathinfo($name, PATHINFO_FILENAME);
+        $filename = Str::slug(pathinfo($name, PATHINFO_FILENAME));
 
         // if no extension, "" is returned
-        $extension = Str::lower(pathinfo($name, PATHINFO_EXTENSION));
-
-        // get random string
-        $randomString = Str::random(5);
+        $extension = Str::slug(Str::lower(pathinfo($name, PATHINFO_EXTENSION)));
 
         // create file handle
-        $handle = $filename . "_" . $randomString . "." . $extension;
-
-        // get mime type
-        $mime = $file->getMimeType();
-
-        /*
-            Create a spore class that can handle all of this
-         */
+        $handle = $filename . "_" . Str::random(5) . "." . $extension;
 
         // create a record in the revision
         $spore = [
             "handle" => $handle,
             "type" => $sporeType,
             "extension" => $extension,
-            "mime" => $mime,
             "attributes" => []
         ];
         $this->spores->put($handle, $spore);
 
-        // store the file
-        $storage->putFileAs("spores", $file, $handle);
+        // store the file (move it)
+        // (move because the filePath points into the "upload" folder)
+        $storage->move($filePath, "spores/{$handle}");
 
         // save spore records
         $this->save($storage);

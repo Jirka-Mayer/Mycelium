@@ -10,7 +10,8 @@ class Shroom extends Model
         ShroomConcerns\GeneratesSlug,
         ShroomConcerns\HasFilesystem,
         ShroomConcerns\HasRevisions,
-        ShroomConcerns\HasVersion;
+        ShroomConcerns\HasVersion,
+        ShroomConcerns\HandlesSporeUpload;
 
     /**
      * Database table to save shrooms to
@@ -148,19 +149,8 @@ class Shroom extends Model
 
             "title" => $this->title,
 
-            "data" => $this->data("master")
+            "data" => $this->data("master"),
+            "spores" => $this->revision("master")->spores->toArray()
         ];
-    }
-
-    /**
-     * Puts into the shroom a new spore that has just been uploaded
-     * Return the spore properties
-     *
-     * Causes the master revision to be saved
-     */
-    public function putNewSpore($file, $sporeType)
-    {
-        return $this->revision("master")->putNewSpore(
-            $file, $sporeType, $this->storage());
     }
 }
