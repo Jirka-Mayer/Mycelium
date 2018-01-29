@@ -20,7 +20,7 @@ class IndexController extends Controller
         return $session->get("bob is editor", false);
     }
 
-    public function shroomSlug()
+    public static function shroomSlug()
     {
         return "index";
     }

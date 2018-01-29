@@ -29,7 +29,7 @@ class Mycelium
 
     /**
      * Returns route generator instance
-     * @return \Mycelium\RouteGenerator
+     * @return \Mycelium\RouteManager
      */
     public function routes()
     {

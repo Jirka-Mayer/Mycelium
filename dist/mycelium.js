@@ -3941,6 +3941,8 @@ var Shroom = function () {
             this.data = data.data;
             this.spores = data.spores;
 
+            this.url = data.url;
+
             // if the provided data is empty, it's serialized
             // in php as [] instead of {}
             if (this.data instanceof Array) this.data = {};

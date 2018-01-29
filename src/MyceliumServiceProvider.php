@@ -8,7 +8,7 @@ use Illuminate\Log\Writer;
 use Monolog\Logger as Monolog;
 
 use Mycelium\Services\Mycelium;
-use Mycelium\Services\RouteGenerator;
+use Mycelium\Services\RouteManager;
 use Mycelium\Services\DeltaRenderer;
 use Mycelium\SporeHandlers\FileHandler;
 use Mycelium\SporeHandlers\ImageHandler;
@@ -102,7 +102,7 @@ class MyceliumServiceProvider extends ServiceProvider
 
         $this->app->singleton(
             "mycelium.routes",
-            RouteGenerator::class
+            RouteManager::class
         );
         
         $this->app->singleton(

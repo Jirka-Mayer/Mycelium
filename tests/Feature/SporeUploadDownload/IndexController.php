@@ -20,7 +20,7 @@ class IndexController extends Controller
         return true;
     }
 
-    public function shroomSlug()
+    public static function shroomSlug()
     {
         return "index";
     }

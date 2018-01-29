@@ -184,7 +184,7 @@ trait ServesShroom
      * Slug identifying the shroom
      * @return string
      */
-    public function shroomSlug()
+    public static function shroomSlug()
     {
         return "shroom-slug";
     }
@@ -228,7 +228,7 @@ trait ServesShroom
 
         // find or create shroom
         if ($this->shroomExists())
-            $this->shroom = Shroom::find($this->shroomSlug());
+            $this->shroom = Shroom::find(static::shroomSlug());
         else
             $this->shroom = $this->createShroom();
 
@@ -245,7 +245,7 @@ trait ServesShroom
      */
     protected function shroomExists()
     {
-        return Shroom::find($this->shroomSlug()) !== null;
+        return Shroom::find(static::shroomSlug()) !== null;
     }
 
     /**
@@ -258,7 +258,7 @@ trait ServesShroom
             // title for a single shroom stays null
             // it's used only in clusters
 
-            "id" => $this->shroomSlug()
+            "id" => static::shroomSlug()
         ]);
     }
 
@@ -312,8 +312,8 @@ trait ServesShroom
         if (!$revision->spores->has($handle))
             abort(404);
 
-        // get the spore as collection
-        $spore = collect($revision->spores[$handle]);
+        // get the spore via the spore method to resolve references
+        $spore = $this->shroom->spore($handle, "public");
 
         // resolve the spore handler
         $handler = $mycelium->resolveSporeHandler($spore["type"], $this->shroom);

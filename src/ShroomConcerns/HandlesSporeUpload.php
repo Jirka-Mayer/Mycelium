@@ -3,6 +3,7 @@
 namespace Mycelium\ShroomConcerns;
 
 use Illuminate\Http\UploadedFile;
+use Carbon\Carbon;
 
 trait HandlesSporeUpload
 {
@@ -86,6 +87,9 @@ trait HandlesSporeUpload
 
         // update context
         $context["lastReceivedPart"] = $params["partIndex"];
+
+        // set updated-at time for timeout erase
+        $context["updatedAt"] = Carbon::now()->format("Y-m-d H:i:s");
 
         // save context
         $this->storage()->put(
