@@ -44,32 +44,11 @@ class ShroomRevision
     /**
      * Creates new revision instance
      */
-    public function __construct()
+    public function __construct($index = null)
     {
+        $this->index = $index;
         $this->data = collect();
         $this->spores = collect();
-    }
-
-    /**
-     * Create a revision save in database
-     */
-    public static function fromDatabase($index, $attributes, $fileContents)
-    {
-        $revision = new static;
-        $revision->index = $index;
-        $revision->readAttributes($attributes);
-        $revision->readFile($fileContents);
-        return $revision;
-    }
-
-    /**
-     * Create master revision
-     */
-    public static function master($fileContents)
-    {
-        $revision = new static;
-        $revision->readFile($fileContents);
-        return $revision;
     }
 
     /**
@@ -78,50 +57,56 @@ class ShroomRevision
     public function __clone()
     {
         $this->data = clone $this->data;
+        $this->spores = clone $this->spores;
     }
 
     /**
-     * Load properties saved in the database
+     * Load the revision from file
      */
-    protected function readAttributes($attributes)
+    public function load(Filesystem $storage)
     {
+        // revision file name
+        $name = $this->index;
+        if ($name === null)
+            $name = "master";
+
+        $filename = "revisions/revision-{$name}.json";
+
+        // does the file exist?
+        if (!$storage->exists($filename))
+            $storage->put($filename, "{}");
+
+        // load the file
+        $file = $storage->get($filename);
+
+        // parse
+        $attributes = json_decode($file, true);
+
+        // parsing error
+        if (!is_array($attributes))
+            $this->loadError($file);
+
+        // array to collection
         $attributes = collect($attributes);
 
-        $this->title = $attributes->get("title");
-        $this->comittedAt = new Carbon($attributes->get("comittedAt"));
-    }
+        // load commited at property
+        if ($attributes->get("comittedAt") === null)
+            $this->comittedAt = null;
+        else
+            $this->comittedAt = new Carbon($attributes->get("comittedAt"));
 
-    /**
-     * Export properties saved in the database
-     * @return array
-     */
-    public function exportDatabaseAttributes()
-    {
-        $attributes = collect();
+        // load other properties
+        $this->title = $attributes->get("title", "");
 
-        $attributes->put("title", $this->title);
-        $attributes->put("comittedAt", $this->comittedAt->format("Y-m-d H:i:s"));
-
-        return $attributes->toArray();
-    }
-
-    /**
-     * Load properties saved in a file
-     */
-    protected function readFile(string $fileContents)
-    {
-        $attributes = json_decode($fileContents, true);
-
-        if ($attributes === null)
-            $this->readFileError($fileContents);
-
-        $attributes = collect($attributes);
-
+        // load data and spores
         $this->data = collect($attributes->get("data", []));
         $this->spores = collect($attributes->get("spores", []));
     }
 
-    protected function readFileError($fileContents)
+    /**
+     * Handle file loading error
+     */
+    protected function loadError($fileContents)
     {
         // log the error
         // note the file as damaged and so on...
@@ -133,21 +118,29 @@ class ShroomRevision
     }
 
     /**
-     * Save data stored in the file
-     * @return string
+     * Save data into the file
      */
-    public function saveFile(Filesystem $storage)
+    public function save(Filesystem $storage)
     {
-        // get revision name
+        // prepare file contents
+        $attributes = collect();
+        
+        $attributes->put("title", $this->title);
+
+        if ($this->comittedAt === null)
+            $attributes->put("comittedAt", null);
+        else
+            $attributes->put("comittedAt", $this->comittedAt->format("Y-m-d H:i:s"));
+
+        $attributes->put("data", $this->data);
+        $attributes->put("spores", $this->spores);
+
+        $file = $attributes->toJson(JSON_PRETTY_PRINT);
+
+        // get revision file name
         $name = $this->index;
         if ($name === null)
             $name = "master";
-
-        // prepare file contents
-        $attributes = collect();
-        $attributes->put("data", $this->data);
-        $attributes->put("spores", $this->spores);
-        $file = $attributes->toJson(JSON_PRETTY_PRINT);
 
         // save the file
         $storage->put(
@@ -181,6 +174,8 @@ class ShroomRevision
 
     /**
      * Put into the revision a new spore
+     *
+     * Causes the revision to be saved.
      */
     public function putNewSpore($file, Filesystem $storage)
     {
@@ -220,7 +215,7 @@ class ShroomRevision
         $storage->putFileAs("spores", $file, $handle);
 
         // save spore records
-        $this->saveFile($storage);
+        $this->save($storage);
 
         return $spore;
     }

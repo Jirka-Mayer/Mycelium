@@ -66,6 +66,14 @@ trait HasRevisions
                 return null;
         }
 
+        // load if needed
+        if ($this->revisionBag->get($index) === "to-be-loaded")
+        {
+            $revision = new ShroomRevision($index === "master" ? null : $index);
+            $revision->load($this->storage());
+            $this->revisionBag->put($index, $revision);
+        }
+
         return $this->revisionBag->get($index, null);
     }
 
@@ -81,6 +89,7 @@ trait HasRevisions
 
         $this->revisionBag = collect();
 
+        // if the shroom exists
         if ($this->exists)
             $this->loadRevisionBag();
         else
@@ -88,29 +97,37 @@ trait HasRevisions
     }
 
     /**
-     * Load revisions from database and filesystem
+     * Load existing revisions from filesystem
      * @return null
      */
     protected function loadRevisionBag()
     {
-        if (!is_array($this->revisions))
-            $this->revisions = [];
+        $files = collect($this->storage()->files("revisions"));
 
-        foreach ($this->revisions as $index => $attributes)
-        {
-            $this->revisionBag->put(
-                intval($index),
-                ShroomRevision::fromDatabase(
-                    $index,
-                    $attributes,
-                    $this->storage()->get("revisions/revision-{$index}.json")
-                )
-            );
-        }
+        // filter revision files (filter junk out)
+        $revisionFiles = $files->filter(function ($file) {
+            return preg_match("/^revisions\/revision-(master|\d+)\.json$/", $file);
+        });
 
-        $this->revisionBag->put("master", ShroomRevision::master(
-            $this->storage()->get("revisions/revision-master.json")
-        ));
+        // get revision names (indices)
+        // but only numerical, not the master
+        $revisions = $files->map(function ($file) {
+            return preg_match("/^revisions\/revision-(\d+)\.json$/", $file);
+        });
+
+        /*
+            Note: only revision references are loaded,
+            the revisions themselves are loaded on demand
+            in the ->revision() method
+         */
+
+        // reference commited revisions
+        foreach ($revisions as $revisionIndex)
+            $this->revisionBag->put($revisionIndex, "to-be-loaded");
+
+        // reference master revision
+        // (in case the file would not exist, create anyway)
+        $this->revisionBag->put("master", "to-be-loaded");
     }
 
     /**
@@ -119,7 +136,8 @@ trait HasRevisions
      */
     protected function createRevisionBag()
     {
-        $this->revisionBag->put("master", new ShroomRevision);
+        $this->revisionBag = collect();
+        $this->revisionBag->put("master", new ShroomRevision(null));
     }
 
     /**
@@ -130,18 +148,15 @@ trait HasRevisions
     {
         $this->initializeRevisionBag();
 
-        // prepare for database saving
-        $revisions = [];
-        foreach ($this->revisionBag as $index => $revision)
-        {
-            if (is_numeric($index))
-                $revisions[$index] = $revision->exportDatabaseAttributes();
-        }
-        $this->revisions = $revisions;
-
         // save to files
         foreach ($this->revisionBag as $revision)
-            $revision->saveFile($this->storage());
+        {
+            // no need to save not even loaded revisions
+            if ($revision === "to-be-loaded")
+                continue;
+
+            $revision->save($this->storage());
+        }
     }
 
     /**
@@ -155,7 +170,7 @@ trait HasRevisions
         $master->index = $this->getHighestRevisionIndex() + 1;
         $master->title = $commitTitle;
         $master->comittedAt = Carbon::now();
-        
+
         $newMaster->cloneSpores($master);
 
         $this->revisionBag->put($master->index, $master);
