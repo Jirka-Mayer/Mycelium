@@ -4,13 +4,18 @@ namespace Mycelium\SporeHandlers;
 
 use Illuminate\Http\Request;
 
-class ImageHandler extends SporeHandler
+class ImageHandler extends FileHandler
 {
     /**
      * Handle the download request
      */
-    public function handleDownload(Request $request)
+    public function handleDownload()
     {
-        dd("yep, we're here");
+        // if no params provided, just let the user
+        // see the original image
+        if ($this->params === null)
+            return parent::handleDownload();
+
+        dd("parameters were provided: ", $this->params);
     }
 }

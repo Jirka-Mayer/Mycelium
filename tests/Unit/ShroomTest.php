@@ -145,8 +145,7 @@ class ShroomTest extends TestCase
         $shroom->save();
 
         $file = UploadedFile::fake()->create("my-image.jpg", 1024);
-
-        $spore = $shroom->revision("master")->putNewSpore($file, $shroom->storage());
+        $spore = $shroom->putNewSpore($file, "image");
 
         $this->assertEquals(
             ["spores/" . $spore["handle"]],
@@ -182,7 +181,7 @@ class ShroomTest extends TestCase
         $shroom->save();
 
         $file = UploadedFile::fake()->create("my-image.jpg", 1024);
-        $spore = $shroom->revision("master")->putNewSpore($file, $shroom->storage());
+        $spore = $shroom->putNewSpore($file, "image");
 
         $shroom->commit("Added my image.");
 

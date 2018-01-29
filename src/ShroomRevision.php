@@ -177,10 +177,15 @@ class ShroomRevision
      *
      * Causes the revision to be saved.
      */
-    public function putNewSpore($file, Filesystem $storage)
+    public function putNewSpore($file, $sporeType, Filesystem $storage)
     {
+        // if this is not a master, you cannot add a spore
+        if ($this->index !== null)
+            throw new \Exception(
+                "You cannot put new spore into an already comitted revision.");
+
         // slugify name
-        $name = $file->name;
+        $name = $file->getClientOriginalName();
 
         // get filename
         $filename = pathinfo($name, PATHINFO_FILENAME);
@@ -204,7 +209,7 @@ class ShroomRevision
         // create a record in the revision
         $spore = [
             "handle" => $handle,
-            "type" => "image",
+            "type" => $sporeType,
             "extension" => $extension,
             "mime" => $mime,
             "attributes" => []

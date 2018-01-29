@@ -122,7 +122,11 @@ class Shroom extends Model
             $overview->put("updated_at", null);
 
         $overview->put("public_revision", $this->public_revision);
-        $overview->put("deleted_at", $this->deleted_at);
+
+        if ($this->deleted_at !== null)
+            $overview->put("deleted_at", $this->deleted_at->format("Y-m-d H:i:s"));
+        else
+            $overview->put("deleted_at", null);
 
         // save to file
         $this->storage()->put(
@@ -146,5 +150,17 @@ class Shroom extends Model
 
             "data" => $this->data("master")
         ];
+    }
+
+    /**
+     * Puts into the shroom a new spore that has just been uploaded
+     * Return the spore properties
+     *
+     * Causes the master revision to be saved
+     */
+    public function putNewSpore($file, $sporeType)
+    {
+        return $this->revision("master")->putNewSpore(
+            $file, $sporeType, $this->storage());
     }
 }

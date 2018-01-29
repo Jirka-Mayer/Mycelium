@@ -19,6 +19,9 @@ class MyceliumServiceProvider extends ServiceProvider
 {
     public function boot()
     {
+        // register spore handlers
+        $this->app["mycelium"]->registerSporeHandler("image", ImageHandler::class);
+
         Shroom::setFilesystem($this->app["mycelium.filesystem"]);
 
         $this->loadMigrationsFrom(__DIR__ . "/../assets/migrations");
@@ -104,9 +107,6 @@ class MyceliumServiceProvider extends ServiceProvider
             "mycelium.deltaRenderer",
             DeltaRenderer::class
         );
-
-        // spore handlers
-        $this->app->bind("mycelium.spore-handler.image", ImageHandler::class);
 
         if ($this->app->runningInConsole())
             $this->registerMyceliumUpdating();

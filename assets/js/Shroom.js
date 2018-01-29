@@ -141,8 +141,9 @@ class Shroom
     /**
      * User selects a file and it will be uploaded as a new spore
      * Spore handle is returned in the promise
+     * @param {string} type Type of the spore handler
      */
-    uploadNewSpore()
+    uploadNewSpore(type)
     {
         let fileInput = this.document.createElement("input")
         fileInput.type = "file"
@@ -157,16 +158,27 @@ class Shroom
 
             let files = fileInput.files
             let formData = new FormData()
-            formData.append("my-file", files[0], files[0].name)
+
+            // file content and name
+            formData.append("spore", files[0], files[0].name)
+
+            // spore type (handler)
+            formData.append("type", type)
 
             axios({
                 method: "post",
-                url: "upload-file",
+                url: "upload-resource",
                 data: formData,
                 config: { headers: {"Content-Type": "multipart/form-data"} }
             })
             .then((response) => {
-                console.log(response)
+                if (!response.data.success)
+                {
+                    console.error(response.data.message)
+                    return
+                }
+
+                console.log(response.data.spore)
             })
 
         }

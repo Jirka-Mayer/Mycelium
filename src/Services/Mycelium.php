@@ -4,6 +4,7 @@ namespace Mycelium\Services;
 
 use Illuminate\Contracts\Container\Container;
 use Mycelium\Shroom;
+use Exception;
 
 /**
  * Mycelium services accessible via the Mycelium facade
@@ -18,6 +19,8 @@ class Mycelium
     public function __construct(Container $app)
     {
         $this->app = $app;
+
+        $this->sporeHandlers = collect();
     }
 
     /////////////
@@ -131,12 +134,31 @@ class Mycelium
     ////////////
 
     /**
+     * List of registered spore handlers
+     * @var collection
+     */
+    protected $sporeHandlers = null;
+
+    /**
+     * Registers a new spore handler
+     */
+    public function registerSporeHandler($type, $className)
+    {
+        $this->app->bind("mycelium.spore-handler.{$type}", $className);
+        $this->sporeHandlers->put($type, "mycelium.spore-handler.{$type}");
+    }
+
+    /**
      * Returns an initialized instance of proper spore handler
      */
     public function resolveSporeHandler($type, Shroom $shroom)
     {
-        // resolve the handler
-        $handler = $this->app["mycelium.spore-handler.{$type}"];
+        // check existence
+        if (!$this->sporeHandlers->has($type))
+            throw new Exception("Requested spore handler '{$type}' is not registered.");
+
+        // instantiate the handler
+        $handler = $this->app[$this->sporeHandlers->get($type)];
 
         // set shroom reference
         $handler->setShroom($shroom);

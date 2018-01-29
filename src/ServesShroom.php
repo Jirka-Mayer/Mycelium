@@ -271,6 +271,15 @@ trait ServesShroom
      */
     public function uploadSpore(Request $request, Container $app)
     {
+        // check if valid
+        if (!$request->file("spore")->isValid())
+        {
+            return [
+                "success" => false,
+                "message" => "File was not uploaded."
+            ];
+        }
+
         // initialize shroom instance
         $app->call([$this, "obtainShroom"]);
 
@@ -278,9 +287,19 @@ trait ServesShroom
         if (!$app->call([$this, "isUserAnEditor"]))
             throw new AuthorizationException;
 
-        // do stuff ...
+        // put the spore into the shroom
+        $spore = $this->shroom->putNewSpore(
+            $request->file("spore"),
+            $request->input("type")
+        );
 
-        return ["success" => true];
+        // do post-upload handler specific actions
+        // TODO ...
+
+        return [
+            "success" => true,
+            "spore" => $spore
+        ];
     }
 
     /**
@@ -288,21 +307,27 @@ trait ServesShroom
      */
     public function getResource($type, $handle, Mycelium $mycelium, Container $app)
     {
+        return $this->getResourceWithParams($type, null, $handle, $mycelium, $app);
+    }
+
+    /**
+     * Handles request for a resource with parameters
+     */
+    public function getResourceWithParams($type, $params, $handle, Mycelium $mycelium, Container $app)
+    {
         // initialize shroom instance
         $app->call([$this, "obtainShroom"]);
 
         // resolve the spore handler
         $handler = $mycelium->resolveSporeHandler($type, $this->shroom);
 
+        // set the spore handle
+        $handler->setHandle($handle);
+
+        // set parameters to the handler
+        $handler->setParams($params);
+
         // call the handler
         return $app->call([$handler, "handleDownload"]);
-    }
-
-    /**
-     * Handles request for a resource with parameters
-     */
-    public function getResourceWithParams($type, $params, $handle)
-    {
-
     }
 }
