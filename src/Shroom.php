@@ -123,7 +123,6 @@ class Shroom extends Model
 
         $overview->put("public_revision", $this->public_revision);
         $overview->put("deleted_at", $this->deleted_at);
-        $overview->put("revisions", $this->revisions);
 
         // save to file
         $this->storage()->put(
