@@ -269,7 +269,7 @@ trait ServesShroom
     /**
      * Handles new spore upload
      */
-    public function uploadSpore(Request $request)
+    public function uploadSpore(Request $request, Container $app)
     {
         // initialize shroom instance
         $app->call([$this, "obtainShroom"]);
@@ -281,5 +281,28 @@ trait ServesShroom
         // do stuff ...
 
         return ["success" => true];
+    }
+
+    /**
+     * Handles request for a resource
+     */
+    public function getResource($type, $handle, Mycelium $mycelium, Container $app)
+    {
+        // initialize shroom instance
+        $app->call([$this, "obtainShroom"]);
+
+        // resolve the spore handler
+        $handler = $mycelium->resolveSporeHandler($type, $this->shroom);
+
+        // call the handler
+        return $app->call([$handler, "handleDownload"]);
+    }
+
+    /**
+     * Handles request for a resource with parameters
+     */
+    public function getResourceWithParams($type, $params, $handle)
+    {
+
     }
 }

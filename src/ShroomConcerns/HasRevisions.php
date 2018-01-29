@@ -135,18 +135,13 @@ trait HasRevisions
         foreach ($this->revisionBag as $index => $revision)
         {
             if (is_numeric($index))
-                $revisions[$index] = $revision->exportAttributes();
+                $revisions[$index] = $revision->exportDatabaseAttributes();
         }
         $this->revisions = $revisions;
 
         // save to files
-        foreach ($this->revisionBag as $index => $revision)
-        {
-            $this->storage()->put(
-                "revisions/revision-{$index}.json",
-                $revision->exportToFile()
-            );
-        }
+        foreach ($this->revisionBag as $revision)
+            $revision->saveFile($this->storage());
     }
 
     /**
@@ -160,6 +155,8 @@ trait HasRevisions
         $master->index = $this->getHighestRevisionIndex() + 1;
         $master->title = $commitTitle;
         $master->comittedAt = Carbon::now();
+        
+        $newMaster->cloneSpores($master);
 
         $this->revisionBag->put($master->index, $master);
         $this->revisionBag->put("master", $newMaster);

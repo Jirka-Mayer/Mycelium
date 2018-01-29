@@ -10,6 +10,7 @@ use Monolog\Logger as Monolog;
 use Mycelium\Services\Mycelium;
 use Mycelium\Services\RouteGenerator;
 use Mycelium\Services\DeltaRenderer;
+use Mycelium\SporeHandlers\ImageHandler;
 use Mycelium\Update\MyceliumUpdater;
 use Mycelium\Update\ShroomUpdater;
 use Mycelium\Shroom;
@@ -104,13 +105,14 @@ class MyceliumServiceProvider extends ServiceProvider
             DeltaRenderer::class
         );
 
+        // spore handlers
+        $this->app->bind("mycelium.spore-handler.image", ImageHandler::class);
+
         if ($this->app->runningInConsole())
             $this->registerMyceliumUpdating();
 
         $this->app->singleton("mycelium", function () {
-            $mycelium = new Mycelium;
-            $mycelium->setRouteGenerator($this->app["mycelium.routes"]);
-            return $mycelium;
+            return new Mycelium($this->app);
         });
 
         // for service injection

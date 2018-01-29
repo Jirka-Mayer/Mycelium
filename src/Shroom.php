@@ -10,8 +10,7 @@ class Shroom extends Model
         ShroomConcerns\GeneratesSlug,
         ShroomConcerns\HasFilesystem,
         ShroomConcerns\HasRevisions,
-        ShroomConcerns\HasVersion,
-        ShroomConcerns\HasSpores;
+        ShroomConcerns\HasVersion;
 
     /**
      * Database table to save shrooms to
@@ -87,11 +86,11 @@ class Shroom extends Model
     public function save(array $options = [])
     {
         if ($this->slug === "")
-            throw new EmptySlugException("Slug of a shroom cannot be empty.");
+            throw new EmptySlugException("Slug of the shroom cannot be empty.");
 
         $this->prepareStorageDirectory();
 
-        $this->saveRevisions();
+        $this->saveRevisions($this->storage());
 
         // this data is stored primarily in the database, but a backup
         // in a file is made in case of database crash

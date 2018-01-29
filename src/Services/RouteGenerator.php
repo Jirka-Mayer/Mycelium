@@ -24,6 +24,20 @@ class RouteGenerator
         Route::get($url, $controller . "@view");
         Route::get($url . "edit", $controller . "@edit");
         Route::post($url . "edit", $controller . "@saveEdit");
-        Route::post($url . "upload-resource", $controller . "@uploadSpore");
+        
+        Route::post(
+            $url . "upload-resource",
+            $controller . "@uploadSpore"
+        );
+
+        Route::get(
+            $url . "resource/{type}/{handle}",
+            $controller . "@getResource"
+        );
+
+        Route::get(
+            $url . "resource/{type}/{params}/{handle}",
+            $controller . "@getResourceWithParams"
+        );
     }
 }

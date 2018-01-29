@@ -8,6 +8,7 @@ use Mycelium\Shroom;
 use Mycelium\EmptySlugException;
 
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Http\UploadedFile;
 
 class ShroomTest extends TestCase
 {
@@ -138,9 +139,79 @@ class ShroomTest extends TestCase
     /**
      * @test
      */
-    /*public function it_stores_new_spores()
+    public function it_stores_new_spores()
     {
         $shroom = new Shroom(["title" => "My shroom"]);
         $shroom->save();
-    }*/
+
+        $file = UploadedFile::fake()->create("my-image.jpg", 1024);
+
+        $spore = $shroom->revision("master")->putNewSpore($file, $shroom->storage());
+
+        $this->assertEquals(
+            ["spores/" . $spore["handle"]],
+            $shroom->storage()->files("spores")
+        );
+
+        $this->assertEquals(
+            [
+                "handle" => $spore["handle"],
+                "type" => "image",
+                "extension" => "jpg",
+                "mime" => "image/jpeg",
+                "attributes" => []
+            ],
+            $spore
+        );
+
+        $this->assertEquals(
+            $spore,
+            json_decode(
+                $shroom->storage()->get("revisions/revision-master.json"),
+                true
+            )["spores"][$spore["handle"]]
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_clones_spores_on_commit()
+    {
+        $shroom = new Shroom(["title" => "My shroom"]);
+        $shroom->save();
+
+        $file = UploadedFile::fake()->create("my-image.jpg", 1024);
+        $spore = $shroom->revision("master")->putNewSpore($file, $shroom->storage());
+
+        $shroom->commit("Added my image.");
+
+        $this->assertNotEquals(
+            ["@sameAsInRevision" => 1],
+            json_decode(
+                $shroom->storage()->get("revisions/revision-master.json"),
+                true
+            )["spores"][$spore["handle"]]
+        );
+
+        $this->assertEquals(
+            ["@sameAsInRevision" => 1],
+            $shroom->revision("master")->spores[$spore["handle"]]
+        );
+
+        $shroom->save();
+
+        $this->assertEquals(
+            ["@sameAsInRevision" => 1],
+            json_decode(
+                $shroom->storage()->get("revisions/revision-master.json"),
+                true
+            )["spores"][$spore["handle"]]
+        );
+
+        $this->assertEquals(
+            ["@sameAsInRevision" => 1],
+            $shroom->revision("master")->spores[$spore["handle"]]
+        );
+    }
 }

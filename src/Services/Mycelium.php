@@ -2,29 +2,27 @@
 
 namespace Mycelium\Services;
 
+use Illuminate\Contracts\Container\Container;
+use Mycelium\Shroom;
+
 /**
  * Mycelium services accessible via the Mycelium facade
  */
 class Mycelium
 {
+    /**
+     * Reference to the service container
+     */
+    protected $app = null;
+
+    public function __construct(Container $app)
+    {
+        $this->app = $app;
+    }
+
     /////////////
     // Routing //
     /////////////
-    
-    /**
-     * Route generator instance
-     * @var \Mycelium\RouteGenerator
-     */
-    protected $routeGenerator;
-
-    /**
-     * Sets the Route generator dependency
-     * @param RouteGenerator $routeGenerator mycelium route generator service
-     */
-    public function setRouteGenerator(RouteGenerator $routeGenerator)
-    {
-        $this->routeGenerator = $routeGenerator;
-    }
 
     /**
      * Returns route generator instance
@@ -32,7 +30,7 @@ class Mycelium
      */
     public function routes()
     {
-        return $this->routeGenerator;
+        return $this->app["mycelium.routes"];
     }
 
     /////////////
@@ -126,5 +124,23 @@ class Mycelium
         }
 
         return asset("vendor/mycelium" . $bustedName);
-    }    
+    }
+
+    ////////////
+    // Spores //
+    ////////////
+
+    /**
+     * Returns an initialized instance of proper spore handler
+     */
+    public function resolveSporeHandler($type, Shroom $shroom)
+    {
+        // resolve the handler
+        $handler = $this->app["mycelium.spore-handler.{$type}"];
+
+        // set shroom reference
+        $handler->setShroom($shroom);
+
+        return $handler;
+    }
 }
