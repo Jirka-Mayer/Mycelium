@@ -4,13 +4,15 @@ namespace Mycelium\ShroomConcerns;
 
 use Illuminate\Http\UploadedFile;
 use Carbon\Carbon;
+use Mycelium\Services\Mycelium;
+use Illuminate\Support\Str;
 
 trait HandlesSporeUpload
 {
     /**
      * Handles when a spore part gets uploaded
      */
-    public function sporePartUploaded(UploadedFile $file, $params)
+    public function sporePartUploaded(UploadedFile $file, $params, Mycelium $mycelium)
     {
         // make sure param type is proper
         $params["partIndex"] = intval($params["partIndex"]);
@@ -33,6 +35,16 @@ trait HandlesSporeUpload
         // if the first part just arrived
         if ($params["partIndex"] === 0)
         {
+            // check that file extension matches type
+            $handler = $mycelium->resolveSporeHandler($params["type"], $this);
+            $extension = pathinfo($file->getClientOriginalName(), PATHINFO_EXTENSION);
+            $extension = Str::lower($extension);
+            if (!$handler->isFileExtensionOk($extension))
+                return [
+                    "success" => false,
+                    "message" => "This file extension is not allowed for given spore type."
+                ];
+
             // create upload context
             $context = [
                 "originalName" => $file->getClientOriginalName(),
@@ -110,6 +122,18 @@ trait HandlesSporeUpload
                 $context["originalName"],
                 $this->storage()
             );
+
+            // run after-upload logic
+            $handler = $mycelium->resolveSporeHandler($params["type"], $this);
+            $handler->setShroom($this);
+            $handler->setSpore($spore);
+            $handler->processNewSpore();
+
+            // save if changes were made (to the spore)
+            $this->save();
+
+            // fetch the spore again with full details (and updated if changed)
+            $spore = $this->spore($spore["handle"]);
 
             return [
                 "success" => true,

@@ -17,4 +17,13 @@ class FileHandler extends SporeHandler
             $this->shroom->storage()->path("spores/" . $this->spore["handle"])
         );
     }
+
+    /**
+     * Returns true if the extension is fine
+     */
+    public function isFileExtensionOk($extension)
+    {
+        // all files are accepted
+        return true;
+    }
 }

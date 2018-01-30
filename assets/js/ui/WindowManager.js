@@ -132,7 +132,7 @@ class WindowManager
             return null
 
         // check storage access
-        if (!(this.window.localStorage instanceof this.window.storage))
+        if (!(this.window.localStorage instanceof this.window.Storage))
             return null
 
         // dream key

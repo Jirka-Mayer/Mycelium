@@ -10,12 +10,12 @@ class IndexController extends Controller
 {
     use ServesShroom;
 
-    public function isShroomTransparent()
+    public function isUserAnEditor()
     {
         return true;
     }
 
-    public function isUserAnEditor()
+    public static function isShroomTransparent()
     {
         return true;
     }
@@ -25,7 +25,7 @@ class IndexController extends Controller
         return "index";
     }
 
-    public function shroomView()
+    public static function shroomView()
     {
         throw new \Exception("Shroom has no view - see the controller.");
     }

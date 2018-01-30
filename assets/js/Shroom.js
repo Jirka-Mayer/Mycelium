@@ -52,13 +52,6 @@ class Shroom
          * Widgets
          */
         this.widgets = []
-
-        // create instances of all widgets
-        this.createWidgetInstances()
-
-        // initializeAutosave() has to be called externally
-        // depending on the usecase (e.g. you don't want
-        // autosave when testing)
     }
 
     /**
@@ -83,6 +76,21 @@ class Shroom
         // in php as [] instead of {}
         if (this.data instanceof Array)
             this.data = {}
+    }
+
+    /**
+     * This is initialization just like in constructor, but now
+     * the shroom instance is bound to the mycelium namespace
+     * so the code inside this method can access it
+     */
+    initialize()
+    {
+        // create instances of all widgets
+        this.createWidgetInstances()
+
+        // initializeAutosave() has to be called externally
+        // depending on the usecase (e.g. you don't want
+        // autosave when testing)
     }
 
     /////////////
@@ -149,8 +157,19 @@ class Shroom
      */
     uploadNewSpore(type)
     {
+        // open file dialog
         return SporeUploader.fileDialog(this.document)
-            .then(file => SporeUploader.upload(file, type))
+
+        // upload the spore
+        .then(file => SporeUploader.upload(file, type))
+
+        // register the spore
+        .then((spore) => {
+            return new Promise((resolve, reject) => {
+                this.spores[spore.handle] = spore
+                resolve(spore)
+            })
+        })
     }
 
     ////////////
@@ -184,15 +203,17 @@ class Shroom
             this.savingTimerId = null
         }
 
-        axios.post(this.window.location.href, {
+        let promise = axios.post(this.window.location.href, {
             data: this.data
         })
         .then((response) => {
-            console.warn("Shroom saved.")
-
             this.saving = false
             this.afterSave()
         })
+
+        // return the promise in case someone would
+        // want to wait for the save end
+        return promise
     }
 
     /**

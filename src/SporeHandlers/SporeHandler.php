@@ -46,4 +46,22 @@ abstract class SporeHandler
     {
         $this->params = $params;
     }
+
+    /**
+     * Handle the download request
+     */
+    public abstract function handleDownload();
+
+    /**
+     * Returns true if the extension is fine
+     */
+    public abstract function isFileExtensionOk($extension);
+
+    /**
+     * Do any specific processing of a newly uploaded spore
+     */
+    public function processNewSpore()
+    {
+        // override this
+    }
 }

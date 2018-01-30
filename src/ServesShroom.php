@@ -52,7 +52,7 @@ trait ServesShroom
         $mycelium->editor(false);
 
         return $view->make(
-            $app->call([$this, "shroomView"]),
+            static::shroomView(),
             $app->call([$this, "getDataForViewing"])
         );
     }
@@ -76,7 +76,7 @@ trait ServesShroom
         $mycelium->editor(true);
 
         return $view->make(
-            $app->call([$this, "shroomView"]),
+            static::shroomView(),
             $app->call([$this, "getDataForViewing"])
         );
     }
@@ -98,7 +98,7 @@ trait ServesShroom
         $mycelium->editor(true);
 
         return $view->make(
-            $app->call([$this, "shroomView"]),
+            static::shroomView(),
             $app->call([$this, "getDataForEditing"])
         );
     }
@@ -172,33 +172,6 @@ trait ServesShroom
     }
 
     /**
-     * Is the served shroom transparent?
-     * (This means that it's displayed to visitors even if not published)
-     */
-    public function isShroomTransparent()
-    {
-        return false;
-    }
-
-    /**
-     * Slug identifying the shroom
-     * @return string
-     */
-    public static function shroomSlug()
-    {
-        return "shroom-slug";
-    }
-
-    /**
-     * View used for shroom rendering
-     * @var string
-     */
-    public function shroomView()
-    {
-        return "shroom-view";
-    }
-
-    /**
      * Pass additional properties to the rendering view
      * @return array
      */
@@ -233,7 +206,7 @@ trait ServesShroom
             $this->shroom = $this->createShroom();
 
         // set transparency
-        $this->shroom->transparent = $this->isShroomTransparent();
+        $this->shroom->transparent = static::isShroomTransparent();
 
         // bind to the container
         $app->instance("mycelium.shroom", $this->shroom);
@@ -284,7 +257,7 @@ trait ServesShroom
             "partCount" => $request->input("partCount", 1),
             "partIndex" => $request->input("partIndex", 0),
             "uploadId" => $request->input("uploadId")
-        ]);
+        ], $app["mycelium"]);
     }
 
     /**
@@ -326,5 +299,40 @@ trait ServesShroom
 
         // call the handler
         return $app->call([$handler, "handleDownload"]);
+    }
+
+    ////////////////
+    // Properties //
+    ////////////////
+
+    /*
+        Methods to be overriden for customization
+     */
+
+    /**
+     * Is the served shroom transparent?
+     * (This means that it's displayed to visitors even if not published)
+     */
+    public static function isShroomTransparent()
+    {
+        return false;
+    }
+
+    /**
+     * Slug identifying the shroom
+     * @return string
+     */
+    public static function shroomSlug()
+    {
+        return "shroom-slug";
+    }
+
+    /**
+     * View used for shroom rendering
+     * @var string
+     */
+    public static function shroomView()
+    {
+        return "shroom-view";
     }
 }

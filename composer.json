@@ -16,7 +16,8 @@
         "illuminate/filesystem": "^5.4",
         "illuminate/console": "^5.4",
         "illuminate/http": "^5.4",
-        "illuminate/auth": "^5.4"
+        "illuminate/auth": "^5.4",
+        "intervention/image": "^2.4"
     },
     "require-dev": {
         "mockery/mockery": "0.9.*",

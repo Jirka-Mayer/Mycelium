@@ -6,6 +6,7 @@ use Tests\Feature\FeatureTestCase;
 use Mycelium\Shroom;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Str;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class SporeUploadDownloadTest extends FeatureTestCase
 {
@@ -17,8 +18,11 @@ class SporeUploadDownloadTest extends FeatureTestCase
     public function spore_can_be_uploaded()
     {
         // upload a file in a single part
+        $file = UploadedFile::fake()->create("avatar.jpg");
+        Image::canvas(1920, 1080, "#ccc")->save($file->getRealPath());
+
         $response = $this->json("POST", "/upload-resource", [
-            "resource" => UploadedFile::fake()->create("avatar.jpg", 1024),
+            "resource" => $file,
             "type" => "image",
             "uploadId" => Str::random(11),
         ]);

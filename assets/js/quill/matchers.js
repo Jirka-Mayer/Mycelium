@@ -1,4 +1,4 @@
-module.exports = function (Quill) {
+module.exports = function (Quill, mycelium) {
 
 return [
     ["h1", require("./matchers/HeaderMatcher.js")(Quill)],
@@ -10,7 +10,7 @@ return [
 
     ["iframe", require("./matchers/IframeMatcher.js")(Quill)],
     ["table", require("./matchers/TableMatcher.js")(Quill)],
-    ["figure", require("./matchers/ImageMatcher.js")(Quill)],
+    ["figure", require("./matchers/ImageMatcher.js")(Quill, mycelium)],
 ]
 
 }

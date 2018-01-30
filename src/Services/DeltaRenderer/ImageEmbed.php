@@ -17,8 +17,21 @@ class ImageEmbed
         if (!isset($value["url"]))
             $value["url"] = "";
 
+        if (!isset($value["@spore"]))
+            $value["@spore"] = null;
+
         if (!isset($value["title"]))
             $value["title"] = "";
+
+        // a cheat here... do dependency injection in the future!
+        if ($value["@spore"])
+        {
+            $shroom = app("mycelium.shroom");
+            $spore = $shroom->spore($value["@spore"]);
+
+            if ($spore)
+                $value["url"] = $spore["url"];
+        }
 
         $html = "<figure>";
 
@@ -30,7 +43,7 @@ class ImageEmbed
             https://cloudfour.com/thinks/dont-use-picture-most-of-the-time/
          */
         
-        $html .= '<img src="' . htmlentities($value["url"]) . '">';
+        $html .= '<img src="' . htmlentities($value["url"]) . '" mycelium-spore="' . htmlentities($value["@spore"]) . '" >';
 
         $html .= '<figcaption>' . htmlentities($value["title"]) . '</figcaption>';
 

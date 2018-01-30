@@ -10,14 +10,14 @@ class IndexController extends Controller
 {
     use ServesShroom;
 
-    public function isShroomTransparent()
-    {
-        return true;
-    }
-
     public function isUserAnEditor(Session $session)
     {
         return $session->get("bob is logged in", false);
+    }
+
+    public static function isShroomTransparent()
+    {
+        return true;
     }
 
     public static function shroomSlug()
@@ -25,7 +25,7 @@ class IndexController extends Controller
         return "index";
     }
 
-    public function shroomView()
+    public static function shroomView()
     {
         return "index";
     }

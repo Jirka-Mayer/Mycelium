@@ -50,7 +50,20 @@ class ImageBlot extends IframeBlot
         // get image reference
         let refs = getRefs(this.contentDiv)
 
-        refs.img.src = this.initialValue.url
+        // if spore
+        if (this.initialValue["@spore"])
+        {
+            let spore = this.textPad.mycelium.shroom.spores[this.initialValue["@spore"]]
+
+            if (spore)
+                refs.img.src = spore.url
+        }
+        // else if url
+        else if (this.initialValue.url)
+        {
+            refs.img.src = this.initialValue.url
+        }
+
         refs.title.innerText = this.initialValue.title
     }
 

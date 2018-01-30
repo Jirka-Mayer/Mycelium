@@ -45,5 +45,34 @@ return [
 
         // explicit overriding for tables
         "table-headers" => null, // no override, use global settings
+    ],
+
+    /**
+     * Spore options
+     */
+    "spores" => [
+
+        /**
+         * Image spores
+         */
+        "image" => [
+
+            // caching widths
+            "caches" => [
+                // small - thumbnail for example
+                256,
+                512,
+
+                // "full screen" resolutions
+                1280, // 1280x720  - 720p
+                1920, // 1920x1080 - 1080p
+                2560, // 2560x1440 - 1440p
+
+                // above -> upload size
+            ],
+
+            // cache image quality (0 to 100)
+            "quality" => 70
+        ]
     ]
 ];

@@ -811,7 +811,7 @@ var TextPad = function () {
             formats: this.options.formats,
             modules: {
                 clipboard: {
-                    matchers: __webpack_require__(12)(Quill),
+                    matchers: __webpack_require__(12)(Quill, this.mycelium),
                     matchVisual: false
                 }
             }
@@ -886,17 +886,20 @@ var TextPad = function () {
     }, {
         key: "insertImage",
         value: function insertImage() {
-            // upload spore and get it's link...
-            var url = "https://cdn-images-1.medium.com/max/200/1*rQJ6Hxaeh2ttdk3F2t0HtA.jpeg";
+            var _this = this;
 
-            var range = this.quill.getSelection(true);
-            this.quill.insertText(range.index, "\n");
-            this.quill.insertEmbed(range.index + 1, "image", {
-                // static for debug
-                url: url,
-                title: "A very cool image indeed."
+            // first let the user choose an image and upload it to the server
+            this.mycelium.shroom.uploadNewSpore("image").then(function (spore) {
+
+                // now create the embed referencing the spore
+                var range = _this.quill.getSelection(true);
+                _this.quill.insertText(range.index, "\n");
+                _this.quill.insertEmbed(range.index + 1, "image", {
+                    "@spore": spore.handle,
+                    title: "A very cool image indeed."
+                });
+                _this.quill.setSelection(range.index + 2);
             });
-            this.quill.setSelection(range.index + 2);
         }
 
         ///////////////////
@@ -1456,6 +1459,8 @@ function registerClasses(window) {
 function createShroom(window, shroomData) {
     window.mycelium.shroom = new window.mycelium.class.Shroom(window, window.document, window.mycelium, shroomData);
 
+    window.mycelium.shroom.initialize();
+
     window.mycelium.shroom.initializeAutosave();
 }
 
@@ -1808,9 +1813,9 @@ module.exports = defaultOptions;
 /* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = function (Quill) {
+module.exports = function (Quill, mycelium) {
 
-    return [["h1", __webpack_require__(2)(Quill)], ["h2", __webpack_require__(2)(Quill)], ["h3", __webpack_require__(2)(Quill)], ["h4", __webpack_require__(2)(Quill)], ["h5", __webpack_require__(2)(Quill)], ["h6", __webpack_require__(2)(Quill)], ["iframe", __webpack_require__(31)(Quill)], ["table", __webpack_require__(32)(Quill)], ["figure", __webpack_require__(33)(Quill)]];
+    return [["h1", __webpack_require__(2)(Quill)], ["h2", __webpack_require__(2)(Quill)], ["h3", __webpack_require__(2)(Quill)], ["h4", __webpack_require__(2)(Quill)], ["h5", __webpack_require__(2)(Quill)], ["h6", __webpack_require__(2)(Quill)], ["iframe", __webpack_require__(31)(Quill)], ["table", __webpack_require__(32)(Quill)], ["figure", __webpack_require__(33)(Quill, mycelium)]];
 };
 
 /***/ }),
@@ -3131,7 +3136,17 @@ module.exports = function (Quill) {
                 // get image reference
                 var refs = getRefs(this.contentDiv);
 
-                refs.img.src = this.initialValue.url;
+                // if spore
+                if (this.initialValue["@spore"]) {
+                    var spore = this.textPad.mycelium.shroom.spores[this.initialValue["@spore"]];
+
+                    if (spore) refs.img.src = spore.url;
+                }
+                // else if url
+                else if (this.initialValue.url) {
+                        refs.img.src = this.initialValue.url;
+                    }
+
                 refs.title.innerText = this.initialValue.title;
             }
 
@@ -3825,13 +3840,14 @@ module.exports = function (Quill) {
 /* 33 */
 /***/ (function(module, exports) {
 
-module.exports = function (Quill) {
+module.exports = function (Quill, mycelium) {
 
     function ImageMatcher(element, delta) {
         var img = element.querySelector("img");
         var figcaption = element.querySelector("figcaption");
 
         var url = img.src;
+        var spore = img.getAttribute("mycelium-spore");
         var title = figcaption.innerText;
 
         // return the full delta
@@ -3840,6 +3856,7 @@ module.exports = function (Quill) {
                 insert: {
                     image: {
                         url: url,
+                        "@spore": spore,
                         title: title
                     }
                 }
@@ -3913,13 +3930,6 @@ var Shroom = function () {
          * Widgets
          */
         this.widgets = [];
-
-        // create instances of all widgets
-        this.createWidgetInstances();
-
-        // initializeAutosave() has to be called externally
-        // depending on the usecase (e.g. you don't want
-        // autosave when testing)
     }
 
     /**
@@ -3946,6 +3956,23 @@ var Shroom = function () {
             // if the provided data is empty, it's serialized
             // in php as [] instead of {}
             if (this.data instanceof Array) this.data = {};
+        }
+
+        /**
+         * This is initialization just like in constructor, but now
+         * the shroom instance is bound to the mycelium namespace
+         * so the code inside this method can access it
+         */
+
+    }, {
+        key: "initialize",
+        value: function initialize() {
+            // create instances of all widgets
+            this.createWidgetInstances();
+
+            // initializeAutosave() has to be called externally
+            // depending on the usecase (e.g. you don't want
+            // autosave when testing)
         }
 
         /////////////
@@ -4010,8 +4037,22 @@ var Shroom = function () {
     }, {
         key: "uploadNewSpore",
         value: function uploadNewSpore(type) {
-            return SporeUploader.fileDialog(this.document).then(function (file) {
+            var _this = this;
+
+            // open file dialog
+            return SporeUploader.fileDialog(this.document)
+
+            // upload the spore
+            .then(function (file) {
                 return SporeUploader.upload(file, type);
+            })
+
+            // register the spore
+            .then(function (spore) {
+                return new Promise(function (resolve, reject) {
+                    _this.spores[spore.handle] = spore;
+                    resolve(spore);
+                });
             });
         }
 
@@ -4038,7 +4079,7 @@ var Shroom = function () {
     }, {
         key: "save",
         value: function save() {
-            var _this = this;
+            var _this2 = this;
 
             this.saving = true;
             this.saved = true;
@@ -4050,14 +4091,16 @@ var Shroom = function () {
                 this.savingTimerId = null;
             }
 
-            axios.post(this.window.location.href, {
+            var promise = axios.post(this.window.location.href, {
                 data: this.data
             }).then(function (response) {
-                console.warn("Shroom saved.");
-
-                _this.saving = false;
-                _this.afterSave();
+                _this2.saving = false;
+                _this2.afterSave();
             });
+
+            // return the promise in case someone would
+            // want to wait for the save end
+            return promise;
         }
 
         /**
@@ -7409,7 +7452,7 @@ var WindowManager = function () {
             if (!this.window.localStorage) return null;
 
             // check storage access
-            if (!(this.window.localStorage instanceof this.window.storage)) return null;
+            if (!(this.window.localStorage instanceof this.window.Storage)) return null;
 
             // dream key
             var key = DREAM_PREFIX + win.name;

@@ -96,7 +96,7 @@ class TextPad
             formats: this.options.formats,
             modules: {
                 clipboard: {
-                    matchers: require("./quill/matchers.js")(Quill),
+                    matchers: require("./quill/matchers.js")(Quill, this.mycelium),
                     matchVisual: false
                 }
             }
@@ -175,17 +175,20 @@ class TextPad
      */
     insertImage()
     {
-        // upload spore and get it's link...
-        let url = "https://cdn-images-1.medium.com/max/200/1*rQJ6Hxaeh2ttdk3F2t0HtA.jpeg"
+        // first let the user choose an image and upload it to the server
+        this.mycelium.shroom.uploadNewSpore("image")
+        .then((spore) => {
 
-        let range = this.quill.getSelection(true)
-        this.quill.insertText(range.index, "\n")
-        this.quill.insertEmbed(range.index + 1, "image", {
-            // static for debug
-            url: url,
-            title: "A very cool image indeed."
+            // now create the embed referencing the spore
+            let range = this.quill.getSelection(true)
+            this.quill.insertText(range.index, "\n")
+            this.quill.insertEmbed(range.index + 1, "image", {
+                "@spore": spore.handle,
+                title: "A very cool image indeed."
+            })
+            this.quill.setSelection(range.index + 2)
+
         })
-        this.quill.setSelection(range.index + 2)
     }
 
     ///////////////////

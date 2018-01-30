@@ -162,6 +162,7 @@ class ShroomTest extends TestCase
                 "handle" => $spore["handle"],
                 "type" => "image",
                 "extension" => "jpg",
+                "filename" => $spore["filename"],
                 "attributes" => []
             ],
             $spore

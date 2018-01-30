@@ -1,10 +1,14 @@
 const createApplication = require("./support/createApplication.js")
+const axios = require("axios")
+const moxios = require("moxios")
 
 describe("Shroom", () => {
 
     let window, shroom
 
     beforeEach(() => {
+        moxios.install(axios)
+
         window = createApplication({
             data: {
                 "content": "Content ipsum."
@@ -12,6 +16,10 @@ describe("Shroom", () => {
         })
 
         shroom = window.mycelium.shroom
+    })
+
+    afterEach(() => {
+        moxios.uninstall(axios)
     })
 
     it("loads information about itself", () => {
@@ -30,6 +38,38 @@ describe("Shroom", () => {
 
         expect(shroom.getData("content")).toBe("Foo")
         expect(shroom.saved).toBe(false)
+    })
+
+    it("saves changes", (done) => {
+        shroom.setData("content", "Foo")
+        expect(shroom.saved).toBe(false)
+        
+        shroom.save()
+            .then(() => {
+                expect(shroom.saved).toBe(true)
+                expect(shroom.saving).toBe(false)
+                done()
+            })
+
+        expect(shroom.saved).toBe(true)
+        expect(shroom.saving).toBe(true)
+
+        moxios.wait(() => {
+            let request = moxios.requests.mostRecent()
+
+            expect(JSON.parse(request.config.data)).toEqual({
+                data: {
+                    "content": "Foo"
+                }
+            })
+
+            request.respondWith({
+                status: 200,
+                response: {
+                    success: true
+                }
+            })
+        })
     })
 
 })

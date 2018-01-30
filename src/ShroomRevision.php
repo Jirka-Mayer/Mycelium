@@ -186,18 +186,20 @@ class ShroomRevision
 
         // get filename
         $filename = Str::slug(pathinfo($name, PATHINFO_FILENAME));
+        $filename .= "_" . Str::random(5);
 
         // if no extension, "" is returned
         $extension = Str::slug(Str::lower(pathinfo($name, PATHINFO_EXTENSION)));
 
         // create file handle
-        $handle = $filename . "_" . Str::random(5) . "." . $extension;
+        $handle = $filename . "." . $extension;
 
         // create a record in the revision
         $spore = [
             "handle" => $handle,
             "type" => $sporeType,
             "extension" => $extension,
+            "filename" => $filename,
             "attributes" => []
         ];
         $this->spores->put($handle, $spore);

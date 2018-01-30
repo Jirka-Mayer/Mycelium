@@ -61,12 +61,6 @@ class Shroom extends Model
     ];
 
     /**
-     * Filesystem for saving shrooms
-     * @var \Illuminate\Contracts\Filesystem
-     */
-    protected static $filesystem;
-
-    /**
      * Returns data stored in the shroom
      * @return collection
      */

@@ -39,6 +39,13 @@ class TestCase extends \Illuminate\Foundation\Testing\TestCase
         $app->make(\Illuminate\Contracts\Console\Kernel::class)
             ->bootstrap();
 
+        // kernel bootstrap causes config overriding, but thats not desired
+        // this is a patch: (maybe wrong, but works...)
+        $app["config"]->set(
+            "mycelium",
+            require __DIR__ . "/../assets/config/config.php"
+        );
+
         return $app;
     }
 

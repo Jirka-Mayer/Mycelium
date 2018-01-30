@@ -8,6 +8,12 @@ use Illuminate\Support\Str;
 trait HasFilesystem
 {
     /**
+     * Filesystem for saving shrooms
+     * @var \Illuminate\Contracts\Filesystem
+     */
+    protected static $filesystem = null;
+
+    /**
      * Local shroom filesystem
      * (with root in the shroom directory)
      *
@@ -112,9 +118,6 @@ trait HasFilesystem
      */
     public static function getFilesystem()
     {
-        if (!isset(static::$filesystem))
-            return null;
-
         return static::$filesystem;
     }
 }
