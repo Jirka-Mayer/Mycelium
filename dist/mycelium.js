@@ -6117,11 +6117,11 @@ var TextPadToolbar = function (_Window) {
             this.content.innerHTML = __webpack_require__(74);
             this.refs = getRefs(this.content);
 
-            this.headerPicker = new Picker(document, this.refs.header, [{ key: "p", label: "Normal" }]);
+            this.headerPicker = new Picker(this.document, this.refs.header, [{ key: "p", label: "Normal" }]);
 
-            this.tableInsertMenu = new Menu(document, this.refs.tableInsert, "Insert", [{ key: "row-below", label: "Row below" }, { key: "row-above", label: "Row above" }, { key: "column-left", label: "Column left" }, { key: "column-right", label: "Column right" }]);
+            this.tableInsertMenu = new Menu(this.document, this.refs.tableInsert, "Insert", [{ key: "row-below", label: "Row below" }, { key: "row-above", label: "Row above" }, { key: "column-left", label: "Column left" }, { key: "column-right", label: "Column right" }]);
 
-            this.tableRemoveMenu = new Menu(document, this.refs.tableRemove, "Remove", [{ key: "row", label: "Row" }, { key: "column", label: "Column" }]);
+            this.tableRemoveMenu = new Menu(this.document, this.refs.tableRemove, "Remove", [{ key: "row", label: "Row" }, { key: "column", label: "Column" }]);
         }
     }, {
         key: "registerEventListeners",
@@ -7405,8 +7405,11 @@ var WindowManager = function () {
                 return null;
             }
 
+            // check storage existance
+            if (!this.window.localStorage) return null;
+
             // check storage access
-            if (!(this.window.localStorage instanceof Storage)) return null;
+            if (!(this.window.localStorage instanceof this.window.storage)) return null;
 
             // dream key
             var key = DREAM_PREFIX + win.name;
@@ -7436,8 +7439,11 @@ var WindowManager = function () {
             // check name
             if (!win.name) return; // error already printed on load
 
+            // check storage existance
+            if (!this.window.localStorage) return null;
+
             // check storage access
-            if (!(this.window.localStorage instanceof Storage)) return;
+            if (!(this.window.localStorage instanceof this.window.Storage)) return;
 
             // dream key
             var key = DREAM_PREFIX + win.name;

@@ -127,8 +127,12 @@ class WindowManager
             return null
         }
 
+        // check storage existance
+        if (!this.window.localStorage)
+            return null
+
         // check storage access
-        if (!(this.window.localStorage instanceof Storage))
+        if (!(this.window.localStorage instanceof this.window.storage))
             return null
 
         // dream key
@@ -162,8 +166,12 @@ class WindowManager
         if (!win.name)
             return // error already printed on load
 
+        // check storage existance
+        if (!this.window.localStorage)
+            return null
+
         // check storage access
-        if (!(this.window.localStorage instanceof Storage))
+        if (!(this.window.localStorage instanceof this.window.Storage))
             return
 
         // dream key

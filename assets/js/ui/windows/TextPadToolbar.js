@@ -26,12 +26,12 @@ class TextPadToolbar extends Window
         this.content.innerHTML = require("./TextPadToolbar.html")
         this.refs = getRefs(this.content)
 
-        this.headerPicker = new Picker(document, this.refs.header, [
+        this.headerPicker = new Picker(this.document, this.refs.header, [
             { key: "p", label: "Normal" }
         ])
 
         this.tableInsertMenu = new Menu(
-            document,
+            this.document,
             this.refs.tableInsert,
             "Insert",
             [
@@ -43,7 +43,7 @@ class TextPadToolbar extends Window
         )
 
         this.tableRemoveMenu = new Menu(
-            document,
+            this.document,
             this.refs.tableRemove,
             "Remove",
             [

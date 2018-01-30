@@ -1,30 +1,21 @@
-const Shroom = require("../assets/js/Shroom.js")
-const {JSDOM} = require("jsdom")
+const createApplication = require("./support/createApplication.js")
 
 describe("Shroom", () => {
-    let dom, shroom
+
+    let window, shroom
 
     beforeEach(() => {
-        dom = new JSDOM()
-
-        shroom = new Shroom(
-            dom.window,
-            dom.window.document,
-            {
-                "id": "index",
-                "slug": "index",
-                "cluster": null,
-                "title": "index",
-                "data": {
-                    "content": "Content ipsum."
-                }
+        window = createApplication({
+            data: {
+                "content": "Content ipsum."
             }
-        )
-        
+        })
+
+        shroom = window.mycelium.shroom
     })
 
     it("loads information about itself", () => {
-        expect(shroom.id).toBe("index")
+        expect(shroom.id).toBe("my-shroom")
         expect(shroom.cluster).toBeNull()
     })
 
@@ -33,12 +24,12 @@ describe("Shroom", () => {
     })
 
     it("captures data changes", () => {
-        expect(shroom.$saved).toBe(true)
+        expect(shroom.saved).toBe(true)
 
         shroom.setData("content", "Foo")
 
         expect(shroom.getData("content")).toBe("Foo")
-        expect(shroom.$saved).toBe(false)
+        expect(shroom.saved).toBe(false)
     })
 
 })
