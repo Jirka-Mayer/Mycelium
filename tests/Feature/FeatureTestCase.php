@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use Storage;
 use Mycelium\Shroom;
 
 class FeatureTestCase extends TestCase
@@ -18,11 +17,8 @@ class FeatureTestCase extends TestCase
     {
         parent::setUp();
 
-        // mock filesystem
-        Storage::fake("mycelium-fake");
-        Shroom::setFilesystem(Storage::drive("mycelium-fake"));
-
         $this->migrate();
+        $this->mockFilesystem();
     }
 
     /**

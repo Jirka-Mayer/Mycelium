@@ -5,6 +5,8 @@ namespace MyceliumTests;
 use Tests\TestCase;
 
 use Mycelium\Services\DeltaRenderer;
+use Mycelium\Shroom;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class DeltaRendererTest extends TestCase
 {
@@ -18,11 +20,17 @@ class DeltaRendererTest extends TestCase
     /**
      * Helper for rendering to an array
      */
-    protected function renderToBlocks($delta)
+    protected function renderToBlocks($delta, $optionsOverride = [])
     {
+        $options = collect([
+            "shroom" => null,
+            "mangleContacts" => false,
+            "trimEmbedNewlines" => false
+        ])->merge($optionsOverride);
+
         // render
-        $blocks = $this->renderer->deltaToBlocks($delta);
-        $html = $this->renderer->blocksToHtml($blocks);
+        $blocks = $this->renderer->deltaToBlocks($delta, $options);
+        $html = $this->renderer->blocksToHtml($blocks, $options);
 
         // to array for comparison
         $blocks = array_map(function ($block) {
@@ -138,7 +146,7 @@ class DeltaRendererTest extends TestCase
                 ["insert" => "world", "attributes" => ["link" => "mailto:world@example.com"]],
                 ["insert" => "\n"],
             ]
-        ]);
+        ], ["mangleContacts" => true]);
 
         $this->assertEquals([
             ["text" => [
@@ -201,7 +209,7 @@ class DeltaRendererTest extends TestCase
                 ],
                 ["insert" => "\n"]
             ]
-        ]);
+        ], ["trimEmbedNewlines" => true]);
 
         $this->assertEquals([
             [
@@ -237,5 +245,69 @@ class DeltaRendererTest extends TestCase
         $this->assertEquals(
             "<table><tr><td><p>Foo</p></td><td><p>Bar</p></td></tr></table>"
         , $html);
+    }
+
+    /**
+     * @test
+     */
+    public function it_renders_image_using_url_only()
+    {
+        list($blocks, $html) = $this->renderToBlocks([
+            "ops" => [
+                [
+                    "insert" => ["image" => [
+                        "url" => "http://example.com/",
+                        "title" => "Blah blah"
+                    ]]
+                ]
+            ]
+        ]);
+
+        $this->assertContains('src="http://example.com/"', $html);
+        $this->assertContains(
+            '<figcaption>Blah blah</figcaption>',
+            $html
+        );
+    }
+
+    /**
+     * @test
+     */
+    public function it_renders_image_with_caches()
+    {
+        $this->migrate();
+        $this->mockFilesystem();
+
+        $shroom = Shroom::create(["title" => "My shroom"]);
+        app("mycelium.routes")->fakeShroomUrlBinding($shroom, "/");
+
+        $shroom->storage()->put("upload/data-fake", "");
+        Image::canvas(420, 350, "#ccc")
+            ->save($shroom->storage()->path("upload/data-fake"));
+        $handle = $shroom->revision("master")->putNewSpore(
+            "upload/data-fake",
+            "image",
+            "My image.jpg",
+            $shroom,
+            app("mycelium")
+        );
+
+        // now the spore exists, we can work with it
+
+        list($blocks, $html) = $this->renderToBlocks([
+            "ops" => [
+                [
+                    "insert" => ["image" => [
+                        "@spore" => $handle,
+                        "title" => "Blah blah"
+                    ]]
+                ]
+            ]
+        ], ["shroom" => $shroom]);
+
+        $this->assertContains('src="' . url("/resource/{$handle}") . '"', $html);
+        $this->assertContains("/resource/240w/my-image", $html);
+        $this->assertContains('alt="Blah blah"', $html);
+        $this->assertContains('mycelium-spore="' . $handle . '"', $html);
     }
 }

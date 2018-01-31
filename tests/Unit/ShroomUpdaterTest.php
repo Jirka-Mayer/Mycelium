@@ -17,10 +17,7 @@ class ShroomUpdaterTest extends TestCase
         parent::setUp();
 
         $this->migrate();
-
-        // mock filesystem
-        Storage::fake("mycelium-fake");
-        Shroom::setFilesystem(Storage::drive("mycelium-fake"));
+        $this->mockFilesystem();
 
         // mock logger
         $this->log = new Writer(new Monolog("fake-update-log"));

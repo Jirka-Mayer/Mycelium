@@ -4,7 +4,6 @@ TODO
 
 ## Features
 
-- commit now has to perform spore meta folder renaming and spore referencing
 - shroom output HTML caching
 
 

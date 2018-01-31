@@ -17,5 +17,5 @@ interface Block
     /**
      * Renders block ton HTML
      */
-    public function toHtml(DeltaRenderer $renderer, $mangleContacts);
+    public function toHtml(DeltaRenderer $renderer, $options);
 }

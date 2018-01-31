@@ -78,4 +78,15 @@ class RouteManager
     {
         return $this->getShroomUrl($shroom, "resource/{$sporeHandle}");
     }
+
+    /**
+     * Fake shroom url binding for testing
+     */
+    public function fakeShroomUrlBinding($shroom, $url)
+    {
+        $url = url($url);
+        if (!Str::endsWith($url, "/"))
+            $url .= "/";
+        $this->singleShroomUrlBindings[$shroom->slug] = $url;
+    }
 }

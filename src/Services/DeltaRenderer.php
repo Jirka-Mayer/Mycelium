@@ -12,13 +12,26 @@ class DeltaRenderer
 {
     /**
      * Render a delta to HTML
-     * @param bool $mangleContacts Mangle emails to it's hard to scrape them
      * @return string
      */
-    public function renderHtml($delta, $mangleContacts = true, $trimEmbedNewlines = true)
+    public function renderHtml($delta, $options = [])
     {
-        $blocks = $this->deltaToBlocks($delta, $trimEmbedNewlines);
-        $html = $this->blocksToHtml($blocks, $mangleContacts);
+        // default options
+        $options = collect([
+
+            // reference to a shroom for pulling spores
+            "shroom" => null,
+
+            // mangle emails and telephone numbers
+            "mangleContacts" => true,
+
+            // remove newlines before first and after last embed
+            "trimEmbedNewlines" => true
+            
+        ])->merge($options);
+
+        $blocks = $this->deltaToBlocks($delta, $options);
+        $html = $this->blocksToHtml($blocks, $options);
         return $html;
     }
 
@@ -50,7 +63,7 @@ class DeltaRenderer
     /**
      * Converts delta format into an array of blocks (line/embed)
      */
-    public function deltaToBlocks($delta, $trimEmbedNewlines = true)
+    public function deltaToBlocks($delta, $options)
     {
         $blocks = [];
         $block = new Line;
@@ -121,7 +134,7 @@ class DeltaRenderer
             }
         }
 
-        if ($trimEmbedNewlines)
+        if ($options["trimEmbedNewlines"])
             $this->trimEmbedNewlines($blocks);
 
         return $blocks;
@@ -168,12 +181,12 @@ class DeltaRenderer
     /**
      * Renders blocks to HTML
      */
-    public function blocksToHtml($blocks, $mangleContacts = true)
+    public function blocksToHtml($blocks, $options)
     {
         $html = "";
 
         foreach ($blocks as $block)
-            $html .= $block->toHtml($this, $mangleContacts);
+            $html .= $block->toHtml($this, $options);
 
         return $html;
     }

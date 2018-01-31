@@ -24,11 +24,11 @@ class ImageHandler extends FileHandler
         $spore = $this->spore;
 
         // weird parameter
-        if (!preg_match("/^w\d+$/", $this->params))
+        if (!preg_match("/^\d+w$/", $this->params))
             abort(404);
 
         // get width
-        $width = intval(Str::substr($this->params, 1));
+        $width = intval($this->params); // the "w" at the end is not a problem
 
         // get the cached widths
         $widths = Arr::get($spore, "attributes.cache", []);
@@ -38,7 +38,7 @@ class ImageHandler extends FileHandler
             abort(404);
 
         // cache filename
-        $filename = "spore-meta/{$spore["filename"]}/revision-{$this->revision->getName()}/{$spore["filename"]}_w{$width}.{$spore["extension"]}";
+        $filename = "spore-meta/{$spore["filename"]}/revision-{$this->revision->getName()}/{$spore["filename"]}_{$width}w.{$spore["extension"]}";
 
         // return the file
         return response()->file(
@@ -123,7 +123,7 @@ class ImageHandler extends FileHandler
 
             // create cache file
             $height = floor(($attributes["height"] / $attributes["width"]) * $width);
-            $cacheFilename = "spore-meta/{$sporeFilename}/revision-master/{$sporeFilename}_w{$width}.{$sporeExtension}";
+            $cacheFilename = "spore-meta/{$sporeFilename}/revision-master/{$sporeFilename}_{$width}w.{$sporeExtension}";
 
             // touch
             $this->shroom->storage()->put($cacheFilename, "");

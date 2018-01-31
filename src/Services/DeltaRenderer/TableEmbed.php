@@ -9,7 +9,7 @@ class TableEmbed
     /**
      * Render table embed to HTML
      */
-    public static function toHtml($value, $attributes, DeltaRenderer $renderer, $mangleContacts)
+    public static function toHtml($value, $attributes, DeltaRenderer $renderer, $options)
     {
         if (!is_array($value))
             $value = [];
@@ -27,7 +27,7 @@ class TableEmbed
             $html .= "<tr>";
 
             foreach ($row as $cell)
-                $html .= "<td>" . $renderer->renderHtml($cell, $mangleContacts) . "</td>";
+                $html .= "<td>" . $renderer->renderHtml($cell, $options) . "</td>";
 
             $html .= "</tr>";
         }

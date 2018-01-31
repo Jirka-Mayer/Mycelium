@@ -9,13 +9,6 @@ class StaticTransparentWebsiteTest extends ScenarioTestCase
 {
     public $scenario = "StaticTransparentWebsite";
 
-    public function setUp()
-    {
-        parent::setUp();
-
-        $this->migrate();
-    }
-
     /**
      * Disables guard in the index controller
      */

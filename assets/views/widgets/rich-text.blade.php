@@ -70,7 +70,11 @@
         {!!
             $renderer->renderHtml(
                 $shroom->data("public")->get($key, $default),
-                false, false
+                [
+                    "shroom" => $shroom,
+                    "mangleContacts" => false,
+                    "trimEmbedNewlines" => false
+                ]
             )
         !!}
     </div>
@@ -78,7 +82,10 @@
     <div class="{{ $class }} {{ $cssScopeText }}">
         {!!
             $renderer->renderHtml(
-                $shroom->data("public")->get($key, $default)
+                $shroom->data("public")->get($key, $default),
+                [
+                    "shroom" => $shroom
+                ]
             )
         !!}
     </div>

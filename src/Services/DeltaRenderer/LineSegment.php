@@ -19,7 +19,7 @@ class LineSegment
     /**
      * Render segment to HTML
      */
-    public function toHtml($mangleContacts)
+    public function toHtml($options)
     {
         $html = htmlentities($this->text);
 
@@ -41,7 +41,7 @@ class LineSegment
             $html = $this->convertLinkToHtml(
                 $this->attributes["link"],
                 $html,
-                $mangleContacts
+                $options
             );
         }
 
@@ -51,8 +51,10 @@ class LineSegment
     /**
      * Converts a link to html
      */
-    protected function convertLinkToHtml($href, $content, $mangleContacts)
+    protected function convertLinkToHtml($href, $content, $options)
     {
+        $mangleContacts = $options["mangleContacts"];
+
         // if not email/tel disable mangling (for this link)
         if (substr($href, 0, 7) !== "mailto:" && substr($href, 0, 4) !== "tel:")
             $mangleContacts = false;
@@ -67,6 +69,9 @@ class LineSegment
                 '" target="_blank">' . $content . '</a>');
     }
 
+    /**
+     * Turns html into a self-reconstructing mess
+     */
     protected function mangleHtml($html)
     {
         // mangle the href and text

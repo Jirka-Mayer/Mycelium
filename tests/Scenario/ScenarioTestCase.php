@@ -12,6 +12,14 @@ class ScenarioTestCase extends TestCase
      */
     public $scenario = null;
 
+    public function setUp()
+    {
+        parent::setUp();
+
+        $this->migrate();
+        $this->mockFilesystem();
+    }
+
     /**
      * Creates the application.
      *

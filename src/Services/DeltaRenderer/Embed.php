@@ -36,7 +36,7 @@ class Embed implements Block
     /**
      * Render embed to HTML
      */
-    public function toHtml(DeltaRenderer $renderer, $mangleContacts)
+    public function toHtml(DeltaRenderer $renderer, $options)
     {
         // render table embed
         if (isset($this->value["table"]))
@@ -44,7 +44,7 @@ class Embed implements Block
                 $this->value["table"],
                 $this->attributes,
                 $renderer,
-                $mangleContacts
+                $options
             );
 
         // render image embed
@@ -52,9 +52,9 @@ class Embed implements Block
             return ImageEmbed::toHtml(
                 $this->value["image"],
                 $this->attributes,
-                $renderer
+                $options
             );
 
-        return "<pre>Unknown embed type.</pre>";
+        return "<pre>Unknown embed type - see DeltaRenderer.</pre>";
     }
 }

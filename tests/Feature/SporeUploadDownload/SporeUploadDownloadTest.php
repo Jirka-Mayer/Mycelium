@@ -144,7 +144,7 @@ class SporeUploadDownloadTest extends FeatureTestCase
         $handle = Shroom::find("index")->revision("master")->spores->first()["handle"];
 
         // download existing cache
-        $response = $this->get("/resource/w480/{$handle}");
+        $response = $this->get("/resource/480w/{$handle}");
         $this->assertEquals("image/jpeg", $response->headers->get("Content-type"));
         $response->assertStatus(200);
 
