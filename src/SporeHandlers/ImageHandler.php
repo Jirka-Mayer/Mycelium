@@ -5,6 +5,8 @@ namespace Mycelium\SporeHandlers;
 use Intervention\Image\ImageManagerStatic as Image;
 use Intervention\Image\Exception\NotReadableException;
 use Carbon\Carbon;
+use Illuminate\Support\Str;
+use Illuminate\Support\Arr;
 
 class ImageHandler extends FileHandler
 {
@@ -18,8 +20,30 @@ class ImageHandler extends FileHandler
         if ($this->params === null)
             return parent::handleDownload();
 
-        // TODO - serve cached files!
-        dd("parameters were provided: ", $this->params);
+        // spore reference
+        $spore = $this->spore;
+
+        // weird parameter
+        if (!preg_match("/^w\d+$/", $this->params))
+            abort(404);
+
+        // get width
+        $width = intval(Str::substr($this->params, 1));
+
+        // get the cached widths
+        $widths = Arr::get($spore, "attributes.cache", []);
+
+        // if this width is not cached
+        if (!collect($widths)->contains($width))
+            abort(404);
+
+        // cache filename
+        $filename = "spore-meta/{$spore["filename"]}/revision-{$this->revision->getName()}/{$spore["filename"]}_w{$width}.{$spore["extension"]}";
+
+        // return the file
+        return response()->file(
+            $this->shroom->storage()->path($filename)
+        );
     }
 
     /**
@@ -45,6 +69,12 @@ class ImageHandler extends FileHandler
         try
         {
             $image = Image::make($filename);
+            
+            // rotate by exif header
+            $image->orientate()->save($filename);
+
+            // reload
+            $image = Image::make($filename);
         }
         catch (NotReadableException $e)
         {
@@ -55,8 +85,8 @@ class ImageHandler extends FileHandler
         }
 
         // store image dimensions
-        $attributes["width"] = $image->getSize()->width;
-        $attributes["height"] = $image->getSize()->height;
+        $attributes["width"] = $image->width();
+        $attributes["height"] = $image->height();
         
         // setup the cache
         $this->setupImageCache($filename, $attributes);

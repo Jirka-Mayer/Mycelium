@@ -116,24 +116,16 @@ trait HandlesSporeUpload
             $this->storage()->delete($contextPath);
 
             // create spore
-            $spore = $this->revision("master")->putNewSpore(
+            $handle = $this->revision("master")->putNewSpore(
                 $dataPath,
                 $context["type"],
                 $context["originalName"],
-                $this->storage()
+                $this,
+                $mycelium
             );
 
-            // run after-upload logic
-            $handler = $mycelium->resolveSporeHandler($params["type"], $this);
-            $handler->setShroom($this);
-            $handler->setSpore($spore);
-            $handler->processNewSpore();
-
-            // save if changes were made (to the spore)
-            $this->save();
-
-            // fetch the spore again with full details (and updated if changed)
-            $spore = $this->spore($spore["handle"]);
+            // fetch the spore
+            $spore = $this->spore($handle);
 
             return [
                 "success" => true,

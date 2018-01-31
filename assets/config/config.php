@@ -60,8 +60,8 @@ return [
             // caching widths
             "caches" => [
                 // small - thumbnail for example
-                256,
-                512,
+                240,
+                480,
 
                 // "full screen" resolutions
                 1280, // 1280x720  - 720p

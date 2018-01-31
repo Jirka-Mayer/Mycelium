@@ -5,6 +5,8 @@ namespace Mycelium;
 use Carbon\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\COntracts\Filesystem\Filesystem;
+use Mycelium\Shroom;
+use Mycelium\Services\Mycelium;
 
 /**
  * Represents data of a single shroom revision
@@ -58,6 +60,17 @@ class ShroomRevision
     {
         $this->data = clone $this->data;
         $this->spores = clone $this->spores;
+    }
+
+    /**
+     * Returns revision name (index or "master")
+     */
+    public function getName()
+    {
+        if ($this->index === null)
+            return "master";
+
+        return $this->index;
     }
 
     /**
@@ -154,30 +167,14 @@ class ShroomRevision
     ////////////
 
     /**
-     * This method clones all spores,
-     * called on revision commit
-     */
-    public function cloneSpores(ShroomRevision $oldMaster)
-    {
-        // erase local spores
-        $this->spores = collect();
-
-        // set reference for each spore
-        foreach ($oldMaster->spores as $handle => $spore)
-        {
-            $this->spores->put(
-                $handle,
-                ["@sameAsInRevision" => $oldMaster->index]
-            );
-        }
-    }
-
-    /**
      * Put into the revision a new spore
      *
      * Causes the revision to be saved.
      */
-    public function putNewSpore($filePath, $sporeType, $name, Filesystem $storage)
+    public function putNewSpore(
+        $filePath, $sporeType, $name,
+        Shroom $shroom, Mycelium $mycelium
+    )
     {
         // if this is not a master, you cannot add a spore
         if ($this->index !== null)
@@ -206,11 +203,72 @@ class ShroomRevision
 
         // store the file (move it)
         // (move because the filePath points into the "upload" folder)
-        $storage->move($filePath, "spores/{$handle}");
+        $shroom->storage()->move($filePath, "spores/{$handle}");
+
+        // run after-upload logic
+        $handler = $mycelium->resolveSporeHandler($sporeType);
+        $handler->setShroom($shroom);
+        $handler->setRevision($this);
+        $handler->setSpore($spore);
+        $handler->processNewSpore();
 
         // save spore records
-        $this->save($storage);
+        $this->save($shroom->storage());
 
-        return $spore;
+        // return only the handle
+        return $handle;
+    }
+
+    /**
+     * This method clones all spores,
+     * called on revision commit
+     */
+    public function cloneSpores(ShroomRevision $oldMaster)
+    {
+        // erase local spores
+        $this->spores = collect();
+
+        // set reference for each spore
+        foreach ($oldMaster->spores as $handle => $spore)
+        {
+            $this->spores->put(
+                $handle,
+                ["@sameAsInRevision" => $oldMaster->index]
+            );
+        }
+    }
+
+    /**
+     * Renames the spore meta master folder to a proper revision name folder
+     *
+     * This function is called on the old master, the revision index is
+     * already set, so we can use it
+     */
+    public function renameSporeMetaMasterFolder(Filesystem $storage)
+    {
+        // check the index is set
+        if ($this->index === null)
+            throw new \Exception("Set the index first, then call this method.");
+
+        // do the update for all spores
+        foreach ($this->spores as $handle => $spore)
+        {
+            // current folder name
+            $oldName = "spore-meta/{$spore["filename"]}/revision-master";
+            
+            // new revision folder name
+            $newName = "spore-meta/{$spore["filename"]}/revision-{$this->index}";
+
+            // check the old one even exists
+            if (!$storage->exists($oldName))
+                continue;
+
+            // check the new one does not exist
+            if ($storage->exists($newName))
+                throw new \Exception("There already exists a folder with the name '{$newName}', I cannot move the old master then.");
+
+            // move the folder (rename it)
+            $storage->move($oldName, $newName);
+        }
     }
 }

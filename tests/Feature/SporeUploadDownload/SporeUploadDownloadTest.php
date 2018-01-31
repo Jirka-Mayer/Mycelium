@@ -126,4 +126,30 @@ class SporeUploadDownloadTest extends FeatureTestCase
         $response = $this->get("/resource/file/non-existing-file");
         $response->assertStatus(404);
     }
+
+    /**
+     * @test
+     */
+    public function image_can_be_downloaded_from_cache()
+    {
+        $file = UploadedFile::fake()->create("avatar.jpg");
+        Image::canvas(500, 500, "#ccc")->save($file->getRealPath());
+
+        $this->json("POST", "/upload-resource", [
+            "resource" => $file,
+            "type" => "image",
+            "uploadId" => Str::random(11),
+        ]);
+
+        $handle = Shroom::find("index")->revision("master")->spores->first()["handle"];
+
+        // download existing cache
+        $response = $this->get("/resource/w480/{$handle}");
+        $this->assertEquals("image/jpeg", $response->headers->get("Content-type"));
+        $response->assertStatus(200);
+
+        // non-existing cache
+        $response = $this->get("/resource/w123/{$handle}");
+        $response->assertStatus(404);
+    }
 }

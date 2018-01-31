@@ -6,9 +6,9 @@ use Tests\TestCase;
 
 use Mycelium\Shroom;
 use Mycelium\EmptySlugException;
-
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\UploadedFile;
+use Intervention\Image\ImageManagerStatic as Image;
 
 class ShroomTest extends TestCase
 {
@@ -132,6 +132,37 @@ class ShroomTest extends TestCase
         $this->assertEquals(42, $loadedShroom->data()->get("bar"));
     }
 
+    /**
+     * @test
+     */
+    public function it_return_null_on_unpublished_public_revision()
+    {
+        $shroom = new Shroom(["title" => "My shroom"]);
+
+        $this->assertEquals(null, $shroom->revision("public"));
+
+        $shroom->commit("Lorem ipsum");
+        $shroom->publish();
+
+        $this->assertNotEquals(null, $shroom->revision("public"));
+    }
+
+    /**
+     * @test
+     */
+    public function transparent_shrooms_never_return_null()
+    {
+        $shroom = new Shroom(["title" => "My shroom"]);
+        $shroom->transparent = true;
+
+        $this->assertNotEquals(null, $shroom->revision("public"));
+
+        $shroom->commit("Lorem ipsum");
+        $shroom->publish();
+
+        $this->assertNotEquals(null, $shroom->revision("public"));
+    }
+
     ////////////
     // Spores //
     ////////////
@@ -145,35 +176,40 @@ class ShroomTest extends TestCase
         $shroom->save();
 
         $file = $shroom->storage()->put("upload/data-fake", "JPEG-binary-data-here");
-        $spore = $shroom->revision("master")->putNewSpore(
+        $handle = $shroom->revision("master")->putNewSpore(
             "upload/data-fake",
-            "image",
+            "file",
             "My image.jpg",
-            $shroom->storage()
+            $shroom,
+            app("mycelium")
         );
 
+        $spore = $shroom->spore($handle);
+
         $this->assertEquals(
-            ["spores/" . $spore["handle"]],
+            ["spores/" . $handle],
             $shroom->storage()->files("spores")
         );
 
-        $this->assertEquals(
+        $this->assertArraySubset(
             [
-                "handle" => $spore["handle"],
-                "type" => "image",
+                "handle" => $handle,
+                "type" => "file",
                 "extension" => "jpg",
                 "filename" => $spore["filename"],
                 "attributes" => []
             ],
-            $spore
+            $spore->toArray()
         );
 
         $this->assertEquals(
-            $spore,
+            $spore->only([
+                "handle", "type", "filename", "extension", "attributes"
+            ])->toArray(),
             json_decode(
                 $shroom->storage()->get("revisions/revision-master.json"),
                 true
-            )["spores"][$spore["handle"]]
+            )["spores"][$handle]
         );
     }
 
@@ -186,41 +222,62 @@ class ShroomTest extends TestCase
         $shroom->save();
 
         $file = $shroom->storage()->put("upload/data-fake", "JPEG-binary-data-here");
-        $spore = $shroom->revision("master")->putNewSpore(
+        $handle = $shroom->revision("master")->putNewSpore(
             "upload/data-fake",
             "image",
             "My image.jpg",
-            $shroom->storage()
+            $shroom,
+            app("mycelium")
         );
 
         $shroom->commit("Added my image.");
 
-        $this->assertNotEquals(
+        $this->assertEquals(
             ["@sameAsInRevision" => 1],
             json_decode(
                 $shroom->storage()->get("revisions/revision-master.json"),
                 true
-            )["spores"][$spore["handle"]]
+            )["spores"][$handle]
         );
 
         $this->assertEquals(
             ["@sameAsInRevision" => 1],
-            $shroom->revision("master")->spores[$spore["handle"]]
+            $shroom->revision("master")->spores[$handle]
         );
+    }
 
+    /**
+     * @test
+     */
+    public function it_updates_spore_meta_folder_names_when_comitted()
+    {
+        $shroom = new Shroom(["title" => "My shroom"]);
         $shroom->save();
 
-        $this->assertEquals(
-            ["@sameAsInRevision" => 1],
-            json_decode(
-                $shroom->storage()->get("revisions/revision-master.json"),
-                true
-            )["spores"][$spore["handle"]]
+        $shroom->storage()->put("upload/data-fake", "");
+        Image::canvas(420, 350, "#ccc")
+            ->save($shroom->storage()->path("upload/data-fake"));
+
+        $handle = $shroom->revision("master")->putNewSpore(
+            "upload/data-fake",
+            "image",
+            "My image.jpg",
+            $shroom,
+            app("mycelium")
         );
 
+        $spore = $shroom->spore($handle);
+
         $this->assertEquals(
-            ["@sameAsInRevision" => 1],
-            $shroom->revision("master")->spores[$spore["handle"]]
+            ["spore-meta/{$spore["filename"]}/revision-master"],
+            $shroom->storage()->directories("spore-meta/{$spore["filename"]}")
+        );
+
+        $shroom->commit("Lorem ipsum");
+
+        $this->assertEquals(
+            ["spore-meta/{$spore["filename"]}/revision-1"],
+            $shroom->storage()->directories("spore-meta/{$spore["filename"]}")
         );
     }
 }

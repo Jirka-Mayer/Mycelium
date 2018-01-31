@@ -289,12 +289,17 @@ trait ServesShroom
         $spore = $this->shroom->spore($handle, "public");
 
         // resolve the spore handler
-        $handler = $mycelium->resolveSporeHandler($spore["type"], $this->shroom);
+        $handler = $mycelium->resolveSporeHandler($spore["type"]);
+        $handler->setShroom($this->shroom);
+        
+        if ($spore->has("@resolvedReferenceTo"))
+            $handler->setRevision(
+                $this->shroom->revision($spore["@resolvedReferenceTo"])
+            );
+        else
+            $handler->setRevision($this->shroom->revision("public"));
 
-        // set spore reference
         $handler->setSpore($spore);
-
-        // set parameters to the handler
         $handler->setParams($params);
 
         // call the handler

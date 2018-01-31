@@ -164,17 +164,28 @@ trait HasRevisions
      */
     public function commit($commitTitle)
     {
+        // clone current master
         $master = $this->revision("master");
         $newMaster = clone $master;
 
+        // turn current master into an ordinary revision
         $master->index = $this->getHighestRevisionIndex() + 1;
         $master->title = $commitTitle;
         $master->comittedAt = Carbon::now();
 
+        // clone spore records -> create references "@sameAsInRevision"
         $newMaster->cloneSpores($master);
 
+        // update storage spore-meta folder names
+        $master->renameSporeMetaMasterFolder($this->storage());
+
+        // update revision bag
         $this->revisionBag->put($master->index, $master);
         $this->revisionBag->put("master", $newMaster);
+
+        // the shroom gets saved, because changes to
+        // the filesystem has been made
+        $this->save();
     }
 
     /**

@@ -1,10 +1,6 @@
 Unit
 ----
 
-- shroom revisions
-    - not published return `null`
-    - transparent return master
-
 Feature
 -------
 

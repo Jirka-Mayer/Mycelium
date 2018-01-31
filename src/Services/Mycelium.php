@@ -3,7 +3,6 @@
 namespace Mycelium\Services;
 
 use Illuminate\Contracts\Container\Container;
-use Mycelium\Shroom;
 use Exception;
 
 /**
@@ -151,7 +150,7 @@ class Mycelium
     /**
      * Returns an initialized instance of proper spore handler
      */
-    public function resolveSporeHandler($type, Shroom $shroom)
+    public function resolveSporeHandler($type)
     {
         // check existence
         if (!$this->sporeHandlers->has($type))
@@ -159,9 +158,6 @@ class Mycelium
 
         // instantiate the handler
         $handler = $this->app[$this->sporeHandlers->get($type)];
-
-        // set shroom reference
-        $handler->setShroom($shroom);
 
         return $handler;
     }

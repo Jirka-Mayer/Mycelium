@@ -12,6 +12,11 @@ abstract class SporeHandler
     protected $shroom = null;
 
     /**
+     * Revision reference
+     */
+    protected $revision = null;
+
+    /**
      * The spore reference
      * @var collection
      */
@@ -29,6 +34,14 @@ abstract class SporeHandler
     public function setShroom(Shroom $shroom)
     {
         $this->shroom = $shroom;
+    }
+
+    /**
+     * Set the revision
+     */
+    public function setRevision($revision)
+    {
+        $this->revision = $revision;
     }
 
     /**
