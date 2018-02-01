@@ -123,6 +123,22 @@ class Toolbar
             this.refs.logout.remove()
     }
 
+    /**
+     * Sets upload bar state - 0 to 1 or null for disable
+     */
+    setUploadBarState(state)
+    {
+        if (state === null)
+        {
+            this.refs.upload.style.display = "none"
+            return
+        }
+
+        this.refs.upload.style.display = "block"
+        let bar = this.refs.upload.querySelector(".mc-toolbar__upload-progress-bar")
+        bar.style.width = Math.ceil(state * 100) + "%"
+    }
+
     /////////////////////
     // Event listeners //
     /////////////////////

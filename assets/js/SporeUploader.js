@@ -13,8 +13,11 @@ class SporeUploader
      * @param {File} file The file to be uploaded
      * @param {string} type Spore handler type
      */
-    static upload(file, type)
+    static upload(file, type, progress)
     {
+        if (!progress)
+            progress = () => {}
+
         return new Promise((resolve, reject) => {
 
             let partCount = Math.ceil(file.size / PART_SIZE)
@@ -27,10 +30,13 @@ class SporeUploader
 
                 currentPart += 1
 
+                progress((currentPart + 1) / partCount)
+
                 // last part has been send
                 if (currentPart >= partCount)
                 {
                     console.warn("Upload done, handle: " + spore.handle)
+                    progress(1)
                     resolve(spore)
                     return
                 }
@@ -53,6 +59,7 @@ class SporeUploader
 
             // start uploading
             console.warn("Starting spore upload... " + uploadId)
+            progress(0)
             uploadNextPart(null)
         })
     }

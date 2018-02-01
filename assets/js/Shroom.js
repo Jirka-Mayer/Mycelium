@@ -54,6 +54,12 @@ class Shroom
          * Widgets
          */
         this.widgets = []
+
+        /**
+         * Flag that prevents uploading when an upload still takes place
+         * @type {Boolean}
+         */
+        this.uploadInProgress = false
     }
 
     /**
@@ -171,16 +177,33 @@ class Shroom
      */
     uploadNewSpore(type)
     {
+        if (this.uploadInProgress)
+            return
+
+        this.uploadInProgress = true
+
+        let progress = (state) => {
+            this.mycelium.toolbar.setUploadBarState(state)
+        }
+
         // open file dialog
         return SporeUploader.fileDialog(this.document)
 
         // upload the spore
-        .then(file => SporeUploader.upload(file, type))
+        .then(file => SporeUploader.upload(file, type, progress))
+
+        // catch errors
+        .catch((error) => {
+            this.uploadInProgress = false
+            console.error(error)
+        })
 
         // register the spore
         .then((spore) => {
             return new Promise((resolve, reject) => {
                 this.spores[spore.handle] = spore
+                this.uploadInProgress = false
+                progress(null)
                 resolve(spore)
             })
         })
