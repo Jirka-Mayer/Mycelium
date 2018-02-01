@@ -120,4 +120,19 @@ trait HasFilesystem
     {
         return static::$filesystem;
     }
+
+    /**
+     * Returns size on disk in bytes
+     */
+    public function getSize()
+    {
+        $size = 0;
+
+        $files = $this->storage()->allFiles();
+
+        foreach ($files as $file)
+            $size += $this->storage()->size($file);
+
+        return $size;
+    }
 }

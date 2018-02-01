@@ -53,7 +53,7 @@ class Update extends Command
         // run each shroom through the updater
         foreach ($shrooms as $shroom)
         {
-            $this->info("Shroom '{$shroom->slug}'.");
+            $this->info("Shroom '{$shroom->id}'.");
             
             $updater->updateShroom($shroom);
 

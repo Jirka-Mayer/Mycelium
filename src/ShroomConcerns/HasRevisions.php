@@ -56,6 +56,15 @@ trait HasRevisions
 
         $this->initializeRevisionBag();
 
+        if ($index === "all")
+        {
+            // load all revisions and return the bag
+            foreach ($this->revisionBag->keys() as $rev)
+                $this->revision($rev);
+
+            return $this->revisionBag;
+        }
+
         if ($index === "public")
         {
             if ($this->isPublished())
@@ -105,14 +114,17 @@ trait HasRevisions
         $files = collect($this->storage()->files("revisions"));
 
         // filter revision files (filter junk out)
+        // (master gets inserted into the bag anyway, don't search for it)
         $revisionFiles = $files->filter(function ($file) {
-            return preg_match("/^revisions\/revision-(master|\d+)\.json$/", $file);
+            return preg_match("/^revisions\/revision-(\d+)\.json$/", $file);
         });
 
         // get revision names (indices)
         // but only numerical, not the master
-        $revisions = $files->map(function ($file) {
-            return preg_match("/^revisions\/revision-(\d+)\.json$/", $file);
+        $revisions = $revisionFiles->map(function ($file) {
+            $matches = [];
+            preg_match("/^revisions\/revision-(\d+)\.json$/", $file, $matches);
+            return intval($matches[1]);
         });
 
         /*
@@ -226,5 +238,59 @@ trait HasRevisions
         }
 
         return $max;
+    }
+
+    /**
+     * Remove a revision (delete it)
+     */
+    public function removeRevision($index)
+    {
+        if ($index === null || $index === "master")
+            throw new \Exception("You cannot remove master revision.");
+
+        if (!$this->revisionBag->has($index))
+            throw new \Exception("The revision '{$index}' does not exist.");
+
+        // get the removed revision
+        $revision = $this->revision($index);
+
+        // resolve spore references for each spore in the revision
+        foreach ($revision->spores as $handle => $spore)
+        {
+            /*
+                Note: If this spore is a reference, it won't case a problem,
+                that's why we duplicate the content without looking at it
+             */
+
+            $references = $this->getAllReferencesToASpore($index, $handle);
+
+            // if empty, no references need to be resolved
+            if ($references->count() === 0)
+                continue;
+
+            $target = $references->pull(0);
+            $this->revision($target)->spores[$handle] = $spore;
+
+            // if this spore is not a reference, move all metadata as well
+            if (!array_key_exists("@sameAsInRevision", $spore))
+            {
+                $from = "spore-meta/{$spore["filename"]}/revision-{$index}";
+                $to = "spore-meta/{$spore["filename"]}/revision-{$target}";
+
+                if ($this->storage()->exists($from))
+                {
+                    if ($this->storage()->exit($to))
+                        throw new \Exception("Target folder already exists.");
+
+                    $this->storage()->move($from, $to);
+                }
+            }
+        }
+
+        // remove from bag
+        $this->revisionBag->forget($index);
+
+        // remove from storage
+        $this->storage()->delete("revisions/revision-{$index}.json");
     }
 }

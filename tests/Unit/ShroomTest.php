@@ -95,6 +95,26 @@ class ShroomTest extends TestCase
     /**
      * @test
      */
+    public function it_returns_its_size()
+    {
+        $shroom = new Shroom(["title" => "My shroom"]);
+        
+        // not saved yet
+        $this->assertEquals(0, $shroom->getSize());
+
+        $shroom->save();
+
+        // some positive size
+        $this->assertGreaterThan(0, $shroom->getSize());
+    }
+
+    ///////////////
+    // Revisions //
+    ///////////////
+
+    /**
+     * @test
+     */
     public function it_saves_data_for_master_revision()
     {
         $shroom = new Shroom([
@@ -130,6 +150,23 @@ class ShroomTest extends TestCase
     /**
      * @test
      */
+    public function revisions_get_loaded_properly()
+    {
+        $shroom = Shroom::create(["title" => "My shroom"]);
+        $shroom->commit("Lorem");
+        $shroom->save();
+
+        $loadedShroom = Shroom::first();
+
+        $this->assertEquals(
+            [1, "master"],
+            $loadedShroom->revision("all")->keys()->toArray()
+        );
+    }
+
+    /**
+     * @test
+     */
     public function it_return_null_on_unpublished_public_revision()
     {
         $shroom = new Shroom(["title" => "My shroom"]);
@@ -156,6 +193,88 @@ class ShroomTest extends TestCase
         $shroom->publish();
 
         $this->assertNotEquals(null, $shroom->revision("public"));
+    }
+
+    /**
+     * @test
+     */
+    public function revision_can_be_removed()
+    {
+        $shroom = Shroom::create(["title" => "My shroom"]);
+        $shroom->data()->put("body", "foo");
+        $shroom->save();
+        $shroom->commit("Lorem ipsum");
+
+        $this->assertEquals([
+            "revisions/revision-1.json",
+            "revisions/revision-master.json"
+        ], $shroom->storage()->files("revisions"));
+
+        $shroom->removeRevision(1);
+
+        $this->assertEquals([
+            "revisions/revision-master.json"
+        ], $shroom->storage()->files("revisions"));
+    }
+
+    /**
+     * @test
+     */
+    public function removing_revision_resolves_spore_references()
+    {
+        $shroom = Shroom::create(["title" => "My shroom"]);
+        $shroom->data()->put("body", "first data");
+        $shroom->save();
+
+        $file = $shroom->storage()->put("upload/data-fake", "data");
+        $handle = $shroom->revision("master")->putNewSpore(
+            "upload/data-fake",
+            "file",
+            "My file.dat",
+            $shroom,
+            app("mycelium")
+        );
+
+        $shroom->commit("Lorem ipsum");
+
+        $this->assertArraySubset(
+            ["@resolvedReferenceTo" => 1],
+            $shroom->spore($handle)
+        );
+
+        $this->assertEquals(
+            ["@sameAsInRevision" => 1],
+            $shroom->revision()->spores[$handle]
+        );
+
+        // one more commit
+        $shroom->data()->put("body", "second data");
+        $shroom->commit("Dolor amet");
+
+        // references get chained
+        $this->assertArraySubset(
+            ["@resolvedReferenceTo" => 2],
+            $shroom->spore($handle)
+        );
+
+        $shroom->removeRevision(2);
+
+        // references get repaired
+        $this->assertArraySubset(
+            ["@resolvedReferenceTo" => 1],
+            $shroom->spore($handle)
+        );
+
+        $shroom->removeRevision(1);
+
+        $this->assertTrue(
+            $shroom->revision()->spores->has($handle));
+        $this->assertFalse(
+            $shroom->spore($handle)->has("@resolvedReferenceTo"));
+        $this->assertFalse(
+            collect($shroom->revision()->spores[$handle])->has("@sameAsInRevision"));
+        $this->assertTrue(
+            collect($shroom->revision()->spores[$handle])->has("handle"));
     }
 
     ////////////
@@ -274,5 +393,63 @@ class ShroomTest extends TestCase
             ["spore-meta/{$spore["filename"]}/revision-1"],
             $shroom->storage()->directories("spore-meta/{$spore["filename"]}")
         );
+    }
+
+    /**
+     * @test
+     */
+    public function it_removes_unsused_spores()
+    {
+        $shroom = Shroom::create(["title" => "My shroom"]);
+        $file = $shroom->storage()->put("upload/data-fake", "data");
+        $handle = $shroom->revision("master")->putNewSpore(
+            "upload/data-fake",
+            "file",
+            "My file.dat",
+            $shroom,
+            app("mycelium")
+        );
+
+        $spore = $shroom->spore($handle);
+
+        // create some fake metadata
+        $shroom->storage()->put("spore-meta/{$spore["filename"]}/meta.txt", "foo");
+
+        // now it's used
+        $shroom->data()->put("body", [
+            "@spore" => $handle
+        ]);
+        $shroom->save();
+
+        // try to remove, does nothing
+        $shroom->removeUnusedSpores();
+        $this->assertTrue($shroom->storage()->exists("spores/{$handle}"));
+
+        // commit, remove, still nothing
+        $shroom->commit("Lorem ipsum");
+        $shroom->removeUnusedSpores();
+        $this->assertTrue($shroom->storage()->exists("spores/{$handle}"));
+
+        // make it useless
+        $shroom->data()->put("body", null);
+        $shroom->save();
+
+        // still nothing, because it's used in the old revision
+        $removed = $shroom->removeUnusedSpores();
+        $this->assertEquals([], $removed);
+        $this->assertTrue($shroom->storage()->exists("spores/{$handle}"));
+
+        // remove the old revision and keep it useless in the master
+        // now it gets removed
+        $shroom->removeRevision(1);
+        $removed = $shroom->removeUnusedSpores();
+
+        $this->assertEquals([$handle], $removed);
+
+        $this->assertEquals([], $shroom->revision("master")->spores->all());
+        $this->assertFalse($shroom->storage()->exists("spores/{$handle}"));
+
+        // check that meta was removed as well
+        $this->assertEquals([], $shroom->storage()->directories("spore-meta"));
     }
 }

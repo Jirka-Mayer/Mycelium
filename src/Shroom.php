@@ -11,7 +11,7 @@ class Shroom extends Model
         ShroomConcerns\HasFilesystem,
         ShroomConcerns\HasRevisions,
         ShroomConcerns\HasVersion,
-        ShroomConcerns\HandlesSporeUpload;
+        ShroomConcerns\HasSpores;
 
     /**
      * Database table to save shrooms to
@@ -72,53 +72,6 @@ class Shroom extends Model
             return null;
 
         return $revisionInstance->data;
-    }
-
-    /**
-     * Returns a spore with additional information like url
-     * Automatically resolves references "@sameAsInRevision"
-     * @return collection
-     */
-    public function spore($handle, $revision = "master")
-    {
-        // try to get the spore
-        $spore = $this->revision($revision)->spores->get($handle, null);
-
-        // spore does not exist
-        if ($spore === null)
-            return null;
-
-        // to collection
-        $spore = collect($spore);
-
-        // spore is a reference
-        if ($spore->has("@sameAsInRevision"))
-        {
-            // check that it's pointing to an older revision
-            if (is_numeric($revision) && $revision <= $spore["@sameAsInRevision"])
-                throw new \Exception("Cyclic @sameAsInRevision reference for spore '{$handle}' in revision '{$revision}'.");
-
-            // get the spore recursively
-            $resolvedSpore = $this->spore($handle, $spore["@sameAsInRevision"]);
-
-            // check existence
-            if ($resolvedSpore === null)
-                throw new \Exception("Spore @sameAsInRevision reference is broken for spore '{$handle}' in revision '{$revision}'.");
-
-            // keep a note that it has been resolved
-            // (for example if a handler needs to locate a specifinc revision folder)
-            $resolvedSpore["@resolvedReferenceTo"] = $spore["@sameAsInRevision"];
-
-            // to collection and overwrite
-            $spore = collect($resolvedSpore);
-        }
-
-        // add the URL
-        $spore["url"] = app("mycelium.routes")
-            ->getSporeUrl($this, $spore["handle"]);
-
-        // return the resolved spore
-        return $spore;
     }
 
     /**

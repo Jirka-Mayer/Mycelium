@@ -62,6 +62,7 @@ class MyceliumServiceProvider extends ServiceProvider
                 \Mycelium\Console\Auth\ListUsers::class,
                 \Mycelium\Console\Auth\RemoveUsers::class,
                 \Mycelium\Console\Auth\ChangeUserPassword::class,
+                \Mycelium\Console\Shroom\RemoveUnusedSpores::class,
             ]);
 
             $this->bootMyceliumUpdating();

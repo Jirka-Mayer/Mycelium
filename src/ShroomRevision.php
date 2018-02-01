@@ -253,6 +253,10 @@ class ShroomRevision
         // do the update for all spores
         foreach ($this->spores as $handle => $spore)
         {
+            // ignore the spore if it's just a reference
+            if (array_key_exists("@sameAsInRevision", $spore))
+                continue;
+
             // current folder name
             $oldName = "spore-meta/{$spore["filename"]}/revision-master";
             
@@ -270,5 +274,40 @@ class ShroomRevision
             // move the folder (rename it)
             $storage->move($oldName, $newName);
         }
+    }
+
+    /**
+     * Returns true if the spore is referenced in data somewhere
+     */
+    public function isSporeReferencedInData($sporeHandle)
+    {
+        return $this->arrayContainsKeyValuePair(
+            $this->data,
+            "@spore",
+            $sporeHandle
+        );
+    }
+
+    /**
+     * Helper function for data searching
+     * Returns true if the array contains somewhere inside a key-value pair
+     * Works recursively
+     */
+    private function arrayContainsKeyValuePair(&$array, $key, $value)
+    {
+        /*
+            Note: I use references to avoid data duplication
+         */
+
+        foreach ($array as $k => &$v)
+        {
+            if ($k == $key && $v == $value)
+                return true;
+
+            if (is_array($v) && $this->arrayContainsKeyValuePair($v, $key, $value))
+                return true;
+        }
+
+        return false;
     }
 }
