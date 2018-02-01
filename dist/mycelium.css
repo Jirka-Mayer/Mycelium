@@ -212,6 +212,34 @@ body.mc-ql-image-blot__content img {
 [mycelium-widget="text"]::selection {
   background: rgba(0,0,0,0.2);
 }
+[mycelium-widget="image"] {
+  display: inline-block;
+  position: relative;
+  min-height: 50px;
+  min-width: 50px;
+  font-size: 0;
+  background: #444;
+}
+[mycelium-widget="image"].no-image {
+  width: 160px;
+  height: 90px;
+}
+[mycelium-widget="image"].no-image > img {
+  display: none;
+}
+[mycelium-widget="image"].url-error > img {
+  display: inline-block;
+}
+[mycelium-widget="image"] > .edit-button {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  opacity: 0;
+  cursor: pointer;
+}
+[mycelium-widget="image"]:hover > .edit-button {
+  opacity: 1;
+}
 .mc-window-manager {
   display: block;
   position: fixed;

@@ -16,6 +16,9 @@ trait HasSpores
      */
     public function spore($handle, $revision = "master")
     {
+        if ($handle === null)
+            return null;
+
         // try to get the spore
         $spore = $this->revision($revision)->spores->get($handle, null);
 

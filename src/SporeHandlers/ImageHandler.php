@@ -145,4 +145,25 @@ class ImageHandler extends FileHandler
         // caching date
         $attributes["cachedAt"] = Carbon::now()->format("Y-m-d H:i:s");
     }
+
+    /**
+     * Returns the srcset attribute value for the <img> tag
+     * @return string
+     */
+    public static function getSrcset($shroom, $spore)
+    {
+        $shroomUrl = app("mycelium.routes")->getShroomUrl($shroom);
+        $handle = $spore->get("handle", "");
+
+        // get all widths from spore attributes
+        $widths = collect(collect($spore->get("attributes", []))->get("cache", []));
+
+        // widths to URLs
+        $links = $widths->map(function ($width) use ($shroomUrl, $handle) {
+            $link = $shroomUrl . "resource/{$width}w/{$handle}";
+            return $link . " " . $width . "w";
+        });
+
+        return $links->implode(", ");
+    }
 }

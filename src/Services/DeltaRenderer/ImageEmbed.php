@@ -3,6 +3,7 @@
 namespace Mycelium\Services\DeltaRenderer;
 
 use Mycelium\Services\DeltaRenderer;
+use Mycelium\SporeHandlers\ImageHandler;
 
 class ImageEmbed
 {
@@ -58,26 +59,10 @@ class ImageEmbed
      */
     protected static function sporeHasBeenUsed($shroom, $spore, $value)
     {
-        // srcset="swing-200.jpg 200w, swing-400.jpg 400w, swing-800.jpg 800w"
-        
-        $shroomUrl = app("mycelium.routes")->getShroomUrl($shroom);
-        $handle = $spore->get("handle");
-
-        // get src attribute
-        $src = $spore->get("url", "");
-
-        // get srcset attribute
-        $widths = collect(collect($spore->get("attributes", []))->get("cache", []));
-        $links = $widths->map(function ($width) use ($shroomUrl, $handle) {
-            $link = $shroomUrl . "resource/{$width}w/{$handle}";
-            return $link . " " . $width . "w";
-        });
-        $srcset = $links->implode(", ");
-
         return '<img src="'
-            . htmlentities($src)
+            . htmlentities($spore->get("url", ""))
             . '" srcset="'
-            . htmlentities($srcset)
+            . htmlentities(ImageHandler::getSrcset($shroom, $spore))
             . '" alt="'
             . htmlentities($value->get("title", ""))
             . '" mycelium-spore="'

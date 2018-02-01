@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 21);
+/******/ 	return __webpack_require__(__webpack_require__.s = 22);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -70,7 +70,7 @@
 "use strict";
 
 
-var bind = __webpack_require__(13);
+var bind = __webpack_require__(14);
 var isBuffer = __webpack_require__(37);
 
 /*global toString:true*/
@@ -463,7 +463,7 @@ module.exports = function (Quill) {
 "use strict";
 
 
-var asap = __webpack_require__(19);
+var asap = __webpack_require__(20);
 
 function noop() {}
 
@@ -1350,10 +1350,10 @@ function getDefaultAdapter() {
   var adapter;
   if (typeof XMLHttpRequest !== 'undefined') {
     // For browsers use XHR adapter
-    adapter = __webpack_require__(14);
+    adapter = __webpack_require__(15);
   } else if (typeof process !== 'undefined') {
     // For node use HTTP adapter
-    adapter = __webpack_require__(14);
+    adapter = __webpack_require__(15);
   }
   return adapter;
 }
@@ -1435,20 +1435,20 @@ function setupQuill(window) {
     var Quill = window.Quill;
 
     // register blots
-    __webpack_require__(23)(Quill);
     __webpack_require__(24)(Quill);
     __webpack_require__(25)(Quill);
     __webpack_require__(26)(Quill);
     __webpack_require__(27)(Quill);
     __webpack_require__(28)(Quill);
+    __webpack_require__(29)(Quill);
 }
 
 function registerClasses(window) {
-    window.mycelium.class.Shroom = __webpack_require__(34);
+    window.mycelium.class.Shroom = __webpack_require__(35);
 
     if (!window.mycelium.class.widgets) window.mycelium.class.widgets = {};
 
-    window.mycelium.class.widgets.RichText = __webpack_require__(18);
+    window.mycelium.class.widgets.RichText = __webpack_require__(19);
 
     if (!window.mycelium.class.ui) window.mycelium.class.ui = {};
 
@@ -1815,11 +1815,17 @@ module.exports = defaultOptions;
 
 module.exports = function (Quill, mycelium) {
 
-    return [["h1", __webpack_require__(2)(Quill)], ["h2", __webpack_require__(2)(Quill)], ["h3", __webpack_require__(2)(Quill)], ["h4", __webpack_require__(2)(Quill)], ["h5", __webpack_require__(2)(Quill)], ["h6", __webpack_require__(2)(Quill)], ["iframe", __webpack_require__(31)(Quill)], ["table", __webpack_require__(32)(Quill)], ["figure", __webpack_require__(33)(Quill, mycelium)]];
+    return [["h1", __webpack_require__(2)(Quill)], ["h2", __webpack_require__(2)(Quill)], ["h3", __webpack_require__(2)(Quill)], ["h4", __webpack_require__(2)(Quill)], ["h5", __webpack_require__(2)(Quill)], ["h6", __webpack_require__(2)(Quill)], ["iframe", __webpack_require__(32)(Quill)], ["table", __webpack_require__(33)(Quill)], ["figure", __webpack_require__(34)(Quill, mycelium)]];
 };
 
 /***/ }),
 /* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(36);
+
+/***/ }),
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1837,7 +1843,7 @@ module.exports = function bind(fn, thisArg) {
 
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1848,7 +1854,7 @@ var settle = __webpack_require__(41);
 var buildURL = __webpack_require__(43);
 var parseHeaders = __webpack_require__(44);
 var isURLSameOrigin = __webpack_require__(45);
-var createError = __webpack_require__(15);
+var createError = __webpack_require__(16);
 var btoa = (typeof window !== 'undefined' && window.btoa && window.btoa.bind(window)) || __webpack_require__(46);
 
 module.exports = function xhrAdapter(config) {
@@ -2024,7 +2030,7 @@ module.exports = function xhrAdapter(config) {
 
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2049,7 +2055,7 @@ module.exports = function createError(message, config, code, request, response) 
 
 
 /***/ }),
-/* 16 */
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2061,7 +2067,7 @@ module.exports = function isCancel(value) {
 
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2087,7 +2093,7 @@ module.exports = Cancel;
 
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2225,7 +2231,7 @@ var RichText = function () {
 module.exports = RichText;
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2456,7 +2462,7 @@ rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
 /* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(59)))
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -2881,15 +2887,15 @@ var Window = function () {
 module.exports = Window;
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(22);
+__webpack_require__(23);
 module.exports = __webpack_require__(80);
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 ///////////////////////////////
@@ -2914,7 +2920,7 @@ if (!window.mycelium.class) window.mycelium.class = {};
 window.mycelium.initialization = __webpack_require__(9);
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2946,7 +2952,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports) {
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -2978,7 +2984,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3019,7 +3025,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3070,7 +3076,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3203,7 +3209,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3219,7 +3225,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 module.exports = function (Quill) {
 
     var getRefs = __webpack_require__(1);
-    var TableRow = __webpack_require__(29);
+    var TableRow = __webpack_require__(30);
     var IframeBlot = __webpack_require__(10)(Quill);
     var ClipCache = __webpack_require__(6);
 
@@ -3509,14 +3515,14 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var TableCell = __webpack_require__(30);
+var TableCell = __webpack_require__(31);
 
 var TableRow = function () {
     function TableRow(tableBlot, contents) {
@@ -3608,7 +3614,7 @@ var TableRow = function () {
 module.exports = TableRow;
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -3749,7 +3755,7 @@ var TableCell = function () {
 module.exports = TableCell;
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = function (Quill) {
@@ -3773,7 +3779,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 module.exports = function (Quill) {
@@ -3837,7 +3843,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports) {
 
 module.exports = function (Quill, mycelium) {
@@ -3868,16 +3874,17 @@ module.exports = function (Quill, mycelium) {
 };
 
 /***/ }),
-/* 34 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var axios = __webpack_require__(35);
+var axios = __webpack_require__(13);
 var TextWidget = __webpack_require__(55);
-var RichTextWidget = __webpack_require__(18);
+var RichTextWidget = __webpack_require__(19);
+var ImageWidget = __webpack_require__(85);
 var EventBus = __webpack_require__(7);
 var SporeUploader = __webpack_require__(56);
 
@@ -3990,6 +3997,8 @@ var Shroom = function () {
             this.widgets = this.widgets.concat(TextWidget.createInstances(this.window, this.document, this));
 
             this.widgets = this.widgets.concat(RichTextWidget.createInstances(this.window, this.document, this.mycelium, this));
+
+            this.widgets = this.widgets.concat(ImageWidget.createInstances(this.window, this.document, this));
         }
 
         //////////
@@ -4157,12 +4166,6 @@ var Shroom = function () {
 module.exports = Shroom;
 
 /***/ }),
-/* 35 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(36);
-
-/***/ }),
 /* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -4170,7 +4173,7 @@ module.exports = __webpack_require__(36);
 
 
 var utils = __webpack_require__(0);
-var bind = __webpack_require__(13);
+var bind = __webpack_require__(14);
 var Axios = __webpack_require__(38);
 var defaults = __webpack_require__(8);
 
@@ -4205,9 +4208,9 @@ axios.create = function create(instanceConfig) {
 };
 
 // Expose Cancel & CancelToken
-axios.Cancel = __webpack_require__(17);
+axios.Cancel = __webpack_require__(18);
 axios.CancelToken = __webpack_require__(53);
-axios.isCancel = __webpack_require__(16);
+axios.isCancel = __webpack_require__(17);
 
 // Expose all/spread
 axios.all = function all(promises) {
@@ -4557,7 +4560,7 @@ module.exports = function normalizeHeaderName(headers, normalizedName) {
 "use strict";
 
 
-var createError = __webpack_require__(15);
+var createError = __webpack_require__(16);
 
 /**
  * Resolve or reject a Promise based on response status.
@@ -4976,7 +4979,7 @@ module.exports = InterceptorManager;
 
 var utils = __webpack_require__(0);
 var transformData = __webpack_require__(50);
-var isCancel = __webpack_require__(16);
+var isCancel = __webpack_require__(17);
 var defaults = __webpack_require__(8);
 
 /**
@@ -5129,7 +5132,7 @@ module.exports = function combineURLs(baseURL, relativeURL) {
 "use strict";
 
 
-var Cancel = __webpack_require__(17);
+var Cancel = __webpack_require__(18);
 
 /**
  * A `CancelToken` is an object that can be used to request cancellation of an operation.
@@ -5326,7 +5329,7 @@ var _createClass = function () { function defineProperties(target, props) { for 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
 var Promise = __webpack_require__(57);
-var axios = __webpack_require__(35);
+var axios = __webpack_require__(13);
 
 var PART_SIZE = 1024 * 1024; // 1 MB
 
@@ -5818,7 +5821,7 @@ Promise.prototype.nodeify = function (callback, ctx) {
 
 
 // rawAsap provides everything we need except exception management.
-var rawAsap = __webpack_require__(19);
+var rawAsap = __webpack_require__(20);
 // RawTasks are recycled to reduce GC churn.
 var freeTasks = [];
 // We queue errors to ensure they are thrown in right order (FIFO).
@@ -6128,7 +6131,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var Window = __webpack_require__(20);
+var Window = __webpack_require__(21);
 var getRefs = __webpack_require__(1);
 var cssClass = __webpack_require__(4);
 var Picker = __webpack_require__(70);
@@ -7048,7 +7051,7 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var Window = __webpack_require__(20);
+var Window = __webpack_require__(21);
 var TextPad = __webpack_require__(5);
 
 var TextPopupWindow = function (_Window) {
@@ -7514,6 +7517,127 @@ module.exports = WindowManager;
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
+
+/***/ }),
+/* 81 */,
+/* 82 */,
+/* 83 */,
+/* 84 */,
+/* 85 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var cssClass = __webpack_require__(4);
+
+var Image = function () {
+    _createClass(Image, null, [{
+        key: "createInstances",
+        value: function createInstances(window, document, shroom) {
+            var elements = document.querySelectorAll('[mycelium-widget="image"]');
+            var instances = [];
+
+            for (var i = 0; i < elements.length; i++) {
+                instances.push(new Image(window, document, elements[i], shroom));
+            }return instances;
+        }
+    }]);
+
+    function Image(window, document, element, shroom) {
+        _classCallCheck(this, Image);
+
+        this.window = window;
+        this.document = document;
+
+        this.element = element;
+
+        this.shroom = shroom;
+        this.key = this.element.getAttribute("mycelium-key");
+
+        if (!this.key) throw new Error("Image widget missing 'key' attribute.");
+
+        this.editButton = this.element.querySelector(".edit-button");
+        this.image = this.element.querySelector("img");
+
+        this.editButton.addEventListener("click", this.onEditButtonClick.bind(this));
+        this.image.addEventListener("load", this.updateEmptiness.bind(this));
+        this.image.addEventListener("error", this.updateEmptiness.bind(this));
+
+        this.updateEmptiness();
+    }
+
+    /**
+     * Checks if empty and updates the css class
+     */
+
+
+    _createClass(Image, [{
+        key: "updateEmptiness",
+        value: function updateEmptiness() {
+            if (this.image.getAttribute("src") === "") {
+                // no image set
+                cssClass(this.element, "no-image", true);
+            } else if (this.image.naturalWidth == 0) {
+                // image set, but error while loading
+                cssClass(this.element, "no-image", true);
+                cssClass(this.element, "url-error", true);
+            } else {
+                // all fine
+                cssClass(this.element, "no-image", false);
+                cssClass(this.element, "url-error", false);
+            }
+        }
+
+        /**
+         * Updates the src tag of the image
+         */
+
+    }, {
+        key: "updateImageSrc",
+        value: function updateImageSrc() {
+            var data = this.shroom.getData(this.key);
+
+            if (!(data instanceof Object)) return;
+
+            this.image.src = this.shroom.spores[data["@spore"]].url;
+        }
+
+        /**
+         * When the edit button is clicked
+         */
+
+    }, {
+        key: "onEditButtonClick",
+        value: function onEditButtonClick() {
+            var _this = this;
+
+            this.shroom.uploadNewSpore("image").then(function (spore) {
+                _this.changeSpore(spore.handle);
+            });
+        }
+
+        /**
+         * Change displayed spore
+         */
+
+    }, {
+        key: "changeSpore",
+        value: function changeSpore(sporeHandle) {
+            this.shroom.setData(this.key, {
+                "@type": "mycelium::image",
+                "@spore": sporeHandle
+            });
+
+            this.updateImageSrc();
+        }
+    }]);
+
+    return Image;
+}();
+
+module.exports = Image;
 
 /***/ })
 /******/ ]);
