@@ -2,6 +2,7 @@ const axios = require("axios")
 const TextWidget = require("./widgets/Text.js")
 const RichTextWidget = require("./widgets/RichText.js")
 const ImageWidget = require("./widgets/Image.js")
+const AspectImageWidget = require("./widgets/AspectImage.js")
 const EventBus = require("./EventBus.js")
 const SporeUploader = require("./SporeUploader.js")
 
@@ -118,6 +119,12 @@ class Shroom
 
         this.widgets = this.widgets.concat(
             ImageWidget.createInstances(
+                this.window, this.document, this
+            )
+        )
+
+        this.widgets = this.widgets.concat(
+            AspectImageWidget.createInstances(
                 this.window, this.document, this
             )
         )

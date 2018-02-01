@@ -3885,6 +3885,7 @@ var axios = __webpack_require__(13);
 var TextWidget = __webpack_require__(55);
 var RichTextWidget = __webpack_require__(19);
 var ImageWidget = __webpack_require__(85);
+var AspectImageWidget = __webpack_require__(86);
 var EventBus = __webpack_require__(7);
 var SporeUploader = __webpack_require__(56);
 
@@ -3999,6 +4000,8 @@ var Shroom = function () {
             this.widgets = this.widgets.concat(RichTextWidget.createInstances(this.window, this.document, this.mycelium, this));
 
             this.widgets = this.widgets.concat(ImageWidget.createInstances(this.window, this.document, this));
+
+            this.widgets = this.widgets.concat(AspectImageWidget.createInstances(this.window, this.document, this));
         }
 
         //////////
@@ -7638,6 +7641,162 @@ var Image = function () {
 }();
 
 module.exports = Image;
+
+/***/ }),
+/* 86 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var cssClass = __webpack_require__(4);
+
+var AspectImage = function () {
+    _createClass(AspectImage, null, [{
+        key: "createInstances",
+        value: function createInstances(window, document, shroom) {
+            var elements = document.querySelectorAll('[mycelium-widget="aspect-image"]');
+            var instances = [];
+
+            for (var i = 0; i < elements.length; i++) {
+                instances.push(new AspectImage(window, document, elements[i], shroom));
+            }return instances;
+        }
+    }]);
+
+    function AspectImage(window, document, element, shroom) {
+        _classCallCheck(this, AspectImage);
+
+        this.window = window;
+        this.document = document;
+
+        this.element = element;
+
+        this.shroom = shroom;
+        this.key = this.element.getAttribute("mycelium-key");
+
+        if (!this.key) throw new Error("Image widget missing 'key' attribute.");
+
+        this.editButton = this.element.querySelector(".edit-button");
+        this.sizeButton = this.element.querySelector(".size-button");
+        this.image = this.element.querySelector("img");
+
+        this.editButton.addEventListener("click", this.onEditButtonClick.bind(this));
+        this.sizeButton.addEventListener("click", this.onSizeButtonClick.bind(this));
+        this.image.addEventListener("load", this.updateEmptiness.bind(this));
+        this.image.addEventListener("error", this.updateEmptiness.bind(this));
+
+        /**
+         * Value
+         */
+        this.value = {};
+
+        this.loadValue();
+        this.updateEmptiness();
+    }
+
+    /**
+     * Loads the value from shroom
+     */
+
+
+    _createClass(AspectImage, [{
+        key: "loadValue",
+        value: function loadValue() {
+            this.value = this.shroom.getData(this.key);
+
+            if (!(this.value instanceof Object)) this.value = {};
+
+            this.value["@type"] = "mycelium::image";
+            this.value["size"] = this.value["size"] === "fit" ? "fit" : "fill";
+        }
+
+        /**
+         * Set value into the shroom
+         */
+
+    }, {
+        key: "saveValue",
+        value: function saveValue() {
+            this.shroom.setData(this.key, this.value);
+        }
+
+        /**
+         * Checks if empty and updates the css class
+         */
+
+    }, {
+        key: "updateEmptiness",
+        value: function updateEmptiness() {
+            if (this.image.getAttribute("src") === "") {
+                // no image set
+                cssClass(this.element, "no-image", true);
+            } else if (this.image.naturalWidth == 0) {
+                // image set, but error while loading
+                cssClass(this.element, "no-image", true);
+                cssClass(this.element, "url-error", true);
+            } else {
+                // all fine
+                cssClass(this.element, "no-image", false);
+                cssClass(this.element, "url-error", false);
+            }
+        }
+
+        /**
+         * Updates the src tag of the image
+         */
+
+    }, {
+        key: "updateImageSrc",
+        value: function updateImageSrc() {
+            this.image.src = this.shroom.spores[this.value["@spore"]].url;
+        }
+
+        /**
+         * When the edit button is clicked
+         */
+
+    }, {
+        key: "onEditButtonClick",
+        value: function onEditButtonClick() {
+            var _this = this;
+
+            this.shroom.uploadNewSpore("image").then(function (spore) {
+                _this.value["@spore"] = spore.handle;
+                _this.updateImageSrc();
+                _this.saveValue();
+            });
+        }
+
+        /**
+         * When the size change button is clicked
+         */
+
+    }, {
+        key: "onSizeButtonClick",
+        value: function onSizeButtonClick() {
+            this.value["size"] = this.value["size"] === "fit" ? "fill" : "fit";
+            this.saveValue();
+
+            var fitNotFill = this.value["size"] === "fit";
+            var aspectRatio = this.element.clientWidth / this.element.clientHeight;
+            var setWidthNotHeight = fitNotFill ? aspectRatio < 1 : aspectRatio > 1;
+
+            if (setWidthNotHeight) {
+                this.image.style.width = "100%";
+                this.image.style.height = "auto";
+            } else {
+                this.image.style.width = "auto";
+                this.image.style.height = "100%";
+            }
+        }
+    }]);
+
+    return AspectImage;
+}();
+
+module.exports = AspectImage;
 
 /***/ })
 /******/ ]);

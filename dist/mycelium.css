@@ -240,6 +240,30 @@ body.mc-ql-image-blot__content img {
 [mycelium-widget="image"]:hover > .edit-button {
   opacity: 1;
 }
+[mycelium-widget="aspect-image"].no-image {
+  background: #444;
+}
+[mycelium-widget="aspect-image"].no-image > img {
+  display: none;
+}
+[mycelium-widget="aspect-image"].url-error > img {
+  display: block;
+}
+[mycelium-widget="aspect-image"] > .control-buttons {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  opacity: 0;
+}
+[mycelium-widget="aspect-image"] > .control-buttons > button {
+  cursor: pointer;
+}
+[mycelium-widget="aspect-image"]:hover {
+  outline: 2px solid rgba(0,0,0,0.2);
+}
+[mycelium-widget="aspect-image"]:hover > .control-buttons {
+  opacity: 1;
+}
 .mc-window-manager {
   display: block;
   position: fixed;

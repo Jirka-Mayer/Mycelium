@@ -1,0 +1,26 @@
+[mycelium-widget="aspect-image"]
+    
+    &.no-image
+        background: #444
+        
+        > img
+            display: none
+        
+    &.url-error > img
+        display: block
+        
+    > .control-buttons
+        position: absolute
+        bottom: 10px
+        right: 10px
+        
+        opacity: 0
+        
+        > button
+            cursor: pointer
+        
+    &:hover
+        outline: 2px solid rgba(black, 0.2)
+    
+        > .control-buttons
+            opacity: 1
