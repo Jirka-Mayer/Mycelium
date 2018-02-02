@@ -378,6 +378,34 @@ module.exports = {
 /***/ (function(module, exports) {
 
 /**
+ * Enables or disables a css class on an element
+ */
+function cssClass(element, cssClass, enable) {
+    var newClasses = "";
+    var found = false;
+
+    for (var i = 0; i < element.classList.length; i++) {
+        if (element.classList[i] == cssClass) {
+            found = true;
+
+            if (enable) newClasses += element.classList[i] + " ";
+        } else {
+            newClasses += element.classList[i] + " ";
+        }
+    }
+
+    if (!found && enable) newClasses += cssClass;
+
+    element.className = newClasses;
+}
+
+module.exports = cssClass;
+
+/***/ }),
+/* 2 */
+/***/ (function(module, exports) {
+
+/**
  * Return an object of all refs in a given element
  *
  * Ref is an element with the ref="..." tag
@@ -394,7 +422,7 @@ function getRefs(element) {
 module.exports = getRefs;
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports) {
 
 module.exports = function (Quill) {
@@ -457,7 +485,7 @@ module.exports = function (Quill) {
 };
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -677,34 +705,6 @@ function doResolve(fn, promise) {
 
 
 /***/ }),
-/* 4 */
-/***/ (function(module, exports) {
-
-/**
- * Enables or disables a css class on an element
- */
-function cssClass(element, cssClass, enable) {
-    var newClasses = "";
-    var found = false;
-
-    for (var i = 0; i < element.classList.length; i++) {
-        if (element.classList[i] == cssClass) {
-            found = true;
-
-            if (enable) newClasses += element.classList[i] + " ";
-        } else {
-            newClasses += element.classList[i] + " ";
-        }
-    }
-
-    if (!found && enable) newClasses += cssClass;
-
-    element.className = newClasses;
-}
-
-module.exports = cssClass;
-
-/***/ }),
 /* 5 */
 /***/ (function(module, exports, __webpack_require__) {
 
@@ -714,7 +714,7 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 
 var EventBus = __webpack_require__(7);
 var defaultOptions = __webpack_require__(11);
-var cssClass = __webpack_require__(4);
+var cssClass = __webpack_require__(1);
 
 var CSS_SCOPE_CLASS_PREFIX = "css-scope__";
 
@@ -1452,16 +1452,14 @@ function registerClasses(window) {
 
     if (!window.mycelium.class.ui) window.mycelium.class.ui = {};
 
-    window.mycelium.class.ui.Toolbar = __webpack_require__(66);
-    window.mycelium.class.ui.WindowManager = __webpack_require__(79);
+    window.mycelium.class.ui.Toolbar = __webpack_require__(68);
+    window.mycelium.class.ui.WindowManager = __webpack_require__(81);
 }
 
 function createShroom(window, shroomData) {
     window.mycelium.shroom = new window.mycelium.class.Shroom(window, window.document, window.mycelium, shroomData);
 
     window.mycelium.shroom.initialize();
-
-    window.mycelium.shroom.initializeAutosave();
 }
 
 function initializeUI(window) {
@@ -1495,7 +1493,7 @@ module.exports = function (Quill) {
 
     var BlockEmbed = Quill.import("blots/block/embed");
     var ClipCache = __webpack_require__(6);
-    var cssClass = __webpack_require__(4);
+    var cssClass = __webpack_require__(1);
 
     var DIMENSION_TIMER_INTERVAL = 5000;
     var CSS_SCOPE_CLASS_PREFIX = "css-scope__";
@@ -1815,7 +1813,7 @@ module.exports = defaultOptions;
 
 module.exports = function (Quill, mycelium) {
 
-    return [["h1", __webpack_require__(2)(Quill)], ["h2", __webpack_require__(2)(Quill)], ["h3", __webpack_require__(2)(Quill)], ["h4", __webpack_require__(2)(Quill)], ["h5", __webpack_require__(2)(Quill)], ["h6", __webpack_require__(2)(Quill)], ["iframe", __webpack_require__(32)(Quill)], ["table", __webpack_require__(33)(Quill)], ["figure", __webpack_require__(34)(Quill, mycelium)]];
+    return [["h1", __webpack_require__(3)(Quill)], ["h2", __webpack_require__(3)(Quill)], ["h3", __webpack_require__(3)(Quill)], ["h4", __webpack_require__(3)(Quill)], ["h5", __webpack_require__(3)(Quill)], ["h6", __webpack_require__(3)(Quill)], ["iframe", __webpack_require__(32)(Quill)], ["table", __webpack_require__(33)(Quill)], ["figure", __webpack_require__(34)(Quill, mycelium)]];
 };
 
 /***/ }),
@@ -2459,7 +2457,7 @@ rawAsap.makeRequestCallFromTimer = makeRequestCallFromTimer;
 // back into ASAP proper.
 // https://github.com/tildeio/rsvp.js/blob/cddf7232546a9cf858524b75cde6f9edf72620a7/lib/rsvp/asap.js
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(59)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(61)))
 
 /***/ }),
 /* 21 */
@@ -2469,9 +2467,9 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var clamp = __webpack_require__(68);
-var cssClass = __webpack_require__(4);
-var getRefs = __webpack_require__(1);
+var clamp = __webpack_require__(70);
+var cssClass = __webpack_require__(1);
+var getRefs = __webpack_require__(2);
 var defaultOptions = __webpack_require__(11);
 
 /**
@@ -2587,7 +2585,7 @@ var Window = function () {
         value: function _createDOM() {
             var element = this.document.createElement("div");
             element.className = "mc-window";
-            element.innerHTML = __webpack_require__(69);
+            element.innerHTML = __webpack_require__(71);
 
             this.element = element;
             this.bar = element.querySelector(".mc-window__bar");
@@ -2891,7 +2889,7 @@ module.exports = Window;
 /***/ (function(module, exports, __webpack_require__) {
 
 __webpack_require__(23);
-module.exports = __webpack_require__(80);
+module.exports = __webpack_require__(82);
 
 
 /***/ }),
@@ -3091,7 +3089,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 module.exports = function (Quill) {
 
-    var getRefs = __webpack_require__(1);
+    var getRefs = __webpack_require__(2);
     var IframeBlot = __webpack_require__(10)(Quill);
     var ClipCache = __webpack_require__(6);
 
@@ -3224,7 +3222,7 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
 
 module.exports = function (Quill) {
 
-    var getRefs = __webpack_require__(1);
+    var getRefs = __webpack_require__(2);
     var TableRow = __webpack_require__(30);
     var IframeBlot = __webpack_require__(10)(Quill);
     var ClipCache = __webpack_require__(6);
@@ -3884,10 +3882,10 @@ function _classCallCheck(instance, Constructor) { if (!(instance instanceof Cons
 var axios = __webpack_require__(13);
 var TextWidget = __webpack_require__(55);
 var RichTextWidget = __webpack_require__(19);
-var ImageWidget = __webpack_require__(85);
-var AspectImageWidget = __webpack_require__(86);
+var ImageWidget = __webpack_require__(56);
+var AspectImageWidget = __webpack_require__(57);
 var EventBus = __webpack_require__(7);
-var SporeUploader = __webpack_require__(56);
+var SporeUploader = __webpack_require__(58);
 
 // delay between a change and save call
 var AUTOSAVE_TIMEOUT = 2000;
@@ -5353,7 +5351,280 @@ var _createClass = function () { function defineProperties(target, props) { for 
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var Promise = __webpack_require__(57);
+var cssClass = __webpack_require__(1);
+
+var Image = function () {
+    _createClass(Image, null, [{
+        key: "createInstances",
+        value: function createInstances(window, document, shroom) {
+            var elements = document.querySelectorAll('[mycelium-widget="image"]');
+            var instances = [];
+
+            for (var i = 0; i < elements.length; i++) {
+                instances.push(new Image(window, document, elements[i], shroom));
+            }return instances;
+        }
+    }]);
+
+    function Image(window, document, element, shroom) {
+        _classCallCheck(this, Image);
+
+        this.window = window;
+        this.document = document;
+
+        this.element = element;
+
+        this.shroom = shroom;
+        this.key = this.element.getAttribute("mycelium-key");
+
+        if (!this.key) throw new Error("Image widget missing 'key' attribute.");
+
+        this.editButton = this.element.querySelector(".edit-button");
+        this.image = this.element.querySelector("img");
+
+        this.editButton.addEventListener("click", this.onEditButtonClick.bind(this));
+        this.image.addEventListener("load", this.updateEmptiness.bind(this));
+        this.image.addEventListener("error", this.updateEmptiness.bind(this));
+
+        this.updateEmptiness();
+    }
+
+    /**
+     * Checks if empty and updates the css class
+     */
+
+
+    _createClass(Image, [{
+        key: "updateEmptiness",
+        value: function updateEmptiness() {
+            if (this.image.getAttribute("src") === "") {
+                // no image set
+                cssClass(this.element, "no-image", true);
+            } else if (this.image.naturalWidth == 0) {
+                // image set, but error while loading
+                cssClass(this.element, "no-image", true);
+                cssClass(this.element, "url-error", true);
+            } else {
+                // all fine
+                cssClass(this.element, "no-image", false);
+                cssClass(this.element, "url-error", false);
+            }
+        }
+
+        /**
+         * Updates the src tag of the image
+         */
+
+    }, {
+        key: "updateImageSrc",
+        value: function updateImageSrc() {
+            var data = this.shroom.getData(this.key);
+
+            if (!(data instanceof Object)) return;
+
+            this.image.src = this.shroom.spores[data["@spore"]].url;
+        }
+
+        /**
+         * When the edit button is clicked
+         */
+
+    }, {
+        key: "onEditButtonClick",
+        value: function onEditButtonClick() {
+            var _this = this;
+
+            this.shroom.uploadNewSpore("image").then(function (spore) {
+                _this.changeSpore(spore.handle);
+            });
+        }
+
+        /**
+         * Change displayed spore
+         */
+
+    }, {
+        key: "changeSpore",
+        value: function changeSpore(sporeHandle) {
+            this.shroom.setData(this.key, {
+                "@type": "mycelium::image",
+                "@spore": sporeHandle
+            });
+
+            this.updateImageSrc();
+        }
+    }]);
+
+    return Image;
+}();
+
+module.exports = Image;
+
+/***/ }),
+/* 57 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var cssClass = __webpack_require__(1);
+
+var AspectImage = function () {
+    _createClass(AspectImage, null, [{
+        key: "createInstances",
+        value: function createInstances(window, document, shroom) {
+            var elements = document.querySelectorAll('[mycelium-widget="aspect-image"]');
+            var instances = [];
+
+            for (var i = 0; i < elements.length; i++) {
+                instances.push(new AspectImage(window, document, elements[i], shroom));
+            }return instances;
+        }
+    }]);
+
+    function AspectImage(window, document, element, shroom) {
+        _classCallCheck(this, AspectImage);
+
+        this.window = window;
+        this.document = document;
+
+        this.element = element;
+
+        this.shroom = shroom;
+        this.key = this.element.getAttribute("mycelium-key");
+
+        if (!this.key) throw new Error("Image widget missing 'key' attribute.");
+
+        this.editButton = this.element.querySelector(".edit-button");
+        this.sizeButton = this.element.querySelector(".size-button");
+        this.image = this.element.querySelector("img");
+
+        this.editButton.addEventListener("click", this.onEditButtonClick.bind(this));
+        this.sizeButton.addEventListener("click", this.onSizeButtonClick.bind(this));
+        this.image.addEventListener("load", this.updateEmptiness.bind(this));
+        this.image.addEventListener("error", this.updateEmptiness.bind(this));
+
+        /**
+         * Value
+         */
+        this.value = {};
+
+        this.loadValue();
+        this.updateEmptiness();
+    }
+
+    /**
+     * Loads the value from shroom
+     */
+
+
+    _createClass(AspectImage, [{
+        key: "loadValue",
+        value: function loadValue() {
+            this.value = this.shroom.getData(this.key);
+
+            if (!(this.value instanceof Object)) this.value = {};
+
+            this.value["@type"] = "mycelium::image";
+            this.value["size"] = this.value["size"] === "fit" ? "fit" : "fill";
+        }
+
+        /**
+         * Set value into the shroom
+         */
+
+    }, {
+        key: "saveValue",
+        value: function saveValue() {
+            this.shroom.setData(this.key, this.value);
+        }
+
+        /**
+         * Checks if empty and updates the css class
+         */
+
+    }, {
+        key: "updateEmptiness",
+        value: function updateEmptiness() {
+            if (this.image.getAttribute("src") === "") {
+                // no image set
+                cssClass(this.element, "no-image", true);
+            } else if (this.image.naturalWidth == 0) {
+                // image set, but error while loading
+                cssClass(this.element, "no-image", true);
+                cssClass(this.element, "url-error", true);
+            } else {
+                // all fine
+                cssClass(this.element, "no-image", false);
+                cssClass(this.element, "url-error", false);
+            }
+        }
+
+        /**
+         * Updates the src tag of the image
+         */
+
+    }, {
+        key: "updateImageSrc",
+        value: function updateImageSrc() {
+            this.image.src = this.shroom.spores[this.value["@spore"]].url;
+        }
+
+        /**
+         * When the edit button is clicked
+         */
+
+    }, {
+        key: "onEditButtonClick",
+        value: function onEditButtonClick() {
+            var _this = this;
+
+            this.shroom.uploadNewSpore("image").then(function (spore) {
+                _this.value["@spore"] = spore.handle;
+                _this.updateImageSrc();
+                _this.saveValue();
+            });
+        }
+
+        /**
+         * When the size change button is clicked
+         */
+
+    }, {
+        key: "onSizeButtonClick",
+        value: function onSizeButtonClick() {
+            this.value["size"] = this.value["size"] === "fit" ? "fill" : "fit";
+            this.saveValue();
+
+            var fitNotFill = this.value["size"] === "fit";
+            var aspectRatio = this.element.clientWidth / this.element.clientHeight;
+            var setWidthNotHeight = fitNotFill ? aspectRatio < 1 : aspectRatio > 1;
+
+            if (setWidthNotHeight) {
+                this.image.style.width = "100%";
+                this.image.style.height = "auto";
+            } else {
+                this.image.style.width = "auto";
+                this.image.style.height = "100%";
+            }
+        }
+    }]);
+
+    return AspectImage;
+}();
+
+module.exports = AspectImage;
+
+/***/ }),
+/* 58 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Promise = __webpack_require__(59);
 var axios = __webpack_require__(13);
 
 var PART_SIZE = 1024 * 1024; // 1 MB
@@ -5499,32 +5770,32 @@ var SporeUploader = function () {
 module.exports = SporeUploader;
 
 /***/ }),
-/* 57 */
+/* 59 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-module.exports = __webpack_require__(58)
+module.exports = __webpack_require__(60)
 
 
 /***/ }),
-/* 58 */
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-module.exports = __webpack_require__(3);
-__webpack_require__(60);
-__webpack_require__(61);
+module.exports = __webpack_require__(4);
 __webpack_require__(62);
 __webpack_require__(63);
+__webpack_require__(64);
 __webpack_require__(65);
+__webpack_require__(67);
 
 
 /***/ }),
-/* 59 */
+/* 61 */
 /***/ (function(module, exports) {
 
 var g;
@@ -5551,13 +5822,13 @@ module.exports = g;
 
 
 /***/ }),
-/* 60 */
+/* 62 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var Promise = __webpack_require__(3);
+var Promise = __webpack_require__(4);
 
 module.exports = Promise;
 Promise.prototype.done = function (onFulfilled, onRejected) {
@@ -5571,13 +5842,13 @@ Promise.prototype.done = function (onFulfilled, onRejected) {
 
 
 /***/ }),
-/* 61 */
+/* 63 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var Promise = __webpack_require__(3);
+var Promise = __webpack_require__(4);
 
 module.exports = Promise;
 Promise.prototype['finally'] = function (f) {
@@ -5594,7 +5865,7 @@ Promise.prototype['finally'] = function (f) {
 
 
 /***/ }),
-/* 62 */
+/* 64 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5602,7 +5873,7 @@ Promise.prototype['finally'] = function (f) {
 
 //This file contains the ES6 extensions to the core Promises/A+ API
 
-var Promise = __webpack_require__(3);
+var Promise = __webpack_require__(4);
 
 module.exports = Promise;
 
@@ -5708,7 +5979,7 @@ Promise.prototype['catch'] = function (onRejected) {
 
 
 /***/ }),
-/* 63 */
+/* 65 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5717,8 +5988,8 @@ Promise.prototype['catch'] = function (onRejected) {
 // This file contains then/promise specific extensions that are only useful
 // for node.js interop
 
-var Promise = __webpack_require__(3);
-var asap = __webpack_require__(64);
+var Promise = __webpack_require__(4);
+var asap = __webpack_require__(66);
 
 module.exports = Promise;
 
@@ -5845,7 +6116,7 @@ Promise.prototype.nodeify = function (callback, ctx) {
 
 
 /***/ }),
-/* 64 */
+/* 66 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -5918,13 +6189,13 @@ RawTask.prototype.call = function () {
 
 
 /***/ }),
-/* 65 */
+/* 67 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var Promise = __webpack_require__(3);
+var Promise = __webpack_require__(4);
 
 module.exports = Promise;
 Promise.enableSynchronous = function () {
@@ -5987,16 +6258,16 @@ Promise.disableSynchronous = function() {
 
 
 /***/ }),
-/* 66 */
+/* 68 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-var TextPadToolbar = __webpack_require__(67);
-var LinkBlotProperties = __webpack_require__(75);
-var getRefs = __webpack_require__(1);
+var TextPadToolbar = __webpack_require__(69);
+var LinkBlotProperties = __webpack_require__(77);
+var getRefs = __webpack_require__(2);
 
 var Toolbar = function () {
     function Toolbar(window, document, mycelium) {
@@ -6051,7 +6322,7 @@ var Toolbar = function () {
 
             // create toolbar element
             var element = document.createElement("div");
-            element.innerHTML = __webpack_require__(78);
+            element.innerHTML = __webpack_require__(80);
             element.className = "mc-toolbar";
 
             // create spacer
@@ -6168,7 +6439,7 @@ var Toolbar = function () {
 module.exports = Toolbar;
 
 /***/ }),
-/* 67 */
+/* 69 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6180,10 +6451,10 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var Window = __webpack_require__(21);
-var getRefs = __webpack_require__(1);
-var cssClass = __webpack_require__(4);
-var Picker = __webpack_require__(70);
-var Menu = __webpack_require__(72);
+var getRefs = __webpack_require__(2);
+var cssClass = __webpack_require__(1);
+var Picker = __webpack_require__(72);
+var Menu = __webpack_require__(74);
 var TextPad = __webpack_require__(5);
 
 var TextPadToolbar = function (_Window) {
@@ -6208,7 +6479,7 @@ var TextPadToolbar = function (_Window) {
     _createClass(TextPadToolbar, [{
         key: "buildDOM",
         value: function buildDOM() {
-            this.content.innerHTML = __webpack_require__(74);
+            this.content.innerHTML = __webpack_require__(76);
             this.refs = getRefs(this.content);
 
             this.headerPicker = new Picker(this.document, this.refs.header, [{ key: "p", label: "Normal" }]);
@@ -6400,7 +6671,7 @@ var TextPadToolbar = function (_Window) {
 module.exports = TextPadToolbar;
 
 /***/ }),
-/* 68 */
+/* 70 */
 /***/ (function(module, exports) {
 
 /**
@@ -6413,13 +6684,13 @@ function clamp(x, min, max) {
 module.exports = clamp;
 
 /***/ }),
-/* 69 */
+/* 71 */
 /***/ (function(module, exports) {
 
 module.exports = "<div class=\"mc-window__bar\">\n    <div class=\"mc-window__handle\"></div>\n\n    <div class=\"mc-window__button\" ref=\"minimize\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M4.516,7.548c0.436-0.446,1.043-0.481,1.576,0L10,11.295l3.908-3.747c0.533-0.481,1.141-0.446,1.574,0\n            c0.436,0.445,0.408,1.197,0,1.615c-0.406,0.418-4.695,4.502-4.695,4.502C10.57,13.888,10.285,14,10,14s-0.57-0.112-0.789-0.335\n            c0,0-4.287-4.084-4.695-4.502C4.107,8.745,4.08,7.993,4.516,7.548z\"/>\n        </svg>\n    </div>\n\n    <div class=\"mc-window__button\" ref=\"close\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#FFFFFF\" d=\"M14.348,14.849c-0.469,0.469-1.229,0.469-1.697,0L10,11.819l-2.651,3.029c-0.469,0.469-1.229,0.469-1.697,0\n            c-0.469-0.469-0.469-1.229,0-1.697l2.758-3.15L5.651,6.849c-0.469-0.469-0.469-1.228,0-1.697s1.228-0.469,1.697,0L10,8.183\n            l2.651-3.031c0.469-0.469,1.228-0.469,1.697,0s0.469,1.229,0,1.697l-2.758,3.152l2.758,3.15\n            C14.817,13.62,14.817,14.38,14.348,14.849z\"/>\n        </svg>\n    </div>\n</div>\n<div class=\"mc-window__content\">\n    <!--window content-->\n</div>";
 
 /***/ }),
-/* 70 */
+/* 72 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6492,7 +6763,7 @@ var Picker = function () {
         key: "createDOM",
         value: function createDOM() {
             this.element.className += " mc-picker";
-            this.element.innerHTML = __webpack_require__(71);
+            this.element.innerHTML = __webpack_require__(73);
 
             this.label = this.element.querySelector(".mc-picker__label");
             this.optionsElement = this.element.querySelector(".mc-picker__options");
@@ -6608,13 +6879,13 @@ var Picker = function () {
 module.exports = Picker;
 
 /***/ }),
-/* 71 */
+/* 73 */
 /***/ (function(module, exports) {
 
 module.exports = "<span class=\"mc-picker\">\n    <span class=\"mc-picker__label\" data-label=\"\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-picker__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-picker__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-picker__options\" style=\"display: none\">\n    </span>\n</span>";
 
 /***/ }),
-/* 72 */
+/* 74 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6682,7 +6953,7 @@ var Menu = function () {
         key: "createDOM",
         value: function createDOM(label) {
             this.element.className += " mc-menu";
-            this.element.innerHTML = __webpack_require__(73);
+            this.element.innerHTML = __webpack_require__(75);
 
             this.label = this.element.querySelector(".mc-menu__label");
             this.itemsElement = this.element.querySelector(".mc-menu__items");
@@ -6778,19 +7049,19 @@ var Menu = function () {
 module.exports = Menu;
 
 /***/ }),
-/* 73 */
+/* 75 */
 /***/ (function(module, exports) {
 
 module.exports = "<span class=\"mc-menu\">\n    <span class=\"mc-menu__label\" data-label=\"\">\n        <svg viewBox=\"0 0 18 18\">\n            <polygon class=\"mc-menu__stroke\" points=\"7 11 9 13 11 11 7 11\"></polygon>\n            <polygon class=\"mc-menu__stroke\" points=\"7 7 9 5 11 7 7 7\"></polygon>\n        </svg>\n    </span>\n    <span class=\"mc-menu__items\" style=\"display: none\">\n    </span>\n</span>";
 
 /***/ }),
-/* 74 */
+/* 76 */
 /***/ (function(module, exports) {
 
 module.exports = "<div class=\"mc-rtwt\">\n\n    <!-- set bold style -->\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <!-- set italic style -->\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <!-- em -->\n    <!-- not yet, implemented later -->\n    <!--<button class=\"mc-rtwt__button\" ref=\"emphasis\">\n        E\n    </button>-->\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- pick header type -->\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- link -->\n    <button class=\"mc-rtwt__button\" ref=\"link\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"11\" y1=\"7\" y2=\"11\"></line>\n            <path class=\"mc-rtwt-stroke\" d=\"M8.9,4.577a3.476,3.476,0,0,1,.36,4.679A3.476,3.476,0,0,1,4.577,8.9C3.185,7.5,2.035,6.4,4.217,4.217S7.5,3.185,8.9,4.577Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M13.423,9.1a3.476,3.476,0,0,0-4.679-.36,3.476,3.476,0,0,0,.36,4.679c1.392,1.392,2.5,2.542,4.679.36S14.815,10.5,13.423,9.1Z\"></path>\n        </svg>\n    </button>\n\n    <!-- image -->\n    <button class=\"mc-rtwt__button\" ref=\"image\">\n        <svg viewBox=\"0 0 18 18\">\n            <rect class=\"mc-rtwt-stroke\" height=\"10\" width=\"12\" x=\"3\" y=\"4\"></rect>\n            <circle class=\"ql-fill\" cx=\"6\" cy=\"7\" r=\"1\"></circle>\n            <polyline class=\"ql-even ql-fill\" points=\"5 12 5 11 7 9 8 10 11 7 13 9 13 12 5 12\"></polyline>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- add a table -->\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        <svg viewBox=\"0 0 26 28\">\n            <g fill=\"#444\" transform=\"scale(0.02734375 0.02734375)\">\n                <path d=\"M292.571 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM950.857 164.571v621.714c0 50.286-41.143 91.429-91.429 91.429h-768c-50.286 0-91.429-41.143-91.429-91.429v-621.714c0-50.286 41.143-91.429 91.429-91.429h768c50.286 0 91.429 41.143 91.429 91.429z\" />\n            </g>\n        </svg>\n    </button>\n\n    <!-- insert something to a table -->\n    <span ref=\"tableInsert\"></span>\n\n    <!-- remove something from a table -->\n    <span ref=\"tableRemove\"></span>\n</div>";
 
 /***/ }),
-/* 75 */
+/* 77 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -6801,9 +7072,9 @@ function _possibleConstructorReturn(self, call) { if (!self) { throw new Referen
 
 function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
-var TextPopupWindow = __webpack_require__(76);
-var getRefs = __webpack_require__(1);
-var cssClass = __webpack_require__(4);
+var TextPopupWindow = __webpack_require__(78);
+var getRefs = __webpack_require__(2);
+var cssClass = __webpack_require__(1);
 var TextPad = __webpack_require__(5);
 
 var LinkBlotProperties = function (_TextPopupWindow) {
@@ -6824,7 +7095,7 @@ var LinkBlotProperties = function (_TextPopupWindow) {
          */
         _this.scheme = "http";
 
-        _this.content.innerHTML = __webpack_require__(77);
+        _this.content.innerHTML = __webpack_require__(79);
         cssClass(_this.content, "mc-lbp", true);
 
         _this.refs = getRefs(_this.content);
@@ -7088,7 +7359,7 @@ var LinkBlotProperties = function (_TextPopupWindow) {
 module.exports = LinkBlotProperties;
 
 /***/ }),
-/* 76 */
+/* 78 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -7350,19 +7621,19 @@ var TextPopupWindow = function (_Window) {
 module.exports = TextPopupWindow;
 
 /***/ }),
-/* 77 */
+/* 79 */
 /***/ (function(module, exports) {
 
 module.exports = "<div ref=\"viewingBlock\" class=\"mc-lbp__block\">\n    Visit URL: <a ref=\"url\" href=\"#\" target=\"_blank\">url here</a>\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"edit\">Edit</a>\n    <span class=\"mc-lbp__bar\"></span>\n    <a ref=\"remove\">Remove</a>\n</div>\n<form ref=\"editingBlock\" class=\"mc-lbp__block\">\n    <a class=\"mc-lbp__scheme\" ref=\"httpScheme\">Web</a>\n    <a class=\"mc-lbp__scheme\" ref=\"telScheme\">Tel</a>\n    <a class=\"mc-lbp__scheme\" ref=\"mailtoScheme\">Email</a>\n    <input type=\"text\" ref=\"textbox\" placeholder=\"URL\">\n    <span class=\"mc-lbp__spacer\"></span>\n    <a ref=\"save\">Save</a>\n</form>";
 
 /***/ }),
-/* 78 */
+/* 80 */
 /***/ (function(module, exports) {
 
 module.exports = "<!--\n    Icons used:\n    http://www.entypo.com/\n-->\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"toggleEdit\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M17.561,2.439c-1.442-1.443-2.525-1.227-2.525-1.227L8.984,7.264L2.21,14.037L1.2,18.799l4.763-1.01\n            l6.774-6.771l6.052-6.052C18.788,4.966,19.005,3.883,17.561,2.439z M5.68,17.217l-1.624,0.35c-0.156-0.293-0.345-0.586-0.69-0.932\n            c-0.346-0.346-0.639-0.533-0.932-0.691l0.35-1.623l0.47-0.469c0,0,0.883,0.018,1.881,1.016c0.997,0.996,1.016,1.881,1.016,1.881\n            L5.68,17.217z\"/>\n        </svg>\n    </button>\n\n    <button class=\"mc-toolbar__button mc-toggle-edit\" ref=\"richTextToolbar\">\n        <svg x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M3.135,6.89c0.933-0.725,1.707-0.225,2.74,0.971c0.116,0.135,0.272-0.023,0.361-0.1\n            C6.324,7.683,7.687,6.456,7.754,6.4C7.82,6.341,7.9,6.231,7.795,6.108C7.688,5.985,7.301,5.483,7.052,5.157\n            c-1.808-2.365,4.946-3.969,3.909-3.994c-0.528-0.014-2.646-0.039-2.963-0.004C6.715,1.294,5.104,2.493,4.293,3.052\n            C3.232,3.778,2.836,4.204,2.771,4.263c-0.3,0.262-0.048,0.867-0.592,1.344C1.604,6.11,1.245,5.729,0.912,6.021\n            C0.747,6.167,0.285,6.513,0.153,6.628C0.02,6.745-0.004,6.942,0.132,7.099c0,0,1.264,1.396,1.37,1.52\n            C1.607,8.741,1.893,8.847,2.069,8.69c0.177-0.156,0.632-0.553,0.708-0.623C2.855,8.001,2.727,7.206,3.135,6.89z M8.843,7.407\n            c-0.12-0.139-0.269-0.143-0.397-0.029L7.012,8.63c-0.113,0.1-0.129,0.283-0.027,0.4l8.294,9.439c0.194,0.223,0.53,0.246,0.751,0.053\n            L17,17.709c0.222-0.195,0.245-0.533,0.052-0.758L8.843,7.407z M19.902,3.39c-0.074-0.494-0.33-0.391-0.463-0.182\n            c-0.133,0.211-0.721,1.102-0.963,1.506c-0.24,0.4-0.832,1.191-1.934,0.41c-1.148-0.811-0.749-1.377-0.549-1.758\n            c0.201-0.383,0.818-1.457,0.907-1.59c0.089-0.135-0.015-0.527-0.371-0.363c-0.357,0.164-2.523,1.025-2.823,2.26\n            c-0.307,1.256,0.257,2.379-0.85,3.494l-1.343,1.4l1.349,1.566l1.654-1.57c0.394-0.396,1.236-0.781,1.998-0.607\n            c1.633,0.369,2.524-0.244,3.061-1.258C20.057,5.792,19.977,3.884,19.902,3.39z M2.739,17.053c-0.208,0.209-0.208,0.549,0,0.758\n            l0.951,0.93c0.208,0.209,0.538,0.121,0.746-0.088l4.907-4.824L7.84,12.115L2.739,17.053z\"/>\n        </svg>\n    </button>\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__text\" ref=\"savingInfo\">\n    Saved\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__upload\" ref=\"upload\" style=\"display: none\">\n    <div class=\"mc-toolbar__upload-box\">\n        <div class=\"mc-toolbar__upload-progress-bar\"></div>\n    </div>\n</div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div style=\"flex: 1\"></div>\n\n<hr class=\"mc-toolbar__line\">\n\n<div class=\"mc-toolbar__panel\">\n    <button class=\"mc-toolbar__button mc-logout\" ref=\"logout\">\n        <svg version=\"1.1\" x=\"0px\" y=\"0px\" viewBox=\"0 0 20 20\" enable-background=\"new 0 0 20 20\">\n            <path fill=\"#000000\" d=\"M19,10l-6-5v3H6v4h7v3L19,10z M3,3h8V1H3C1.9,1,1,1.9,1,3v14c0,1.1,0.9,2,2,2h8v-2H3V3z\"/>\n        </svg>\n    </button>\n</div>";
 
 /***/ }),
-/* 79 */
+/* 81 */
 /***/ (function(module, exports) {
 
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
@@ -7561,287 +7832,10 @@ var WindowManager = function () {
 module.exports = WindowManager;
 
 /***/ }),
-/* 80 */
+/* 82 */
 /***/ (function(module, exports) {
 
 // removed by extract-text-webpack-plugin
-
-/***/ }),
-/* 81 */,
-/* 82 */,
-/* 83 */,
-/* 84 */,
-/* 85 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var cssClass = __webpack_require__(4);
-
-var Image = function () {
-    _createClass(Image, null, [{
-        key: "createInstances",
-        value: function createInstances(window, document, shroom) {
-            var elements = document.querySelectorAll('[mycelium-widget="image"]');
-            var instances = [];
-
-            for (var i = 0; i < elements.length; i++) {
-                instances.push(new Image(window, document, elements[i], shroom));
-            }return instances;
-        }
-    }]);
-
-    function Image(window, document, element, shroom) {
-        _classCallCheck(this, Image);
-
-        this.window = window;
-        this.document = document;
-
-        this.element = element;
-
-        this.shroom = shroom;
-        this.key = this.element.getAttribute("mycelium-key");
-
-        if (!this.key) throw new Error("Image widget missing 'key' attribute.");
-
-        this.editButton = this.element.querySelector(".edit-button");
-        this.image = this.element.querySelector("img");
-
-        this.editButton.addEventListener("click", this.onEditButtonClick.bind(this));
-        this.image.addEventListener("load", this.updateEmptiness.bind(this));
-        this.image.addEventListener("error", this.updateEmptiness.bind(this));
-
-        this.updateEmptiness();
-    }
-
-    /**
-     * Checks if empty and updates the css class
-     */
-
-
-    _createClass(Image, [{
-        key: "updateEmptiness",
-        value: function updateEmptiness() {
-            if (this.image.getAttribute("src") === "") {
-                // no image set
-                cssClass(this.element, "no-image", true);
-            } else if (this.image.naturalWidth == 0) {
-                // image set, but error while loading
-                cssClass(this.element, "no-image", true);
-                cssClass(this.element, "url-error", true);
-            } else {
-                // all fine
-                cssClass(this.element, "no-image", false);
-                cssClass(this.element, "url-error", false);
-            }
-        }
-
-        /**
-         * Updates the src tag of the image
-         */
-
-    }, {
-        key: "updateImageSrc",
-        value: function updateImageSrc() {
-            var data = this.shroom.getData(this.key);
-
-            if (!(data instanceof Object)) return;
-
-            this.image.src = this.shroom.spores[data["@spore"]].url;
-        }
-
-        /**
-         * When the edit button is clicked
-         */
-
-    }, {
-        key: "onEditButtonClick",
-        value: function onEditButtonClick() {
-            var _this = this;
-
-            this.shroom.uploadNewSpore("image").then(function (spore) {
-                _this.changeSpore(spore.handle);
-            });
-        }
-
-        /**
-         * Change displayed spore
-         */
-
-    }, {
-        key: "changeSpore",
-        value: function changeSpore(sporeHandle) {
-            this.shroom.setData(this.key, {
-                "@type": "mycelium::image",
-                "@spore": sporeHandle
-            });
-
-            this.updateImageSrc();
-        }
-    }]);
-
-    return Image;
-}();
-
-module.exports = Image;
-
-/***/ }),
-/* 86 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-var cssClass = __webpack_require__(4);
-
-var AspectImage = function () {
-    _createClass(AspectImage, null, [{
-        key: "createInstances",
-        value: function createInstances(window, document, shroom) {
-            var elements = document.querySelectorAll('[mycelium-widget="aspect-image"]');
-            var instances = [];
-
-            for (var i = 0; i < elements.length; i++) {
-                instances.push(new AspectImage(window, document, elements[i], shroom));
-            }return instances;
-        }
-    }]);
-
-    function AspectImage(window, document, element, shroom) {
-        _classCallCheck(this, AspectImage);
-
-        this.window = window;
-        this.document = document;
-
-        this.element = element;
-
-        this.shroom = shroom;
-        this.key = this.element.getAttribute("mycelium-key");
-
-        if (!this.key) throw new Error("Image widget missing 'key' attribute.");
-
-        this.editButton = this.element.querySelector(".edit-button");
-        this.sizeButton = this.element.querySelector(".size-button");
-        this.image = this.element.querySelector("img");
-
-        this.editButton.addEventListener("click", this.onEditButtonClick.bind(this));
-        this.sizeButton.addEventListener("click", this.onSizeButtonClick.bind(this));
-        this.image.addEventListener("load", this.updateEmptiness.bind(this));
-        this.image.addEventListener("error", this.updateEmptiness.bind(this));
-
-        /**
-         * Value
-         */
-        this.value = {};
-
-        this.loadValue();
-        this.updateEmptiness();
-    }
-
-    /**
-     * Loads the value from shroom
-     */
-
-
-    _createClass(AspectImage, [{
-        key: "loadValue",
-        value: function loadValue() {
-            this.value = this.shroom.getData(this.key);
-
-            if (!(this.value instanceof Object)) this.value = {};
-
-            this.value["@type"] = "mycelium::image";
-            this.value["size"] = this.value["size"] === "fit" ? "fit" : "fill";
-        }
-
-        /**
-         * Set value into the shroom
-         */
-
-    }, {
-        key: "saveValue",
-        value: function saveValue() {
-            this.shroom.setData(this.key, this.value);
-        }
-
-        /**
-         * Checks if empty and updates the css class
-         */
-
-    }, {
-        key: "updateEmptiness",
-        value: function updateEmptiness() {
-            if (this.image.getAttribute("src") === "") {
-                // no image set
-                cssClass(this.element, "no-image", true);
-            } else if (this.image.naturalWidth == 0) {
-                // image set, but error while loading
-                cssClass(this.element, "no-image", true);
-                cssClass(this.element, "url-error", true);
-            } else {
-                // all fine
-                cssClass(this.element, "no-image", false);
-                cssClass(this.element, "url-error", false);
-            }
-        }
-
-        /**
-         * Updates the src tag of the image
-         */
-
-    }, {
-        key: "updateImageSrc",
-        value: function updateImageSrc() {
-            this.image.src = this.shroom.spores[this.value["@spore"]].url;
-        }
-
-        /**
-         * When the edit button is clicked
-         */
-
-    }, {
-        key: "onEditButtonClick",
-        value: function onEditButtonClick() {
-            var _this = this;
-
-            this.shroom.uploadNewSpore("image").then(function (spore) {
-                _this.value["@spore"] = spore.handle;
-                _this.updateImageSrc();
-                _this.saveValue();
-            });
-        }
-
-        /**
-         * When the size change button is clicked
-         */
-
-    }, {
-        key: "onSizeButtonClick",
-        value: function onSizeButtonClick() {
-            this.value["size"] = this.value["size"] === "fit" ? "fill" : "fit";
-            this.saveValue();
-
-            var fitNotFill = this.value["size"] === "fit";
-            var aspectRatio = this.element.clientWidth / this.element.clientHeight;
-            var setWidthNotHeight = fitNotFill ? aspectRatio < 1 : aspectRatio > 1;
-
-            if (setWidthNotHeight) {
-                this.image.style.width = "100%";
-                this.image.style.height = "auto";
-            } else {
-                this.image.style.width = "auto";
-                this.image.style.height = "100%";
-            }
-        }
-    }]);
-
-    return AspectImage;
-}();
-
-module.exports = AspectImage;
 
 /***/ })
 /******/ ]);

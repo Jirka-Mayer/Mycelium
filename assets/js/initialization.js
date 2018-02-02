@@ -38,8 +38,6 @@ function createShroom(window, shroomData)
     )
 
     window.mycelium.shroom.initialize()
-
-    window.mycelium.shroom.initializeAutosave()
 }
 
 function initializeUI(window)

@@ -30,13 +30,18 @@ class StaticTransparentWebsiteTest extends ScenarioTestCase
      */
     public function accessing_new_page_creates_shroom_instance()
     {
+        /*
+            Edit: No it doesn't anymore
+         */
+
         $this->assertDatabaseMissing("shrooms", [
             "id" => "index"
         ]);
 
         $this->get("/");
 
-        $this->assertDatabaseHas("shrooms", [
+        // edited here:
+        $this->assertDatabaseMissing("shrooms", [
             "id" => "index"
         ]);
     }

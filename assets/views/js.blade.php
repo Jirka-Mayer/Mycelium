@@ -50,6 +50,8 @@
                 window,
                 {!! $shroom->toJson(JSON_PRETTY_PRINT) !!}
             )
+
+            window.mycelium.shroom.initializeAutosave()
         </script>
 
     @endif

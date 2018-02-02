@@ -12,6 +12,13 @@ class SporeUploadDownloadTest extends FeatureTestCase
 {
     public $feature = "SporeUploadDownload";
 
+    public function setUp()
+    {
+        parent::setUp();
+
+        Shroom::create(["id" => "index"]);
+    }
+
     /**
      * @test
      */

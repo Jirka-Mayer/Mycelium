@@ -5,6 +5,7 @@ namespace Tests;
 use Illuminate\Config\Repository;
 use Illuminate\Support\Facades\Storage;
 use Mycelium\Shroom;
+use Artisan;
 
 class TestCase extends \Illuminate\Foundation\Testing\TestCase
 {
@@ -58,8 +59,10 @@ class TestCase extends \Illuminate\Foundation\Testing\TestCase
      */
     public function migrate()
     {
-        require_once __DIR__ . "/../assets/migrations/2017_08_29_193421_create_shrooms_table.php";
-        (new \CreateShroomsTable)->up();
+        /*require_once __DIR__ . "/../assets/migrations/2017_08_29_193421_create_shrooms_table.php";
+        (new \CreateShroomsTable)->up();*/
+
+        Artisan::call("mc:shroom:table");
     }
 
     public function mockFilesystem()
