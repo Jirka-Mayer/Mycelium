@@ -7,6 +7,7 @@ use Tests\TestCase;
 use Mycelium\Shroom;
 use Mycelium\EmptySlugException;
 use Intervention\Image\ImageManagerStatic as Image;
+use DB;
 
 class ShroomTest extends TestCase
 {
@@ -451,5 +452,37 @@ class ShroomTest extends TestCase
 
         // check that meta was removed as well
         $this->assertEquals([], $shroom->storage()->directories("spore-meta"));
+    }
+
+    ///////////
+    // Other //
+    ///////////
+
+    /**
+     * @test
+     */
+    public function it_loads_shrooms_from_database()
+    {
+        $shroom = Shroom::create(["title" => "My shroom"]);
+
+        // $shroom->delete() is a soft delete
+        DB::table("shrooms")->where("id", "my-shroom")->delete();
+
+        $this->assertDatabaseMissing("shrooms", [
+            "id" => "my-shroom",
+            "title" => "My shroom"
+        ]);
+        $this->assertNull(Shroom::find("my-shroom"));
+
+        // recreate
+        Shroom::insertIntoDatabase("my-shroom");
+
+        $this->assertDatabaseHas("shrooms", [
+            "id" => "my-shroom",
+            "title" => "My shroom"
+        ]);
+
+        // we can access it again
+        $this->assertNotNull(Shroom::find("my-shroom"));
     }
 }

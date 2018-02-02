@@ -227,7 +227,12 @@ trait ServesShroom
      */
     protected function createShroom()
     {
-        return Shroom::create([
+        // do NOT save!
+        // save happens only when saving an edit, never when viewing
+        // this would cause empty shroom table to erase a shroom
+        // by vising the website, when actually shroom:pull was not
+        // yet called
+        return new Shroom([
             // title for a single shroom stays null
             // it's used only in clusters
 

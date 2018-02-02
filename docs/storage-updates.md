@@ -22,7 +22,12 @@ latest updates and makes sure they will be able to run.
 
 Then you run:
 
-    php artisan mycelium:update
+    php artisan mc:update
+
+Sometimes it's needed to refresh shroom database if it changes:
+
+    php artisan mc:shroom:table
+    php artisan mc:shroom:pull
 
 This should perform all updates automatically.
 

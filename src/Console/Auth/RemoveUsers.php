@@ -7,7 +7,7 @@ use Mycelium\Auth\User;
 
 class RemoveUsers extends Command
 {
-    protected $signature = "mycelium:user:remove {--id=} {--name=} {--email=}";
+    protected $signature = "mc:user:remove {--id=} {--name=} {--email=}";
 
     protected $description = "Removes a mycelium auth user";
 

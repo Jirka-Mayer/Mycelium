@@ -11,9 +11,9 @@ class ImageBlot extends IframeBlot
         super(element, value)
 
         /**
-         * Initial blot value
+         * Data object in shroom
          */
-        this.initialValue = value
+        this.data = value
 
         /**
          * Flag
@@ -51,20 +51,20 @@ class ImageBlot extends IframeBlot
         let refs = getRefs(this.contentDiv)
 
         // if spore
-        if (this.initialValue["@spore"])
+        if (this.data["@spore"])
         {
-            let spore = this.textPad.mycelium.shroom.spores[this.initialValue["@spore"]]
+            let spore = this.textPad.mycelium.shroom.spores[this.data["@spore"]]
 
             if (spore)
                 refs.img.src = spore.url
         }
         // else if url
-        else if (this.initialValue.url)
+        else if (this.data.url)
         {
-            refs.img.src = this.initialValue.url
+            refs.img.src = this.data.url
         }
 
-        refs.title.innerText = this.initialValue.title
+        refs.title.innerText = this.data.title
     }
 
     /**
@@ -88,13 +88,13 @@ class ImageBlot extends IframeBlot
         // if not initialized yet, return the initial value
         if (!this.initialized)
         {
-            out = { image: this.initialValue }
+            out = { image: this.data }
         }
 
         // otherwise get the value
         else
         {
-            let value = this.initialValue
+            let value = this.data
 
             out = {
                 image: value

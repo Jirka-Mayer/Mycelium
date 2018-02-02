@@ -4,6 +4,8 @@ namespace Mycelium\ShroomConcerns;
 
 use Illuminate\Contracts\Filesystem\Filesystem;
 use Illuminate\Support\Str;
+use DB;
+use Carbon\Carbon;
 
 trait HasFilesystem
 {
@@ -100,6 +102,14 @@ trait HasFilesystem
         if ($id === null)
             $id = $this->id;
 
+        return static::getShroomDirectoryName($id);
+    }
+
+    /**
+     * Static core of the getDirectoryName function
+     */
+    public static function getShroomDirectoryName($id)
+    {
         return "shrooms/" . $id;
     }
 
@@ -134,5 +144,64 @@ trait HasFilesystem
             $size += $this->storage()->size($file);
 
         return $size;
+    }
+
+    /**
+     * Insert a shroom into database from filesystem
+     */
+    public static function insertIntoDatabase($id)
+    {
+        /*
+            Note: I'm no using the shroom because of all those
+            attributes, casts and bindings. I just want to copy the
+            data directly from the overview file.
+         */
+        
+        // check the shroom folder exists
+        if (!static::getFilesystem()
+            ->exists(static::getShroomDirectoryName($id) . "/overview.json")
+        )
+        {
+            throw new \Exception("Cannot push shroom '{$id}' to database from folder that does not contain a shroom.");
+        }
+
+        // get overview file content
+        $overview = json_decode(
+            static::getFilesystem()->get(
+                static::getShroomDirectoryName($id) . "/overview.json"
+            ),
+            true
+        );
+
+        if ($overview === null)
+            throw new \Exception(
+                "The overview file '{$id}/overview.json' is corrupted.");
+
+        // to collection
+        $overview = collect($overview);
+
+        // get table name
+        $table = (new static)->table;
+
+        // helper
+        $parseDate = function ($key) use ($overview) {
+            $val = $overview->get($key, null);
+            if ($val === null)
+                return null;
+            return new Carbon($val);
+        };
+
+        // delete shroom from database if present
+        DB::table($table)->where("id", $id)->delete();
+
+        // insert a new clean record
+        DB::table($table)->insert([
+            "id" => $id,
+            "title" => $overview->get("title", null),
+            "created_at" => $parseDate("created_at"),
+            "updated_at" => $parseDate("updated_at"),
+            "public_revision" => $overview->get("public_revision", null),
+            "deleted_at" => $parseDate("deleted_at"),
+        ]);
     }
 }

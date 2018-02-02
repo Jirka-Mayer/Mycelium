@@ -3102,11 +3102,11 @@ module.exports = function (Quill) {
             _classCallCheck(this, ImageBlot);
 
             /**
-             * Initial blot value
+             * Data object in shroom
              */
             var _this = _possibleConstructorReturn(this, (ImageBlot.__proto__ || Object.getPrototypeOf(ImageBlot)).call(this, element, value));
 
-            _this.initialValue = value;
+            _this.data = value;
 
             /**
              * Flag
@@ -3143,17 +3143,17 @@ module.exports = function (Quill) {
                 var refs = getRefs(this.contentDiv);
 
                 // if spore
-                if (this.initialValue["@spore"]) {
-                    var spore = this.textPad.mycelium.shroom.spores[this.initialValue["@spore"]];
+                if (this.data["@spore"]) {
+                    var spore = this.textPad.mycelium.shroom.spores[this.data["@spore"]];
 
                     if (spore) refs.img.src = spore.url;
                 }
                 // else if url
-                else if (this.initialValue.url) {
-                        refs.img.src = this.initialValue.url;
+                else if (this.data.url) {
+                        refs.img.src = this.data.url;
                     }
 
-                refs.title.innerText = this.initialValue.title;
+                refs.title.innerText = this.data.title;
             }
 
             /**
@@ -3180,12 +3180,12 @@ module.exports = function (Quill) {
 
                 // if not initialized yet, return the initial value
                 if (!this.initialized) {
-                    out = { image: this.initialValue };
+                    out = { image: this.data };
                 }
 
                 // otherwise get the value
                 else {
-                        var value = this.initialValue;
+                        var value = this.data;
 
                         out = {
                             image: value

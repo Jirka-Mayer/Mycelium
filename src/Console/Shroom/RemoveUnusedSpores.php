@@ -7,9 +7,9 @@ use Mycelium\Shroom;
 
 class RemoveUnusedSpores extends Command
 {
-    protected $signature = "mycelium:shroom:remove-unused-spores";
+    protected $signature = "mc:shroom:cleanup";
 
-    protected $description = "Removes unused spores in all shrooms";
+    protected $description = "Removes unused data in all shrooms";
 
     public function handle()
     {
@@ -26,8 +26,15 @@ class RemoveUnusedSpores extends Command
             $this->info("Shroom '{$shroom->id}'.");
 
             $sizeBefore = $shroom->getSize();
+
+            // check if corrupted and list
+            // ... (todo - note corruption by creating a flag file)
             
+            // unused spores
             $removed = $shroom->removeUnusedSpores();
+
+            // failed, expired uploads
+            // $shroom->clearOldUploads() // TODO
 
             if (count($removed) > 0)
             {

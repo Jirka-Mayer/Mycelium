@@ -7,7 +7,7 @@ use Mycelium\Auth\User;
 
 class ListUsers extends Command
 {
-    protected $signature = "mycelium:user:list";
+    protected $signature = "mc:user:list";
 
     protected $description = "Lists all mycelium users";
 

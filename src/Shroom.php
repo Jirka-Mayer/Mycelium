@@ -56,9 +56,7 @@ class Shroom extends Model
      * Type casting for attributes
      * @var array
      */
-    protected $casts = [
-        "revisions" => "array"
-    ];
+    protected $casts = [];
 
     /**
      * Returns data stored in the shroom

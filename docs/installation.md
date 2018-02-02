@@ -36,14 +36,16 @@ php artisan vendor:publish --provider=Mycelium\\MyceliumServiceProvider
 Initialize mycelium storage folder and update system:
 
 ```
-php artisan mycelium:init
+php artisan mc:init
 ```
 
-Customize config `config/mycelium.php`.
+Create shrooms table
 
-> If you want to use [mycelium auth](authentication.md), setup the config now.
+```
+php artisan mc:shroom:table
+```
 
-Migrate:
+Migrate
 
 ```
 php artisan migrate
@@ -53,10 +55,16 @@ php artisan migrate
 Mycelium auth
 -------------
 
+Create users table:
+
+```
+php artisan mc:user:table
+```
+
 Create a user account:
 
 ```
-    php artisan mycelium:user:create --name=John --email=john@doe.com
+php artisan mc:user:create --name=John --email=john@doe.com
 ```
 
 For more information see the [account management](authentication.md#manage-accounts) section.

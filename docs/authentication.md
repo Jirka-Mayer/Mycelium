@@ -91,7 +91,7 @@ The `Mycelium\Auth\AuthorizesShroomEditor` trait overrides the `isUserAnEditor` 
 You don't need to use tinker to register new accounts, you can use the artisan:
 
 ```
-    php artisan mycelium:user:create
+    php artisan mc:user:create
 ```
 
 You will be promted for the credentials and a password.
@@ -99,19 +99,19 @@ You will be promted for the credentials and a password.
 You can specify all properties inline if you want to call this via a script:
 
 ```
-    php artisan mycelium:user:create --name=John --email=john@doe.com --password=secret
+    php artisan mc:user:create --name=John --email=john@doe.com --password=secret
 ```
 
 You can list all users by running:
 
 ```
-    php artisan mycelium:user:list
+    php artisan mc:user:list
 ```
 
 Removing users is done via this command:
 
 ```
-    php artisan mycelium:user:remove --id=? --name=? --email=?
+    php artisan mc:user:remove --id=? --name=? --email=?
 ```
 
 All three options are optional, if multiple users match the query, all will be removed.

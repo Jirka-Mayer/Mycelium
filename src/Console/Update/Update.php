@@ -7,7 +7,7 @@ use Mycelium\Shroom;
 
 class Update extends Command
 {
-    protected $signature = "mycelium:update";
+    protected $signature = "mc:update";
 
     protected $description = "Update mycelium storage";
 

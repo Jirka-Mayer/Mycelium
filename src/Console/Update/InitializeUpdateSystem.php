@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 
 class InitializeUpdateSystem extends Command
 {
-    protected $signature = "mycelium:init";
+    protected $signature = "mc:init";
 
     protected $description = "Initialize mycelium update system";
 

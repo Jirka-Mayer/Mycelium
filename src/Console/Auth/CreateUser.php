@@ -7,7 +7,7 @@ use Mycelium\Auth\User;
 
 class CreateUser extends Command
 {
-    protected $signature = "mycelium:user:create {--name=} {--email=} {--password=}";
+    protected $signature = "mc:user:create {--name=} {--email=} {--password=}";
 
     protected $description = "Create new mycelium auth user";
 

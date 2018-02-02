@@ -26,8 +26,6 @@ class MyceliumServiceProvider extends ServiceProvider
 
         Shroom::setFilesystem($this->app["mycelium.filesystem"]);
 
-        $this->loadMigrationsFrom(__DIR__ . "/../assets/migrations");
-        
         $this->loadViewsFrom(__DIR__ . "/../assets/views", "mycelium");
 
         $this->loadTranslationsFrom(__DIR__ . "/../assets/lang", "mycelium");
@@ -58,11 +56,14 @@ class MyceliumServiceProvider extends ServiceProvider
         if ($this->app->runningInConsole())
         {
             $this->commands([
+                \Mycelium\Console\Auth\CreateUsersTable::class,
                 \Mycelium\Console\Auth\CreateUser::class,
                 \Mycelium\Console\Auth\ListUsers::class,
                 \Mycelium\Console\Auth\RemoveUsers::class,
                 \Mycelium\Console\Auth\ChangeUserPassword::class,
                 \Mycelium\Console\Shroom\RemoveUnusedSpores::class,
+                \Mycelium\Console\Shroom\CreateShroomsTable::class,
+                \Mycelium\Console\Shroom\PullShroomsFromStorage::class,
             ]);
 
             $this->bootMyceliumUpdating();

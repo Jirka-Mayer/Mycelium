@@ -7,7 +7,7 @@ use Mycelium\Auth\User;
 
 class ChangeUserPassword extends Command
 {
-    protected $signature = "mycelium:user:password {--id=} {--name=} {--email=}";
+    protected $signature = "mc:user:password {--id=} {--name=} {--email=}";
 
     protected $description = "Change mycelium user's password";
 
