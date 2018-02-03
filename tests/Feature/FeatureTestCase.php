@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use Tests\TestCase;
-use Mycelium\Shroom;
 
 class FeatureTestCase extends TestCase
 {
@@ -21,39 +20,12 @@ class FeatureTestCase extends TestCase
         $this->mockFilesystem();
     }
 
-    /**
-     * Creates the application.
-     *
-     * @return \Illuminate\Foundation\Application
-     */
-    public function createApplication()
+    public function applyTestInfo()
     {
-        $app = parent::createApplication();
-
-        $this->registerRoutes($app);
-        $this->addViewLocation($app);
-
-        return $app;
-    }
-
-    /**
-     * Registers routes for the given scenario
-     * @return void
-     */
-    public function registerRoutes($app)
-    {
-        $app["router"]->middleware('web')
-             ->namespace("Tests\\Feature\\{$this->feature}")
-             ->group(__DIR__ . "/{$this->feature}/routes.php");
-    }
-
-    /**
-     * Replaces the view finder with a new one that points to
-     * the proper scenario directory
-     * @return void
-     */
-    public function addViewLocation($app)
-    {
-        $app["view"]->addLocation(__DIR__ . "/{$this->feature}");
+        $this->setTestInfo([
+            "routeNamespace" => "Tests\\Feature\\{$this->feature}",
+            "routesFilePath" => __DIR__ . "/{$this->feature}/routes.php",
+            "views" => __DIR__ . "/{$this->feature}",
+        ]);
     }
 }

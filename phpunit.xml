@@ -22,6 +22,9 @@
         <testsuite name="Update">
             <directory suffix="Test.php">./tests/Update</directory>
         </testsuite>
+        <testsuite name="Browser">
+            <directory suffix="Test.php">./tests/Browser</directory>
+        </testsuite>
     </testsuites>
     <filter>
         <whitelist>

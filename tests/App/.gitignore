@@ -1,0 +1,5 @@
+.test
+/storage/*.key
+/storage/database.sqlite
+/storage/logs/*
+/storage/mycelium/*

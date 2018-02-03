@@ -7,9 +7,7 @@
 
     <p>Lorem ipsum...</p>
 
-    @include("mycelium::js", [
-        "richText" => false
-    ])
+    @include("mycelium::js")
 
 </body>
 </html>

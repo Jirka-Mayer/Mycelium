@@ -1,0 +1,1 @@
+A fake application core for running complex tests.

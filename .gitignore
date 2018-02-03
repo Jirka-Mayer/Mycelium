@@ -5,3 +5,4 @@ vendor
 *.sublime-workspace
 npm-debug.log
 composer.lock
+storage/logs/*
