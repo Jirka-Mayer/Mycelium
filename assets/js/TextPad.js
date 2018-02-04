@@ -172,11 +172,13 @@ class TextPad
 
     /**
      * Inserts an image into the text
+     *
+     * imageFile is undefined or the file to be uploaded & used
      */
-    insertImage()
+    insertImage(imageFile)
     {
         // first let the user choose an image and upload it to the server
-        this.mycelium.shroom.uploadNewSpore("image")
+        this.mycelium.shroom.uploadNewSpore("image", imageFile)
         .then((spore) => {
 
             // now create the embed referencing the spore
@@ -374,7 +376,7 @@ class TextPad
         Static methods reflecting isntance methods on the active pad
      */
     
-    static insertImage() { if (TextPad.activePad) TextPad.activePad.insertImage() }
+    static insertImage(img) { if (TextPad.activePad) TextPad.activePad.insertImage(img) }
 
     // table editing mirrors
     static insertTable() { if (TextPad.activePad) TextPad.activePad.insertTable() }

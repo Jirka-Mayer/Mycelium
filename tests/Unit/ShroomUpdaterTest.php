@@ -27,7 +27,7 @@ class ShroomUpdaterTest extends TestCase
         
         // create updater
         $this->updater = new ShroomUpdater(
-            Storage::drive("mycelium-fake"),
+            app("mycelium.filesystem"),
             $this->log
         );
     }

@@ -177,6 +177,9 @@ trait HasSpores
             // fetch the spore
             $spore = $this->spore($handle);
 
+            // save the shroom
+            $this->save();
+
             return [
                 "success" => true,
                 "message" => "Upload was successful.",

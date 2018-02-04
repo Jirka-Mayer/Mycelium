@@ -174,8 +174,10 @@ class Shroom
      * User selects a file and it will be uploaded as a new spore
      * Spore handle is returned in the promise
      * @param {string} type Type of the spore handler
+     *
+     * sporeFile is undefined, or can be the file to be uploaded
      */
-    uploadNewSpore(type)
+    uploadNewSpore(type, sporeFile)
     {
         if (this.uploadInProgress)
             return
@@ -186,8 +188,21 @@ class Shroom
             this.mycelium.toolbar.setUploadBarState(state)
         }
 
+        // file via dialog or argument
+        let promise = null
+        if (!sporeFile)
+        {
+            promise = SporeUploader.fileDialog(this.document)
+        }
+        else
+        {
+            promise = new Promise((resolve, reject) => {
+                resolve(sporeFile)
+            })
+        }
+
         // open file dialog
-        return SporeUploader.fileDialog(this.document)
+        return promise
 
         // upload the spore
         .then(file => SporeUploader.upload(file, type, progress))

@@ -881,15 +881,17 @@ var TextPad = function () {
 
         /**
          * Inserts an image into the text
+         *
+         * imageFile is undefined or the file to be uploaded & used
          */
 
     }, {
         key: "insertImage",
-        value: function insertImage() {
+        value: function insertImage(imageFile) {
             var _this = this;
 
             // first let the user choose an image and upload it to the server
-            this.mycelium.shroom.uploadNewSpore("image").then(function (spore) {
+            this.mycelium.shroom.uploadNewSpore("image", imageFile).then(function (spore) {
 
                 // now create the embed referencing the spore
                 var range = _this.quill.getSelection(true);
@@ -1098,8 +1100,8 @@ var TextPad = function () {
 
     }, {
         key: "insertImage",
-        value: function insertImage() {
-            if (TextPad.activePad) TextPad.activePad.insertImage();
+        value: function insertImage(img) {
+            if (TextPad.activePad) TextPad.activePad.insertImage(img);
         }
 
         // table editing mirrors
@@ -4048,11 +4050,13 @@ var Shroom = function () {
          * User selects a file and it will be uploaded as a new spore
          * Spore handle is returned in the promise
          * @param {string} type Type of the spore handler
+         *
+         * sporeFile is undefined, or can be the file to be uploaded
          */
 
     }, {
         key: "uploadNewSpore",
-        value: function uploadNewSpore(type) {
+        value: function uploadNewSpore(type, sporeFile) {
             var _this = this;
 
             if (this.uploadInProgress) return;
@@ -4063,8 +4067,18 @@ var Shroom = function () {
                 _this.mycelium.toolbar.setUploadBarState(state);
             };
 
+            // file via dialog or argument
+            var promise = null;
+            if (!sporeFile) {
+                promise = SporeUploader.fileDialog(this.document);
+            } else {
+                promise = new Promise(function (resolve, reject) {
+                    resolve(sporeFile);
+                });
+            }
+
             // open file dialog
-            return SporeUploader.fileDialog(this.document)
+            return promise
 
             // upload the spore
             .then(function (file) {
@@ -6611,7 +6625,12 @@ var TextPadToolbar = function (_Window) {
     }, {
         key: "onImageClick",
         value: function onImageClick() {
-            TextPad.insertImage();
+            // testing file input
+            var file = null;
+            if (this.refs.testingFileUpload.files.length > 0) file = this.refs.testingFileUpload.files[0];
+
+            // insert the image
+            TextPad.insertImage(file);
         }
 
         ////////////
@@ -7058,7 +7077,7 @@ module.exports = "<span class=\"mc-menu\">\n    <span class=\"mc-menu__label\" d
 /* 76 */
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"mc-rtwt\">\n\n    <!-- set bold style -->\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <!-- set italic style -->\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <!-- em -->\n    <!-- not yet, implemented later -->\n    <!--<button class=\"mc-rtwt__button\" ref=\"emphasis\">\n        E\n    </button>-->\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- pick header type -->\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- link -->\n    <button class=\"mc-rtwt__button\" ref=\"link\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"11\" y1=\"7\" y2=\"11\"></line>\n            <path class=\"mc-rtwt-stroke\" d=\"M8.9,4.577a3.476,3.476,0,0,1,.36,4.679A3.476,3.476,0,0,1,4.577,8.9C3.185,7.5,2.035,6.4,4.217,4.217S7.5,3.185,8.9,4.577Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M13.423,9.1a3.476,3.476,0,0,0-4.679-.36,3.476,3.476,0,0,0,.36,4.679c1.392,1.392,2.5,2.542,4.679.36S14.815,10.5,13.423,9.1Z\"></path>\n        </svg>\n    </button>\n\n    <!-- image -->\n    <button class=\"mc-rtwt__button\" ref=\"image\">\n        <svg viewBox=\"0 0 18 18\">\n            <rect class=\"mc-rtwt-stroke\" height=\"10\" width=\"12\" x=\"3\" y=\"4\"></rect>\n            <circle class=\"ql-fill\" cx=\"6\" cy=\"7\" r=\"1\"></circle>\n            <polyline class=\"ql-even ql-fill\" points=\"5 12 5 11 7 9 8 10 11 7 13 9 13 12 5 12\"></polyline>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- add a table -->\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        <svg viewBox=\"0 0 26 28\">\n            <g fill=\"#444\" transform=\"scale(0.02734375 0.02734375)\">\n                <path d=\"M292.571 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM950.857 164.571v621.714c0 50.286-41.143 91.429-91.429 91.429h-768c-50.286 0-91.429-41.143-91.429-91.429v-621.714c0-50.286 41.143-91.429 91.429-91.429h768c50.286 0 91.429 41.143 91.429 91.429z\" />\n            </g>\n        </svg>\n    </button>\n\n    <!-- insert something to a table -->\n    <span ref=\"tableInsert\"></span>\n\n    <!-- remove something from a table -->\n    <span ref=\"tableRemove\"></span>\n</div>";
+module.exports = "<div class=\"mc-rtwt\">\n\n    <!-- this is a way for laravel dusk to specify which file to upload -->\n    <input type=\"file\" ref=\"testingFileUpload\" style=\"display: none\">\n\n    <!-- set bold style -->\n    <button class=\"mc-rtwt__button\" ref=\"bold\">\n        <svg viewBox=\"0 0 18 18\">\n            <path class=\"mc-rtwt-stroke\" d=\"M5,4H9.5A2.5,2.5,0,0,1,12,6.5v0A2.5,2.5,0,0,1,9.5,9H5A0,0,0,0,1,5,9V4A0,0,0,0,1,5,4Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M5,9h5.5A2.5,2.5,0,0,1,13,11.5v0A2.5,2.5,0,0,1,10.5,14H5a0,0,0,0,1,0,0V9A0,0,0,0,1,5,9Z\"></path>\n        </svg>\n    </button>\n\n    <!-- set italic style -->\n    <button class=\"mc-rtwt__button\" ref=\"italic\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"13\" y1=\"4\" y2=\"4\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"5\" x2=\"11\" y1=\"14\" y2=\"14\"></line>\n            <line class=\"mc-rtwt-stroke\" x1=\"8\" x2=\"10\" y1=\"14\" y2=\"4\"></line>\n        </svg>\n    </button>\n\n    <!-- em -->\n    <!-- not yet, implemented later -->\n    <!--<button class=\"mc-rtwt__button\" ref=\"emphasis\">\n        E\n    </button>-->\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- pick header type -->\n    <span ref=\"header\"></span>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- link -->\n    <button class=\"mc-rtwt__button\" ref=\"link\">\n        <svg viewBox=\"0 0 18 18\">\n            <line class=\"mc-rtwt-stroke\" x1=\"7\" x2=\"11\" y1=\"7\" y2=\"11\"></line>\n            <path class=\"mc-rtwt-stroke\" d=\"M8.9,4.577a3.476,3.476,0,0,1,.36,4.679A3.476,3.476,0,0,1,4.577,8.9C3.185,7.5,2.035,6.4,4.217,4.217S7.5,3.185,8.9,4.577Z\"></path>\n            <path class=\"mc-rtwt-stroke\" d=\"M13.423,9.1a3.476,3.476,0,0,0-4.679-.36,3.476,3.476,0,0,0,.36,4.679c1.392,1.392,2.5,2.542,4.679.36S14.815,10.5,13.423,9.1Z\"></path>\n        </svg>\n    </button>\n\n    <!-- image -->\n    <button class=\"mc-rtwt__button\" ref=\"image\">\n        <svg viewBox=\"0 0 18 18\">\n            <rect class=\"mc-rtwt-stroke\" height=\"10\" width=\"12\" x=\"3\" y=\"4\"></rect>\n            <circle class=\"ql-fill\" cx=\"6\" cy=\"7\" r=\"1\"></circle>\n            <polyline class=\"ql-even ql-fill\" points=\"5 12 5 11 7 9 8 10 11 7 13 9 13 12 5 12\"></polyline>\n        </svg>\n    </button>\n\n    <hr class=\"mc-rtwt__line\">\n\n    <!-- add a table -->\n    <button class=\"mc-rtwt__button\" ref=\"table\">\n        <svg viewBox=\"0 0 26 28\">\n            <g fill=\"#444\" transform=\"scale(0.02734375 0.02734375)\">\n                <path d=\"M292.571 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM292.571 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 786.286v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM585.143 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 566.857v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM877.714 347.429v-109.714c0-10.286-8-18.286-18.286-18.286h-182.857c-10.286 0-18.286 8-18.286 18.286v109.714c0 10.286 8 18.286 18.286 18.286h182.857c10.286 0 18.286-8 18.286-18.286zM950.857 164.571v621.714c0 50.286-41.143 91.429-91.429 91.429h-768c-50.286 0-91.429-41.143-91.429-91.429v-621.714c0-50.286 41.143-91.429 91.429-91.429h768c50.286 0 91.429 41.143 91.429 91.429z\" />\n            </g>\n        </svg>\n    </button>\n\n    <!-- insert something to a table -->\n    <span ref=\"tableInsert\"></span>\n\n    <!-- remove something from a table -->\n    <span ref=\"tableRemove\"></span>\n</div>";
 
 /***/ }),
 /* 77 */

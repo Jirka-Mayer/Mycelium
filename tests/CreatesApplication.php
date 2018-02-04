@@ -3,6 +3,9 @@
 namespace Tests;
 
 use Illuminate\Foundation\Console\Kernel;
+use Illuminate\Support\Facades\Storage;
+use Mycelium\Shroom;
+use Artisan;
 
 trait CreatesApplication
 {
@@ -18,6 +21,8 @@ trait CreatesApplication
         $app = require __DIR__ . '/App/bootstrap/app.php';
 
         $app->make(Kernel::class)->bootstrap();
+
+        $this->clearStorage();
 
         return $app;
     }
@@ -47,5 +52,28 @@ trait CreatesApplication
     {
         // default is clearing
         $this->clearTestInfo();
+    }
+
+    public function migrate()
+    {
+        /*require_once __DIR__ . "/../assets/migrations/2017_08_29_193421_create_shrooms_table.php";
+        (new \CreateShroomsTable)->up();*/
+
+        Artisan::call("mc:shroom:table");
+    }
+
+    public function mockFilesystem()
+    {
+        /*
+            Remove calls to this method actually
+         */
+
+        //Storage::fake("mycelium-fake");
+        //Shroom::setFilesystem(Storage::drive("mycelium-fake"));
+    }
+
+    public function clearStorage()
+    {
+        app("mycelium.filesystem")->deleteDirectory("shrooms");
     }
 }

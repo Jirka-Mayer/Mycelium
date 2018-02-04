@@ -191,7 +191,13 @@ class TextPadToolbar extends Window
 
     onImageClick()
     {
-        TextPad.insertImage()
+        // testing file input
+        let file = null
+        if (this.refs.testingFileUpload.files.length > 0)
+            file = this.refs.testingFileUpload.files[0]
+
+        // insert the image
+        TextPad.insertImage(file)
     }
 
     ////////////
