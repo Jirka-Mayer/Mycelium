@@ -114,13 +114,16 @@ class SporeUploader
      * Shows the file dialog and lets the user choose a file
      * @param {Document} document DOM Document object
      */
-    static fileDialog(document)
+    static fileDialog(document, accept)
     {
         return new Promise((resolve, reject) => {
             
             // create a file input element
             let fileInput = document.createElement("input")
             fileInput.type = "file"
+
+            if (accept)
+                fileInput.accept = accept
 
             // register change handler
             fileInput.onchange = () => {

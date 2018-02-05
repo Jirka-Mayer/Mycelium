@@ -107,7 +107,7 @@ class AspectImage
      */
     onEditButtonClick()
     {
-        this.shroom.uploadNewSpore("image")
+        this.shroom.uploadNewSpore("image", "image/jpeg")
         .then((spore) => {
             this.value["@spore"] = spore.handle
             this.updateImageSrc()

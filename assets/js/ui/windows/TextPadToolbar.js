@@ -19,6 +19,9 @@ class TextPadToolbar extends Window
         this.buildDOM()
 
         this.registerEventListeners()
+
+        // update to proper state
+        this.onActiveTextPadChange(TextPad.activePad)
     }
 
     buildDOM()
@@ -89,7 +92,14 @@ class TextPadToolbar extends Window
     onActiveTextPadChange(pad)
     {
         if (pad === null)
+        {
+            this.content.style.filter = "brightness(0.8)"
             return
+        }
+        else
+        {
+            this.content.style.filter = "none"
+        }
 
         // update header selection
         let options = [{ key: "p", label: "Normal" }]
@@ -101,6 +111,13 @@ class TextPadToolbar extends Window
         for (let i = 1; i <= count; i++)
             options.push({ key: "h" + i, label: "Heading " + i })
         this.headerPicker.updateOptions(options)
+
+        // update all controls based on content
+        // TODO
+
+        // for now, just the image:
+        this.refs.image.style.display = (pad.options.formats.indexOf("image") !== -1)
+            ? "block" : "none"
     }
 
     /**

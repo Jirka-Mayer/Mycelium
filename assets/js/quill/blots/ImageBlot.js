@@ -3,6 +3,7 @@ module.exports = function(Quill) {
 const getRefs = require("../../utils/getRefs.js")
 const IframeBlot = require("./IframeBlot.js")(Quill)
 const ClipCache = require("../IframeClipCache.js")
+const PlainPad = require("../../PlainPad.js")
 
 class ImageBlot extends IframeBlot
 {
@@ -30,12 +31,23 @@ class ImageBlot extends IframeBlot
 
         this.createDOM()
 
-        this.loadQuill(() => {
+        /**
+         * Plain pad for title editing
+         */
+        this.pad = new PlainPad(
+            this.titleElement,
+            this.contentWindow,
+            this.contentDocument
+        )
 
-            this.updateDimensions()
-
-            this.initialized = true
+        this.pad.on("text-change", () => {
+            this.data.title = this.pad.getText()
+            this.triggerShroomUpdate()
         })
+
+        this.updateDimensions()
+
+        this.initialized = true
     }
 
     createDOM()
@@ -49,6 +61,9 @@ class ImageBlot extends IframeBlot
 
         // get image reference
         let refs = getRefs(this.contentDiv)
+
+        // title element reference
+        this.titleElement = refs.title
 
         // if spore
         if (this.data["@spore"])

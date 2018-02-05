@@ -108,6 +108,11 @@ class TextPad
         this.quill.on("text-change", this.onTextChange.bind(this))
 
         this.quill.on("selection-change", this.onSelectionChange.bind(this))
+
+        // if this is the first pad created (thus no pad is active)
+        // make this one the active pad
+        if (TextPad.activePad === null)
+            TextPad.setActivePad(this)
     }
 
     /**
@@ -177,8 +182,17 @@ class TextPad
      */
     insertImage(imageFile)
     {
+        // check format
+        if (this.options.formats.indexOf("image") === -1)
+            return new Promise((resolve, reject) => {
+                reject("Image format not allowed in this pad.")
+            })
+
+        // mime types to accept
+        const accept = "image/jpeg"
+
         // first let the user choose an image and upload it to the server
-        this.mycelium.shroom.uploadNewSpore("image", imageFile)
+        this.mycelium.shroom.uploadNewSpore("image", accept, imageFile)
         .then((spore) => {
 
             // now create the embed referencing the spore
@@ -186,7 +200,7 @@ class TextPad
             this.quill.insertText(range.index, "\n")
             this.quill.insertEmbed(range.index + 1, "image", {
                 "@spore": spore.handle,
-                title: "A very cool image indeed."
+                title: ""
             })
             this.quill.setSelection(range.index + 2)
 

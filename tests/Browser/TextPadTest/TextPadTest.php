@@ -36,6 +36,8 @@ class TextPadTest extends DuskTestCase
      */
     public function it_has_default_content()
     {
+        // this is more like a widget test, but you get the point
+
         $this->browse(function (Browser $browser) {
             $browser->visit("/edit")
                 ->assertSee("Default content");

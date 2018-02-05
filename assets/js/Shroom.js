@@ -177,7 +177,7 @@ class Shroom
      *
      * sporeFile is undefined, or can be the file to be uploaded
      */
-    uploadNewSpore(type, sporeFile)
+    uploadNewSpore(type, accept, sporeFile)
     {
         if (this.uploadInProgress)
             return
@@ -192,7 +192,7 @@ class Shroom
         let promise = null
         if (!sporeFile)
         {
-            promise = SporeUploader.fileDialog(this.document)
+            promise = SporeUploader.fileDialog(this.document, accept)
         }
         else
         {

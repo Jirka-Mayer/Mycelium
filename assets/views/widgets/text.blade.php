@@ -30,8 +30,6 @@
     <span
         mycelium-widget="text"
         mycelium-key="{{ $key }}"
-        contenteditable="true"
-        style="white-space: pre-wrap; display: inline-block;"
     >{{
         $renderer->renderText(
             $shroom->data("public")->get($key, $default)

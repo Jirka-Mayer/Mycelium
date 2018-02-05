@@ -82,7 +82,7 @@ class Image
      */
     onEditButtonClick()
     {
-        this.shroom.uploadNewSpore("image")
+        this.shroom.uploadNewSpore("image", "image/jpeg")
         .then((spore) => {
             this.changeSpore(spore.handle)
         })

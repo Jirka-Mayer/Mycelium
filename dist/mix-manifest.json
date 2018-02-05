@@ -1,9 +1,4 @@
 {
-    "/mycelium.js": "/mycelium.js",
-    "/mycelium.css": "/mycelium.css",
-    "/tests/App/public/vendor/mycelium/quill.core.1.3.4.js": "/tests/App/public/vendor/mycelium/quill.core.1.3.4.js",
-    "/tests/App/public/vendor/mycelium/mycelium.js": "/tests/App/public/vendor/mycelium/mycelium.js",
-    "/tests/App/public/vendor/mycelium/mycelium.css": "/tests/App/public/vendor/mycelium/mycelium.css",
-    "/Testing/public/vendor/mycelium/mycelium.js": "/Testing/public/vendor/mycelium/mycelium.js",
-    "/Testing/public/vendor/mycelium/mycelium.css": "/Testing/public/vendor/mycelium/mycelium.css"
+    "/mycelium.js": "/mycelium.js?id=5d63d718fdb5a03a60f5",
+    "/mycelium.css": "/mycelium.css?id=e213afbc5480bb85e77a"
 }
