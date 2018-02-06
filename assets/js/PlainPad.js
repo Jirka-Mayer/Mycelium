@@ -117,6 +117,13 @@ class PlainPad
 
     onFocus(e)
     {
+        // if the last selected pad is not null, blur it first
+        // (because otherwise if a have TextPad selected and select PlainPad
+        // inside an iframe blot, then when I type it jumps back into the
+        // TextPad - it doesn't get blurred properly for some reason)
+        if (TextPad.activePad !== null)
+            TextPad.activePad.blur()
+
         // no active text pad now
         TextPad.bus.fire("selection-change", null, {})
         TextPad.setActivePad(null)

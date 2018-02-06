@@ -324,6 +324,11 @@ class TextPad
         this.quill.focus()
     }
 
+    blur()
+    {
+        this.quill.blur()
+    }
+
     ///////////////////////////
     // Quill event listeners //
     ///////////////////////////
