@@ -1,5 +1,6 @@
 const EventBus = require("./EventBus.js")
 const TextPad = require("./TextPad.js")
+const HtmlEntities = require("./utils/HtmlEntities.js")
 
 /**
  * Like TextPad, but only for plain text
@@ -66,12 +67,15 @@ class PlainPad
     {
         // check that no html is present
         // (this fix breaks history so that's why the handlers for pasting)
-        if (this.element.innerHTML != this.element.innerText)
+        let textuallHTML = HtmlEntities.encode(this.element.innerText)
+
+        if (this.element.innerHTML != textuallHTML)
         {
-            this.element.innerHTML = this.element.innerText
+            this.element.innerHTML = textuallHTML
             return
         }
 
+        // event
         this.bus.fire("text-change")
     }
 
